@@ -1,0 +1,84 @@
+#!/bin/bash
+# https://developers.google.com/maps/documentation/geocoding/requests-geocoding?_gl=1*1aexkso*_up*MQ..*_ga*MTM0MjQ3MjYxNy4xNzQ0NjY4NzQ3*_ga_NRWSTWS78N*MTc0NDY2ODc0Ny4xLjEuMTc0NDY2OTAyMS4wLjAuMA..#geocoding-lookup
+# https://console.cloud.google.com/google/maps-apis/credentials?utm_source=Docs_CreateAPIKey&utm_content=Docs_geocoding-backend&invt=Abuxcg&project=adsb-plotting-1550952871500
+LHS_STREET="Eagleson Rd"
+RHS_STREET="Hazeldean Rd"
+
+[ "$1" == "" ] || LHS_STREET="$1"
+[ "$2" == "" ] || RHS_STREET="$2"
+
+BASE_CITY='ottawa'
+BASE_PROVINCE='ON'
+
+# ***  1) for intersections, do not specify a street number
+# ***  2) only the last specified road /street should specify a city/province designator
+# ***  3) specifying a street number implies ROUTE mode 
+# ***  4) no street numbers means INTERSECTION mode.
+
+#------------------------------------------------------------------------------------
+
+TEMP=`mktemp `
+TEMP2=`mktemp `
+
+#------------------------------------------------------------------------------------
+# parse ouput stream of the http response
+function find_intersection
+{
+    grep -q "intersection" $TEMP
+    if [ $? != 0 ]; then
+        RED "oppps"
+        #RED "no intersection found ${FQGPS_LHS} and ${FQGPS_RHS}"
+        cat $TEMP
+        echo
+        echo " -------------- above is bad (no intersection tag)"
+        return 1
+    fi
+
+    grep -A9 "formatted_address" $TEMP | tr -s ' '  > $TEMP2
+    LAT="`grep "lat" $TEMP2 | rev | cut -f1 -d' ' | rev`"
+    LONG="`grep "lng" $TEMP2 | rev | cut -f1 -d' ' | rev`"
+    #cat $TEMP2
+
+    # get the TEXT NAME of the intersection it actually resolved to
+    WHERE=`grep 'formatted_address' $TEMP | cut -d ":" -f2 | cut -d',' -f1 | cut -d '"' -f2`
+    #echo "$WHERE" >&2 
+
+    #echo -e "$_GREEN"
+    #echo -e "$_RESET"
+    echo "${LAT}${LONG},\"$WHERE\""
+
+    #cat $TEMP
+    #echo " -------------- above is good (intersection tag found)"
+    return 0
+}
+
+#------------------------------------------------------------------------------------
+
+# http cannot tolerate spaces, put in %20 instead (don't use + signs here)
+
+FQGPS_LHS="`echo "$LHS_STREET" | sed 's= =\%20=g' | cut -d'(' -f1 | sed 's=\.==g'`"
+FQGPS_RHS="`echo "$RHS_STREET" | sed 's= =\%20=g' | cut -d'(' -f1 | sed 's=\.==g'`"
+
+FQGPS_CITY=",+$BASE_CITY,+$BASE_PROVINCE"
+
+REPORT=`mktemp`
+rm -f $REPORT
+
+if [ -z "$RHS_STREET" ]; then
+    # one street specified, probably an address/house
+    CMD="https://maps.googleapis.com/maps/api/geocode/json?address=${FQGPS_LHS}${FQGPS_CITY}\&key=$GOOGLE_KEY"
+
+    #echo "POINT REQUEST = $CMD"
+    shopt -o noglob |  wget -o test.txt -O $TEMP $CMD
+
+else
+
+    # two streets named, must be looking for an intersection (use %26 not the 'and' operator)
+    CMD="https://maps.googleapis.com/maps/api/geocode/json?address=${FQGPS_LHS}+\%26+${FQGPS_RHS}${FQGPS_CITY}\&key="$GOOGLE_KEY""
+
+    shopt -o noglob |  wget -o test.txt -O $TEMP $CMD
+    find_intersection
+    echo "INTERSECTION REQUEST = $CMD"
+    echo "=============================================="
+fi
+

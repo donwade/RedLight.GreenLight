@@ -11,10 +11,16 @@ void print(const __FlashStringHelper *x)
 	M5.Lcd.print(x);
 }
 
+void print(char *x)
+{
+	M5.Lcd.print(x);
+}
+
 void print(uint8_t x)
 {
 	M5.Lcd.print(x);
 }
+
 
 void print(double x, int y)
 {

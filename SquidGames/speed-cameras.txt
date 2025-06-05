@@ -1,0 +1,61 @@
+    Abbeyhill between Aldburn and Sherwood
+    Abbott East between Moss Hill Trail and Shea
+    Alta Vista between Ayers and Ridgemont
+    Bayshore between Woodridge (north) and Woodridge (south)
+    Bearbrook between Centrepark and Innes
+    Berrigan between Croxley Way and Claridge
+    Bridge Street between Arthur and West River
+    Bridgestone between Sunnybrooke and Granite
+    Bronson between University and Brewer
+    Cambrian between Greenbank and Kilbirnie
+    Cassidy between Bruin Lane (north) and Bruin Lane (south)
+    Castlefrank between Kakulu and Hungerford
+    Cedarview between Fallowfield and 217 m south of Fallowfield Road
+    Chapman Mills between Beatrice and Meadowgate
+    Colonial Rd between Delson and Frank Kenny
+    Crestway between Oldfield and Cresthaven
+    Crichton between Vaughan and St. Patrick
+    First Avenue between Chrysler and Percy
+    Fisher between Deer Park and Kintyre Priv
+    Gardenway between Saturn and Saturn
+    Greenbank between Harrison and Banner
+    Greenbank between Jockvale and Half Moon Bay
+    Heron between Baycrest and Finn Court
+    Hunt Club between Lorry Greenberg and Pike
+    Innes between Portobello and Trim
+    Jeanne d'Arc between Paddler Way and Vorlage
+    Kanata between Goulbourn Forced and Walden
+    Katimavik between Castlefrank and Curran
+    Kelly Farm between Shepody and Findlay Creek
+    King Edward between Cathcart and St. Patrick
+    Kitchener between Cochrane and Jasper
+    Knoxdale between Skipton and Cremona
+    Longfields between Berrigan and Hobblebush
+    Longfields between Clearbrook and Strandherd
+    Main between Evelyn and Springhurst
+    Meadowlands between Woodroffe and Withrow
+    Merivale between MacFarlane and Brookdale
+    Montreal between Bethamy and Ogilvie
+    Ogilvie between Elmlea and Elmridge
+    Ogilvie between La Vérendrye and Kender
+    Old Richmond between Kimberly and Tanglewood
+    Ottawa Street between McBean and Cockburn
+    Portobello between Aquaview and Capreol
+    Prince of Wales between Normandy/Kochar and Falaise/Kochar
+    Queen Mary between Edith and Quill
+    Riverside between Mooney's Bay Place and Ridgewood
+    Smyth between Lynda and Saunderson
+    Spratt between Canyon Walk/Goldeneye Way and Shoreline
+    St-Laurent, Boulevard between Noranda and Clarke
+    Stittsville Main between Bandelier and Hazeldean
+    Stittsville Main between Hobin and Beverly
+    Stonehaven between Bridle Park and Tandalee
+    Stoneway between Forest Gate and Mountain Ash
+    Tenth Line between Amiens and Des Epinettes
+    Terry Fox between Richardson Side & Second Line
+    Walkley between Colliston (north)/Albion and Colliston (south)
+    Walkley between Harding and Halifax
+    Watters between Charlemagne and Shawinigan
+    Woodroffe between Anthony and Saville
+    Woodroffe between Georgina and Highway 417
+

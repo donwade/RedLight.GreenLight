@@ -3,6 +3,8 @@
 extern void setCursor(uint16_t X, uint16_t Y, uint8_t font);
 extern void print(const __FlashStringHelper *x);
 extern void print(uint8_t x);
+extern void print(char *x);
+
 extern void print(double x, int y);
 
 extern void println(void);

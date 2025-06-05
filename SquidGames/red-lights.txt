@@ -1,0 +1,83 @@
+    Albert Street & Booth Street
+    Albert Street & Kent Street
+    Albion Road & Rideau Road
+    Arlington Avenue & Kent Street
+    Aviation Parkway & Montreal Road
+    Aviation Parkway & Ogilvie Road
+    Bank Street & Heron Road
+    Bank Street & Hunt Club Road (South Side)
+    Bank Street & Hunt Club Road (West Side)
+    Bank Street & Riverside Drive (North)
+    Bank Street & Riverside Drive (South)
+    Baseline Road & Merivale Road
+    Bay Street & Slater Street
+    Blair Road & Highway 174 Westbound/Gloucester Center
+    Booth Street & Wellington Street
+    Bronson Avenue & Carling Avenue
+    Bronson Avenue & Commissioner Street/Slater Street
+    Bronson Avenue & Powell Avenue
+    Carling Avenue & Fairlawn Avenue
+    Carling Avenue & Holly Acres Road
+    Carling Avenue & Iroquois Road
+    Carling Avenue & Island Park Drive (East Side)
+    Carling Avenue & Island Park Drive (West Side)
+    Carling Avenue & Merivale Road
+    Carling Avenue & Richmond Road
+    Carling Avenue 195m West of Iroquois Road
+    Carp Road & Richardson Side Road
+    Catherine Street & Kent Street (East Side)
+    Catherine Street & Kent Street (South Side)
+    Catherine Street & O'Connor Street/417 Westbound On Ramp (East Side)
+    Catherine Street & O'Connor Street/417 Westbound On Ramp (North Side)
+    Cedarview Road & Fallowfield Road
+    Charlemagne Boulevard/Tompkins Avenue & Tenth Line Road
+    Coldrey Avenue & Kirkwood Avenue
+    Conroy Road & Johnston Road
+    Conroy Road & Lorry Greenberg Drive (North Side)
+    Conroy Road & Lorry Greenberg Drive (South Side)
+    Coventry/Ogilvie Road & St. Laurent Boulevard
+    Cyrville Road & Innes Road
+    Eagleson Road & Cope Drive
+    Eagleson Road & Hazeldean Road
+    Elgin Street & Slater Street
+    Elgin Street/Pretoria Bridge & Queen Elizabeth Drive
+    Fisher Avenue & Meadowlands Drive
+    Gladstone Avenue & Rochester Street
+    Greenbank Road & Berrigan Drive/Wessex Road
+    Hawthorne Road & Leitrim Road
+    Heron Road & Jefferson Street
+    Heron Road & Riverside Drive
+    Heron Road 155m west of Bank Street
+    Hogs Back Road & Meadowlands Drive
+    Holland Avenue & Island Park Drive/NCC Driveway
+    Hunt Club Road & Cahill Drive
+    Hunt Club Road & Downpatrick Road/McCarthy Road
+    Innes Road & Orléans Boulevard
+    Jeanne D'Arc Boulevard & Champlain Street
+    King Edward Avenue & Besserer Street
+    King Edward Avenue & St. Andrew Street
+    King Edward Avenue & St. Patrick Street
+    Lyon Street & Slater Street
+    Maitland Avenue & Erindale Drive / Glenmount Avenue
+    March Road & Carp Road
+    March Road/Eaglson Road & Campeau Drive/417 Westbound Off Ramp
+    Merivale Road & Meadowlands Drive
+    Montreal Road & Brittany Drive
+    Murray Street & Sussex Avenue
+    Navan Road & Renaud Road
+    Old Tenth Line Road & St. Joseph Boulevard
+    Place D'Orléans Drive/Duford Drive & St. Joseph Boulevard
+    Russell Road & St. Laurent Boulevard
+    Smyth Road & Haig Drive
+    Smyth Road & Saunderson Drive
+    St. Joseph Boulevard & Tenth Line Road
+    St. Laurent Boulevard & Belfast Road
+    Strandherd Drive & Jockvale Road
+    Tenth Line Road & Vanguard Drive
+    Terry Fox Drive 135m south of Hazeldean
+    Vanier Parkway & Presland Road
+    Walkley Road & Glenhaven Private
+    Walkley Road & Russell Road/Hawthorne Road
+    Walkley Road & Ryder Street/Don Ried Drive
+    Wellington Street & Bay Street
+
