@@ -4,7 +4,7 @@
 #include <TinyGPS++.h>
 #include "m5Core2-only.h"
 
-#include "soc/rtc_wdt.h"
+//#include "soc/rtc_wdt.h"
 #include "esp_int_wdt.h"
 #include "esp_task_wdt.h"
 
@@ -37,6 +37,7 @@ void smartDelay(unsigned long ms) {
 
 //=============================================================
 void displayInfo() {
+
 	lclear();
 	
     lsetCursor(0, 40, 4); // font=4
@@ -122,6 +123,7 @@ void setup() {
     Serial2.begin(9600, SERIAL_8N1, 13, 14);
 
 	lsetTextColor(GREEN, BLACK);
+    lsetCursor(0, 0, 4); // font=4
 
 	setup_ORIG();
 
@@ -135,13 +137,12 @@ void setup() {
 extern void loop_ORIG(void *);
 
 void loop() {
-#if 1
-	//delay(100);
+#if 0
 	displayInfo();
-	smartDelay(1000);
 #else
     loop_ORIG(NULL);
 #endif
+	smartDelay(1000);
 
 }
 

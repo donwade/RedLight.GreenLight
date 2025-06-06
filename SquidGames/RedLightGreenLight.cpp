@@ -18,6 +18,8 @@ https://github.com/mikalhart/TinyGPSPlus
 // https://github.com/pschatzmann/ESP32-A2DP.git
 // https://github.com/pschatzmann/arduino-audio-tools.git
 
+#define LINE Serial.printf("%s:%d\n", __FUNCTION__, __LINE__)
+
 
 #include <TinyGPS++.h>
 
@@ -133,8 +135,6 @@ void getData(void)
 
 #else
 
-	smartDelay(1000);
-
 	iLocation.lat = gps.location.lat();
 	iLocation.lng = gps.location.lng();
 	iMisc.hour = gps.time.hour();
@@ -167,8 +167,6 @@ char BT_SSID[17] = "== none ====";
 //---------------------------------------------------------
 
 extern void smartDelay(unsigned long ms);
-
-//SSD1306 display(0x3c, 21, 22);
 
 bool cardinalSin(int16_t windowCenter, uint8_t width, int16_t test)
 {
@@ -304,11 +302,10 @@ int  xprintf(uint8_t lineNo, const char *format, ...)
 	display.drawString(0, lineNo * char_height, buffer);
 	#endif
 
-	printf(buffer);
+	printf("%1d %s\n", lineNo, buffer);
     lprint(buffer);
 	
 	va_end(args);
-	delay(1000);
 	return 0;
 }
 
@@ -334,6 +331,7 @@ int  oprintf(uint8_t lineNo, const char *format, ...)
 	display.drawString(0, lineNo * char_height, buffer);
 	#endif
 	
+	printf("%1d %s\n", lineNo, buffer);
     lprint(buffer);
 	
 	va_end(args);
@@ -362,6 +360,7 @@ int  iprintf(uint8_t lineNo, const char *format, ...)
 	display.drawString(0, lineNo * char_height, buffer);
 	#endif
 
+	printf("%1d %s\n", lineNo, buffer);
     lprint(buffer);
 	
 	va_end(args);
@@ -441,15 +440,19 @@ void stateDisplay(void)
 	int dist;
 	int course;
 	const char *dir;
-	
+
+#define DATA_CAPTURE
+
 #ifdef DATA_CAPTURE	
 	static uint8_t toggleCount = 0;
 
 	toggleCount++;
+
+	LINE;	
 	switch (absState)
 	{
 		case MARK_START:
-
+			LINE;
 			// distance has no meaning as we have no start point
 			
 			
@@ -458,13 +461,11 @@ void stateDisplay(void)
 
 			xprintf(3, "MARK START");
 
-			if (iMisc.Kmph() > 5)
+			if (iMisc.Kmph > 5)
 				xprintf(2, "%3d %s", veh_course, veh_cardinal);
 			else
-				xprintf(2, "%2d/%2d/%4d S=%2d", gpX.date.day(), gpX.date.month(), 
-						gpX.date.year(), gpX.satellites.value());
-
-			//display.display();
+				xprintf(2, "%2d/%2d/%4d S=%2d", gps.date.day(), gps.date.month(), 
+						gps.date.year(), gps.satellites.value());
 
 			if (bButtonPressed)
 			{
@@ -477,8 +478,9 @@ void stateDisplay(void)
 		break;
 
 		case MARK_END:
+			LINE;
 
-			dist = gpX.distanceBetween(startLocation.lat, startLocation.lng, gpsAverage.lat, gpsAverage.lng);
+			dist = gps.distanceBetween(startLocation.lat, startLocation.lng, gpsAverage.lat, gpsAverage.lng);
 			course = (int)gps.courseTo(startLocation.lat, startLocation.lng, gpsAverage.lat, gpsAverage.lng);
 			dir = gps.cardinal(course);
 			
@@ -513,6 +515,7 @@ void stateDisplay(void)
 		break;
 
 		case ARRIVED:	// arrived at camera.
+			LINE;
 			// course direction is view FROM distance going to CAMERA
 			dist = gps.distanceBetween(endLocation.lat, endLocation.lng, startLocation.lat, startLocation.lng );
 			course = (int)gps.courseTo(endLocation.lat, endLocation.lng, startLocation.lat, startLocation.lng );
@@ -538,6 +541,7 @@ void stateDisplay(void)
 	{
 		int dist, course;
 		const char *cardinal;
+		LINE;
 		
 		findClosestCamera(iLocation.lat, iLocation.lng);
 		
@@ -582,6 +586,7 @@ void stateDisplay(void)
 	}	
 
 #endif
+	LINE;
 }
 //---------------------------------------------------------
 
@@ -595,12 +600,12 @@ void loop_ORIG(void *not_used)
 
 	//while(1)
 	{
-		smartDelay(1000);
+		LINE;
 		getData();
+		LINE;
 		
 		{
 			// update rolling history
-			noInterrupts();
 
 			samples[sIndex].lat = iLocation.lat;
 			samples[sIndex].lng = iLocation.lng;
@@ -609,10 +614,11 @@ void loop_ORIG(void *not_used)
 			// therefore sIndex points to oldest entry by time
 
 			if (++sIndex == GPS_SAMPLE_SIZE) sIndex = 0;
-			interrupts();
 		}	
+		LINE;
 
 		calcGPSaverage();
+		LINE;
 
 		// get direction only if going fast enough
 		// otherwise it points all over the place
@@ -624,6 +630,7 @@ void loop_ORIG(void *not_used)
 			veh_course = (int)gps.courseTo(oldest.lat, oldest.lng, iLocation.lat, iLocation.lng );
 			veh_cardinal = gps.cardinal(veh_course);
 		}
+		LINE;
 
 		
 		Serial.printf("%2d:%02d:%02d @ %+9.7f %+9.7f ^ %3d kph dir %3d %s\n", 
@@ -636,7 +643,9 @@ void loop_ORIG(void *not_used)
 		//difftime =  micros() - startProfileTime;
 		//Serial.printf("profile = %d uS\n", difftime);
 
+		LINE;
 		stateDisplay();
+		LINE;
 		
 		//startProfileTime = micros();
 

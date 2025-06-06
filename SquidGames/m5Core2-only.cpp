@@ -2,6 +2,7 @@
 #include "m5Core2-only.h"
 
 static uint8_t lastFont = 4;
+static uint8_t vert;
 
 void lsetCursor(uint16_t X, uint16_t Y, uint8_t font)
 {
@@ -10,16 +11,16 @@ void lsetCursor(uint16_t X, uint16_t Y, uint8_t font)
 	//int16_t horz =M5.Lcd.textWidth(" ", font);
 	//printf("charX=%d\n", horz);
 
-	int16_t vert = M5.Lcd.fontHeight();
+	vert = M5.Lcd.fontHeight() * 4;
 	//printf("charY=%d\n", vert);
 	
-	M5.Lcd.setCursor(X, Y, font);
+	M5.Lcd.setCursor(X, Y * vert, font);
 }
 
 
 void lsetCursor(uint16_t X, uint16_t Y)
 {
-	M5.Lcd.setCursor(X, Y, lastFont);
+	M5.Lcd.setCursor(X, Y * vert , lastFont);
 }
 
 void lprint(const __FlashStringHelper *x)
