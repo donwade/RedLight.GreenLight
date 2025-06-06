@@ -1,43 +1,59 @@
 #include <M5Core2.h>
 #include "m5Core2-only.h"
 
-void setCursor(uint16_t X, uint16_t BKGND, uint8_t font)
+static uint8_t lastFont = 4;
+
+void lsetCursor(uint16_t X, uint16_t Y, uint8_t font)
 {
-	M5.Lcd.setCursor(X, BKGND, font);
+	lastFont = font;
+
+	//int16_t horz =M5.Lcd.textWidth(" ", font);
+	//printf("charX=%d\n", horz);
+
+	int16_t vert = M5.Lcd.fontHeight();
+	//printf("charY=%d\n", vert);
+	
+	M5.Lcd.setCursor(X, Y, font);
 }
 
-void print(const __FlashStringHelper *x)
+
+void lsetCursor(uint16_t X, uint16_t Y)
+{
+	M5.Lcd.setCursor(X, Y, lastFont);
+}
+
+void lprint(const __FlashStringHelper *x)
 {
 	M5.Lcd.print(x);
 }
 
-void print(char *x)
+void lprint(char *x)
 {
 	M5.Lcd.print(x);
 }
 
-void print(uint8_t x)
+void lprint(uint8_t x)
 {
 	M5.Lcd.print(x);
 }
 
 
-void print(double x, int y)
+void lprint(double x, int y)
 {
 	M5.Lcd.print(x,y);
 }
 
-void println(void)
+void lprintln(void)
 {
 	M5.Lcd.println();
 }
 
-void println(char *x)
+void lprintln(char *x)
 {
 	M5.Lcd.println(x);
 }
 
-void clear(void)
+void lclear(void)
 {
 	M5.Lcd.clear();
 }
@@ -47,7 +63,7 @@ void setup_M5(void)
 	M5.begin(true, true, true, false, kMBusModeInput);
 }
 
-void setTextColor(unsigned FGND, unsigned BKGND)
+void lsetTextColor(unsigned FGND, unsigned BKGND)
 {
 	M5.Lcd.setTextColor(FGND,BKGND);
 }

@@ -27,86 +27,91 @@ TinyGPSPlus gps;
 void smartDelay(unsigned long ms) {
     unsigned long start = millis();
     do {
-        while (Serial2.available() > 0) gps.encode(Serial2.read());
+        while (Serial2.available() > 0)	gps.encode(Serial2.read());
+		///////////////////////////////////
+		delay((9600/1000)); // 9600baud in mS allow any task dogs !!!!!
+		///////////////////////////////////
     } while (millis() - start < ms);
     //clear();
 }
 
 //=============================================================
 void displayInfo() {
-	clear();
-    setCursor(0, 40, 4);
-    print(F("Latitude:    "));
+	lclear();
+	
+    lsetCursor(0, 40, 4); // font=4
+    lprint(F("Latitude:    "));
     if (gps.location.isValid()) {
-        print(gps.location.lat(), 6);
+        lprint(gps.location.lat(), 6);
 
     } else {
-        print(F("INVALID"));
+        lprint(F("INVALID"));
     }
 
-    println();
-    print(F("Longitude:    "));
+    lprintln();
+    lprint(F("Longitude:    "));
     if (gps.location.isValid()) {
-        print(gps.location.lng(), 6);
+        lprint(gps.location.lng(), 6);
     } else {
-        print(F("INVALID"));
+        lprint(F("INVALID"));
     }
 
-    println();
-    print(F("Altitude:    "));
+    lprintln();
+    lprint(F("Altitude:    "));
     if (gps.altitude.isValid()) {
-        print(gps.altitude.meters());
+        lprint(gps.altitude.meters());
     } else {
-        print(F("INVALID"));
+        lprint(F("INVALID"));
     }
 
-    println();
-    print(F("Satellites:    "));
+    lprintln();
+    lprint(F("Satellites:    "));
     if (gps.satellites.isValid()) {
-        print(gps.satellites.value());
+        lprint(gps.satellites.value());
     } else {
-        print(F("INVALID"));
+        lprint(F("INVALID"));
     }
 
-    println();
-    print(F("Date: "));
+    lprintln();
+    lprint(F("Date: "));
     if (gps.date.isValid()) {
-        print(gps.date.month());
-        print(F("/"));
-        print(gps.date.day());
-        print(F("/"));
-        print(gps.date.year());
+        lprint(gps.date.month());
+        lprint(F("/"));
+        lprint(gps.date.day());
+        lprint(F("/"));
+        lprint(gps.date.year());
     } else {
-        print(F("INVALID"));
+        lprint(F("INVALID"));
     }
 
-    println();
-    print(F("Time: "));
+    lprintln();
+    lprint(F("Time: "));
     if (gps.time.isValid()) {
-        if (gps.time.hour() < 10) print(F("0"));
-        print(gps.time.hour());
-        print(F(":"));
-        if (gps.time.minute() < 10) print(F("0"));
-        print(gps.time.minute());
-        print(F(":"));
-        if (gps.time.second() < 10) print(F("0"));
-        print(gps.time.second());
-        print(F("."));
-        if (gps.time.centisecond() < 10) print(F("0"));
-        print(gps.time.centisecond());
+        if (gps.time.hour() < 10) lprint(F("0"));
+        lprint(gps.time.hour());
+        lprint(F(":"));
+        if (gps.time.minute() < 10) lprint(F("0"));
+        lprint(gps.time.minute());
+        lprint(F(":"));
+        if (gps.time.second() < 10) lprint(F("0"));
+        lprint(gps.time.second());
+        lprint(F("."));
+        if (gps.time.centisecond() < 10) lprint(F("0"));
+        lprint(gps.time.centisecond());
     } else {
-        print(F("INVALID"));
+        lprint(F("INVALID"));
     }
 }
 
 //=============================================================
-extern "C" void setup_dogs();
+extern "C" void test_watchDogs();
 
 void setup() {
 	Serial.begin(115200);
 
 	while(!Serial) delay(100); // in event of crash loop
-	delay(2000);
+	Serial.println("----");
+	delay(3000);
 	
 	setup_M5();	
 	
@@ -116,12 +121,11 @@ void setup() {
 	*/
     Serial2.begin(9600, SERIAL_8N1, 13, 14);
 
-	setTextColor(GREEN, BLACK);
+	lsetTextColor(GREEN, BLACK);
 
 	setup_ORIG();
 
-	setup_dogs();
-	//disableCore0WDT();
+	test_watchDogs();
 
     //  while (*gpsStream)
     //    if (gps.encode(*gpsStream++))
@@ -132,13 +136,12 @@ extern void loop_ORIG(void *);
 
 void loop() {
 #if 1
-    delay(1000);
-	//displayInfo();
+	//delay(100);
+	displayInfo();
+	smartDelay(1000);
 #else
     loop_ORIG(NULL);
-
 #endif
 
-    smartDelay(1000);
 }
 

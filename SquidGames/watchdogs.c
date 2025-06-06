@@ -31,7 +31,7 @@ static TaskHandle_t task_handles[portNUM_PROCESSORS];
 
 
 //Callback for user tasks created in app_main()
-void reset_task0(void *arg)
+void dogLoop0(void *arg)
 {
     int i = *(int*) arg;
 
@@ -57,7 +57,7 @@ void reset_task0(void *arg)
 }
 
 //Callback for user tasks created in app_main()
-void reset_task1(void *arg)
+void dogLoop1(void *arg)
 {
     int i = *(int*) arg;
 
@@ -83,7 +83,7 @@ void reset_task1(void *arg)
 }
 
 
-void setup_dogs()
+void test_watchDogs()
 {
     int tskParam;
     printf("xxxInitialize TWDT\n");
@@ -91,17 +91,23 @@ void setup_dogs()
     CHECK_ERROR_CODE(esp_task_wdt_init(TWDT_TIMEOUT_S,false), ESP_OK);
 
     //Subscribe Idle Tasks to TWDT if they were not subscribed at startup
+
 #ifndef CONFIG_TASK_WDT_CHECK_IDLE_TASK_CPU0
-    printf("go CPU0\n");
+    printf("starting idle task mon for core 0\n");
     tskParam = 0;
     esp_task_wdt_add(xTaskGetIdleTaskHandleForCPU(0));
-    xTaskCreatePinnedToCore(reset_task0, "reset task", 1024 * 2 , &tskParam, 10, &task_handles[0], 0);
+    xTaskCreatePinnedToCore(dogLoop0, "dogLoop0", 1024 * 2 , &tskParam, 10, &task_handles[0], 0);
+#else
+    printf("idle task dog not compiled for core 0\n");
 #endif
+
 #ifndef CONFIG_TASK_WDT_CHECK_IDLE_TASK_CPU1
-    printf("go CPU1\n");
+    printf("starting idle task mon for core 1\n");
     tskParam = 1;
     esp_task_wdt_add(xTaskGetIdleTaskHandleForCPU(1));
-    xTaskCreatePinnedToCore(reset_task1, "reset task", 1024 * 2 , &tskParam, 10, &task_handles[1], 1);
+    xTaskCreatePinnedToCore(dogLoop1, "dogLoop1", 1024 * 2 , &tskParam, 10, &task_handles[1], 1);
+#else
+    printf("idle task dog not compiled for core 1\n");
 #endif
 
     //Create user tasks and add them to watchdog

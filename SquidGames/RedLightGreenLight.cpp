@@ -144,10 +144,13 @@ void getData(void)
 	iMisc.hdop = gps.hdop.hdop();
 	iMisc.course = gps.course.deg();
 
-	
+	/* not required. tbeam builds char by char 
 	if (millis() > 5000 && gps.charsProcessed() < 10)
-	Serial.println(F("No GPS data received: check wiring"));
-
+		Serial.println(F("No GPS data received: check wiring"));
+	else
+		Serial.printf("got reading\n");		
+	*/
+	
 #endif
 }
 
@@ -290,7 +293,7 @@ int  xprintf(uint8_t lineNo, const char *format, ...)
 	char buffer[30];
 	vsnprintf(buffer, sizeof(buffer)-1, format, args);
 
-    //setCursor(0, lineNo, 4); 
+    lsetCursor(0, lineNo); 
 
 	#if 0
 	// erase past background to black
@@ -300,10 +303,12 @@ int  xprintf(uint8_t lineNo, const char *format, ...)
 	
 	display.drawString(0, lineNo * char_height, buffer);
 	#endif
-	
-    print(buffer);
+
+	printf(buffer);
+    lprint(buffer);
 	
 	va_end(args);
+	delay(1000);
 	return 0;
 }
 
@@ -316,7 +321,7 @@ int  oprintf(uint8_t lineNo, const char *format, ...)
 	char buffer[30];
 	vsnprintf(buffer, sizeof(buffer)-1, format, args);
 
-    //setCursor(0, lineNo, 4); 
+    lsetCursor(0, lineNo); 
 
 	#if 0
 	// erase past background to black
@@ -329,7 +334,7 @@ int  oprintf(uint8_t lineNo, const char *format, ...)
 	display.drawString(0, lineNo * char_height, buffer);
 	#endif
 	
-    print(buffer);
+    lprint(buffer);
 	
 	va_end(args);
 	return 0;
@@ -346,7 +351,7 @@ int  iprintf(uint8_t lineNo, const char *format, ...)
 	char buffer[30];
 	vsnprintf(buffer, sizeof(buffer)-1, format, args);
 
-    //setCursor(0, lineNo, 4); 
+    lsetCursor(0, lineNo); 
 
 	#if 0
 	// erase past background to WHITE
@@ -357,7 +362,7 @@ int  iprintf(uint8_t lineNo, const char *format, ...)
 	display.drawString(0, lineNo * char_height, buffer);
 	#endif
 
-    print(buffer);
+    lprint(buffer);
 	
 	va_end(args);
 	return 0;
@@ -519,7 +524,7 @@ void stateDisplay(void)
 			xprintf(3, "APPROACHING");
 			//display.display();
 
-			setRedLED(false);
+			//setRedLED(false);
 
 			if (bButtonPressed)
 			{
@@ -586,12 +591,11 @@ void loop_ORIG(void *not_used)
 	unsigned long startProileTime;
 	unsigned long difftime;
 	
-	snprintf(msg, sizeof(msg),"hello"); 
-
 	static unsigned long lastProfileTime; 
 
-	while(1)
+	//while(1)
 	{
+		smartDelay(1000);
 		getData();
 		
 		{
@@ -746,9 +750,6 @@ void setup_ORIG()
 
 	//pinMode(BUILTIN_LED, OUTPUT);
 
-	delay(4000);
-
-	
 	//TaskHandle_t foo;
 	//xTaskCreate(loop1, "loop1", 4096, NULL, 5, &foo);
 
