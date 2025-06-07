@@ -4,7 +4,7 @@
 #include <TinyGPS++.h>
 #include "m5Core2-only.h"
 
-//#include "soc/rtc_wdt.h"
+#include "soc/rtc_wdt.h"
 #include "esp_int_wdt.h"
 #include "esp_task_wdt.h"
 

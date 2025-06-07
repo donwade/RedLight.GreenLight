@@ -448,11 +448,9 @@ void stateDisplay(void)
 
 	toggleCount++;
 
-	LINE;	
 	switch (absState)
 	{
 		case MARK_START:
-			LINE;
 			// distance has no meaning as we have no start point
 			
 			
@@ -478,7 +476,6 @@ void stateDisplay(void)
 		break;
 
 		case MARK_END:
-			LINE;
 
 			dist = gps.distanceBetween(startLocation.lat, startLocation.lng, gpsAverage.lat, gpsAverage.lng);
 			course = (int)gps.courseTo(startLocation.lat, startLocation.lng, gpsAverage.lat, gpsAverage.lng);
@@ -515,7 +512,6 @@ void stateDisplay(void)
 		break;
 
 		case ARRIVED:	// arrived at camera.
-			LINE;
 			// course direction is view FROM distance going to CAMERA
 			dist = gps.distanceBetween(endLocation.lat, endLocation.lng, startLocation.lat, startLocation.lng );
 			course = (int)gps.courseTo(endLocation.lat, endLocation.lng, startLocation.lat, startLocation.lng );
@@ -541,7 +537,6 @@ void stateDisplay(void)
 	{
 		int dist, course;
 		const char *cardinal;
-		LINE;
 		
 		findClosestCamera(iLocation.lat, iLocation.lng);
 		
@@ -586,7 +581,6 @@ void stateDisplay(void)
 	}	
 
 #endif
-	LINE;
 }
 //---------------------------------------------------------
 
@@ -600,10 +594,7 @@ void loop_ORIG(void *not_used)
 
 	//while(1)
 	{
-		LINE;
 		getData();
-		LINE;
-		
 		{
 			// update rolling history
 
@@ -615,10 +606,8 @@ void loop_ORIG(void *not_used)
 
 			if (++sIndex == GPS_SAMPLE_SIZE) sIndex = 0;
 		}	
-		LINE;
 
 		calcGPSaverage();
-		LINE;
 
 		// get direction only if going fast enough
 		// otherwise it points all over the place
@@ -630,7 +619,6 @@ void loop_ORIG(void *not_used)
 			veh_course = (int)gps.courseTo(oldest.lat, oldest.lng, iLocation.lat, iLocation.lng );
 			veh_cardinal = gps.cardinal(veh_course);
 		}
-		LINE;
 
 		
 		Serial.printf("%2d:%02d:%02d @ %+9.7f %+9.7f ^ %3d kph dir %3d %s\n", 
@@ -643,9 +631,7 @@ void loop_ORIG(void *not_used)
 		//difftime =  micros() - startProfileTime;
 		//Serial.printf("profile = %d uS\n", difftime);
 
-		LINE;
 		stateDisplay();
-		LINE;
 		
 		//startProfileTime = micros();
 

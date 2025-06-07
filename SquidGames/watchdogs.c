@@ -17,8 +17,8 @@
     task starves, the dog which is attached to it will trigger a WDT reset
 */
 
-#define TWDT_DOG_TIMER_SEC    3
-#define TASK_SLEEP_PERIOD     4  
+#define TWDT_DOG_TIMER_SEC    5
+#define TASK_SLEEP_PERIOD     4 
 
 // Everything ok is TWDT_DOG_TIMER_SEC > TASK_SLEEP_PERIOD
 // DOG will trigger if TWDT_DOG_TIMER_SEC < TASK_SLEEP_PERIOD
@@ -69,7 +69,7 @@ void dogLoop0(void *arg)
         unsigned long now=millis();
         unsigned long diff = now -ms;
         ms = now;
-        printf("%s core %d time = %d mS\n", __FUNCTION__, i,  diff);
+        printf("%s core %d time = %d mS of %d mS\n", __FUNCTION__, i,  diff, TWDT_DOG_TIMER_SEC * 1000);
 
         //reset the watchdog every 2 seconds
         CHECK_ERROR_CODE(esp_task_wdt_reset(), ESP_OK);  //Comment this line to trigger a TWDT timeout
@@ -102,7 +102,7 @@ void dogLoop1(void *arg)
         unsigned long now=millis();
         unsigned long diff = now -ms;
         ms = now;
-        printf("%s core %d time = %d mS\n", __FUNCTION__, i,  diff);
+        printf("%s core %d time = %d mS of %d mS\n", __FUNCTION__, i,  diff,TWDT_DOG_TIMER_SEC * 1000);
 
         //reset the watchdog every X seconds
         CHECK_ERROR_CODE(esp_task_wdt_reset(), ESP_OK);  //Comment this line to trigger a TWDT timeout
