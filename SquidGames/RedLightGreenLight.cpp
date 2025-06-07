@@ -25,6 +25,10 @@ https://github.com/mikalhart/TinyGPSPlus
 
 #include "m5Core2-only.h"
 
+extern "C" {
+#include "watchdogs.h"
+}
+
 #include <iostream>
 #include <cstring>
 #include <string>
@@ -591,9 +595,14 @@ void loop_ORIG(void *not_used)
 	unsigned long difftime;
 	
 	static unsigned long lastProfileTime; 
-
-	//while(1)
+	watchdog_prefix();
+	
+	while(1)
 	{
+	
+		watchdog_kick(); 
+		smartDelay(1000);
+		
 		getData();
 		{
 			// update rolling history
@@ -634,9 +643,9 @@ void loop_ORIG(void *not_used)
 		stateDisplay();
 		
 		//startProfileTime = micros();
-
-		
 	}
+
+	watchdog_postfix();
 }
 
 

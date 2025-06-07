@@ -4,6 +4,10 @@
 #include <TinyGPS++.h>
 #include "m5Core2-only.h"
 
+extern "C" {
+#include "watchdogs.h"
+}
+
 #include "soc/rtc_wdt.h"
 #include "esp_int_wdt.h"
 #include "esp_task_wdt.h"
@@ -106,6 +110,7 @@ void displayInfo() {
 
 //=============================================================
 extern "C" void test_watchDogs();
+extern  void  loop_ORIG(void *);
 
 void setup() {
 	Serial.begin(115200);
@@ -127,20 +132,18 @@ void setup() {
 
 	setup_ORIG();
 
-	test_watchDogs();
+	//test_watchDogs();
 
-    //  while (*gpsStream)
-    //    if (gps.encode(*gpsStream++))
-    //      displayInfo();
+	watchdog_task(loop_ORIG,"loop_ORIG", 1024*3, NULL, 5);
+
 }
 
-extern void loop_ORIG(void *);
 
 void loop() {
 #if 0
 	displayInfo();
 #else
-    loop_ORIG(NULL);
+    vTaskDelete(NULL);
 #endif
 	smartDelay(1000);
 

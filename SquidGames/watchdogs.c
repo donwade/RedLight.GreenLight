@@ -11,39 +11,12 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_task_wdt.h"
+#include "watchdogs.h"
 
 /*
-    Effectively create a low priority task on each core. If the low priority
-    task starves, the dog which is attached to it will trigger a WDT reset
+    Effectively puts a predefined internal FreeRTOS 'idle' task under a dog
 */
-
-#define TWDT_DOG_TIMER_SEC    5
-#define TASK_SLEEP_PERIOD     4 
-
-// Everything ok is TWDT_DOG_TIMER_SEC > TASK_SLEEP_PERIOD
-// DOG will trigger if TWDT_DOG_TIMER_SEC < TASK_SLEEP_PERIOD
-
-
-/*
- * Macro to check the outputs of TWDT functions and trigger an abort if an
- * incorrect code is returned.
- * It appears each core has a task called xTaskGetIdleTaskHandleForCPUx
- * provided by FreeRTOS.
- * This task will somehow accept other tasks and monitor them.
- * 
- *     Activate task called xTaskGetIdleTaskHandleForCPUx (the monitor) 
- *     then when your task runs, have it register to xTaskGetIdleTaskHandleForCPUx
- */
-
-
-#define CHECK_ERROR_CODE(functionCall, expected) ({                     \
-            int retval = functionCall;                                  \
-            if(retval != expected){                                     \
-                printf("ERROR = %s %d\n", #functionCall, retval);       \
-                abort();                                                \
-            }                                                           \
-})
-
+#if 0
 static TaskHandle_t task_handles[portNUM_PROCESSORS];
 
 //-------------------------------------------------------------------------
@@ -184,6 +157,9 @@ void test_watchDogs()
 }
 
 
+
+
+
 void shutdown_dogs()
 {
     printf("Delay for 10 seconds\n");
@@ -209,5 +185,120 @@ void shutdown_dogs()
     CHECK_ERROR_CODE(esp_task_wdt_status(NULL), ESP_ERR_INVALID_STATE);     //Confirm TWDT has been deinitialized
 
     printf("Complete\n");
+ }
+#endif
+
+//---------------------------------------------------------------------------------------
+static uint16_t dog_ctr = 0;
+
+void watchdog_postfix(void)
+{
+
+    TaskHandle_t xHandle;
+
+    /* Obtain the handle of a task from its name. */
+
+    xHandle = xTaskGetHandle( NULL );
+
+    printf("%s handle %d", __FUNCTION__, xHandle);
+    dog_ctr--;
+
+    vTaskDelete(xHandle);   //Delete user task first (prevents the resetting of an unsubscribed task)
+    CHECK_ERROR_CODE(esp_task_wdt_delete(xHandle), ESP_OK);     //Unsubscribe task from TWDT
+    CHECK_ERROR_CODE(esp_task_wdt_status(xHandle), ESP_ERR_NOT_FOUND);  //Confirm task is unsubscribed
+
+    if (dog_ctr == 0)
+    {
+        printf("no more dogs ... shutting down WDT");
+        //unsubscribe idle task, core 1 only supported
+        CHECK_ERROR_CODE(esp_task_wdt_delete(xTaskGetIdleTaskHandleForCPU(1)), ESP_OK);     //Unsubscribe Idle Task from TWDT
+        CHECK_ERROR_CODE(esp_task_wdt_status(xTaskGetIdleTaskHandleForCPU(1)), ESP_ERR_NOT_FOUND);      //Confirm Idle task has unsubscribed
+
+
+        //Deinit TWDT after all tasks have unsubscribed
+        CHECK_ERROR_CODE(esp_task_wdt_deinit(), ESP_OK);
+        CHECK_ERROR_CODE(esp_task_wdt_status(NULL), ESP_ERR_INVALID_STATE);     //Confirm TWDT has been deinitialized
+    }
 }
+
+void watchdog_kick(void)
+{
+    //reset the watchdog every X seconds
+    CHECK_ERROR_CODE(esp_task_wdt_reset(), ESP_OK);  //Comment this line to trigger a TWDT timeout
+}
+
+//---------------------------------------------------------------------------------------
+void watchdog_prefix(void)
+{
+    //Subscribe this task to TWDT, then check if it is subscribed
+
+    // put this thread under control of the WDT thread
+    CHECK_ERROR_CODE(esp_task_wdt_add(NULL), ESP_OK);
+
+    // did it stick?
+    CHECK_ERROR_CODE(esp_task_wdt_status(NULL), ESP_OK);
+
+    dog_ctr++;
+
+}
+
+//---------------------------------------------------------------------------------------
+uint32_t watchdog_task(void (*pvTaskCode)(void *), 
+                    const char *const pcName, 
+                    const uint32_t usStackDepth, 
+                    void *const pvParameters, 
+                    uint16_t uxPriority)
+{
+    int tskParam;
+    static bool oneTime = false;
+    //Initialize or reinitialize TWDT
+    int handle;
+
+    if (!oneTime)
+    {
+        printf("Initialize TWDT test\n");
+        CHECK_ERROR_CODE(esp_task_wdt_init(TWDT_DOG_TIMER_SEC,false), ESP_OK);
+    }
+
+    /*
+        "Subscribe Idle Tasks to TWDT if they were not subscribed at startup"
+
+        FreeRTOS has an idle thread that runs on each core.
+        Add the idle thread to be under watchdog task control
+
+        The idle thread never kicks the dog, but if it starves WDT will come into play
+        The user thread should kick the dog faster than the WDT timeout value.
+
+        FreeRTOS might not provide a idle task for all cores, that is decided at 
+        compile time of FreeRTOS. 
+
+        ****Adding a thread to a core that has no built-in in idle task
+        causes mystery crashes.
+    */
+
+    #ifndef CONFIG_TASK_WDT_CHECK_IDLE_TASK_CPU1
+        if (!oneTime)
+        {
+            printf("starting idle task mon for core 1\n");
+
+            // add the built-in idle task on core 1 to the watchdog.
+            esp_task_wdt_add(xTaskGetIdleTaskHandleForCPU(1));
+        }
+
+        // at this point the thead handle for the USER thread is not defined
+        // but we will start the USER thread. 
+
+        // When the thread starts running, THEN thread handle can be determined
+        // and that value can be added to the watch dog thread monitor
+
+        xTaskCreatePinnedToCore(pvTaskCode, pcName , usStackDepth , pvParameters, uxPriority, &handle, 1 /*core1*/);
+    #else
+        printf("!!! FreeRTOS not compiled for core 1 watchdogs\n");
+    #endif
+
+    oneTime = true;
+    return handle;
+
+}
+
 
