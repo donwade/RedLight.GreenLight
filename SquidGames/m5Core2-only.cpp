@@ -61,7 +61,8 @@ void lclear(void)
 
 void setup_M5(void)
 {
-	M5.begin(true, true, true, false, kMBusModeInput);
+	//M5.begin(true, true, true, false, kMBusModeInput);
+	M5.begin(true, true, true, true, kMBusModeOutput, true);
 }
 
 void lsetTextColor(unsigned FGND, unsigned BKGND)

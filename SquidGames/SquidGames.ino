@@ -8,6 +8,8 @@ extern "C" {
 #include "watchdogs.h"
 }
 
+#include "wav2spkr.h"
+
 #include "soc/rtc_wdt.h"
 #include "esp_int_wdt.h"
 #include "esp_task_wdt.h"
@@ -120,6 +122,7 @@ void setup() {
 	delay(3000);
 	
 	setup_M5();	
+	setup_voice();
 	
     /*   kMBusModeOutput,powered by USB or Battery
     kMBusModeInput,powered by outside input need to fill in this Otherwise
@@ -135,6 +138,7 @@ void setup() {
 	//test_watchDogs();
 
 	watchdog_task(loop_ORIG,"loop_ORIG", 1024*3, NULL, 5);
+	speak_file(WAV_FILE_NAME);
 
 }
 
