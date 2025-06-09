@@ -645,7 +645,7 @@ void loop_ORIG(void *not_used)
 		//startProfileTime = micros();
 	}
 
-	watchdog_postfix();
+	// watchdog_postfix(); only originator must call this
 }
 
 

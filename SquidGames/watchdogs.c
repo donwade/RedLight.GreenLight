@@ -191,25 +191,19 @@ void shutdown_dogs()
 //---------------------------------------------------------------------------------------
 static uint16_t dog_ctr = 0;
 
-void watchdog_postfix(void)
+void watchdog_postfix(TaskHandle_t xHandle)
 {
-
-    TaskHandle_t xHandle;
-
-    /* Obtain the handle of a task from its name. */
-
-    xHandle = xTaskGetHandle( NULL );
-
-    printf("%s handle %d", __FUNCTION__, xHandle);
-    dog_ctr--;
-
-    vTaskDelete(xHandle);   //Delete user task first (prevents the resetting of an unsubscribed task)
     CHECK_ERROR_CODE(esp_task_wdt_delete(xHandle), ESP_OK);     //Unsubscribe task from TWDT
     CHECK_ERROR_CODE(esp_task_wdt_status(xHandle), ESP_ERR_NOT_FOUND);  //Confirm task is unsubscribed
 
+    dog_ctr--;
+
+    vTaskDelete(xHandle);   //Delete user task first (prevents the resetting of an unsubscribed task)
+    printf("%s handle %d", __FUNCTION__, xHandle);
+
     if (dog_ctr == 0)
     {
-        printf("no more dogs ... shutting down WDT");
+        printf("%s no more dogs ... shutting down WDT", __FUNCTION__);
         //unsubscribe idle task, core 1 only supported
         CHECK_ERROR_CODE(esp_task_wdt_delete(xTaskGetIdleTaskHandleForCPU(1)), ESP_OK);     //Unsubscribe Idle Task from TWDT
         CHECK_ERROR_CODE(esp_task_wdt_status(xTaskGetIdleTaskHandleForCPU(1)), ESP_ERR_NOT_FOUND);      //Confirm Idle task has unsubscribed
@@ -224,7 +218,7 @@ void watchdog_postfix(void)
 void watchdog_kick(void)
 {
     //reset the watchdog every X seconds
-    CHECK_ERROR_CODE(esp_task_wdt_reset(), ESP_OK);  //Comment this line to trigger a TWDT timeout
+    CHECK_ERROR_CODE(esp_task_wdt_reset(), ESP_OK);
 }
 
 //---------------------------------------------------------------------------------------
@@ -243,7 +237,7 @@ void watchdog_prefix(void)
 }
 
 //---------------------------------------------------------------------------------------
-uint32_t watchdog_task(void (*pvTaskCode)(void *), 
+TaskHandle_t watchdog_task(void (*pvTaskCode)(void *), 
                     const char *const pcName, 
                     const uint32_t usStackDepth, 
                     void *const pvParameters, 
@@ -252,7 +246,7 @@ uint32_t watchdog_task(void (*pvTaskCode)(void *),
     int tskParam;
     static bool oneTime = false;
     //Initialize or reinitialize TWDT
-    int handle;
+    TaskHandle_t handle;
 
     if (!oneTime)
     {

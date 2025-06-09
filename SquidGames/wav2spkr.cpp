@@ -159,27 +159,39 @@ unsigned int get_rate(void)
 
 void  streamVoice(void *passIn) 
 {
+
+	watchdog_prefix();
 	while (true)
 	{
+	
+		watchdog_kick();
+		
 	    // Read more bytes from file and play
 	    auto numBytesRead = hFile.read(buffer, sizeof(buffer));
 
 	    if (numBytesRead <= 0)
 	    {
-	    	hFile.close();
-			break;
+	    	//hFile.close();
+			Serial.printf("TODO: fault on close file streaming done\n");
+			bIsStreaming = false;
+
+			while(true)
+			{
+				watchdog_kick();
+				delay(1000); // somebody kill me!!!
+			}
 	    }
 		
 	    // I2S write is blocking until the end of write
 	    M5.Spk.PlaySound(buffer, numBytesRead);
 	}
 	
-	bIsStreaming = false;
+	// watchdog_postfix(); no. only originator can call this.
 }
 
 //-------------------------------------------------------------
 
-bool speak_file(char *waveFilename)
+TaskHandle_t speak_file(char *waveFilename)
 {
 
     hFile = SD.open(waveFilename);
@@ -187,7 +199,7 @@ bool speak_file(char *waveFilename)
     if (!hFile)
 	{
 		printf("file %s does not exist\n", waveFilename);
-		return false;
+		return NULL;
     }
 
 	unsigned int playRate = get_rate();
@@ -197,15 +209,15 @@ bool speak_file(char *waveFilename)
     bValidWavFile = prepareFile();
     if (!bValidWavFile) {
         printf("*** Not good Illegal wav format\n");
-		return false;
+		return NULL;
     }
 
 	// file handle postioned to first data chunk. Play it.
 	
 	bIsStreaming = true;
-	watchdog_task(streamVoice,"wav2voice", 1024*3, NULL, 5);
+	TaskHandle_t hSpkthread = watchdog_task(streamVoice,"wav2voice", 1024*3, NULL, 5);
 
-	return true;
+	return hSpkthread;
 	/*
 	auto pos = M5.Touch.getPressPoint();
 	if (pos.x >= 0 && pos.x < M5.Lcd.width() && pos.y >= 0 &&

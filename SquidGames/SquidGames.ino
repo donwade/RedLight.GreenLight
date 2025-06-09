@@ -113,8 +113,10 @@ void displayInfo() {
 //=============================================================
 extern "C" void test_watchDogs();
 extern  void  loop_ORIG(void *);
+TaskHandle_t hSpkThread;
 
 void setup() {
+	
 	Serial.begin(115200);
 
 	while(!Serial) delay(100); // in event of crash loop
@@ -138,7 +140,8 @@ void setup() {
 	//test_watchDogs();
 
 	watchdog_task(loop_ORIG,"loop_ORIG", 1024*3, NULL, 5);
-	speak_file(WAV_FILE_NAME);
+	
+	hSpkThread = speak_file(WAV_FILE_NAME);
 
 }
 

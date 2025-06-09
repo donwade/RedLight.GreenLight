@@ -31,8 +31,8 @@
             }                                                           \
 })
 
-uint32_t watchdog_task(void  (*pvTaskCode)(void *), const char *const pcName, const uint32_t usStackDepth, void *const pvParameters, uint16_t uxPriority);
-void watchdog_postfix(void);
+TaskHandle_t watchdog_task(void  (*pvTaskCode)(void *), const char *const pcName, const uint32_t usStackDepth, void *const pvParameters, uint16_t uxPriority);
+void watchdog_postfix(TaskHandle_t x);
 void watchdog_prefix(void);
 void watchdog_kick(void);
 
