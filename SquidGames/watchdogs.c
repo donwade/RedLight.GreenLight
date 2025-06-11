@@ -30,10 +30,10 @@ void dogLoop0(void *arg)
     //Subscribe this task to TWDT, then check if it is subscribed
 
     // put this thread under control of the WDT thread
-    CHECK_ERROR_CODE(esp_task_wdt_add(NULL), ESP_OK);
+    ABORT_ON_FAIL(esp_task_wdt_add(NULL), ESP_OK);
 
     // did it stick?
-    CHECK_ERROR_CODE(esp_task_wdt_status(NULL), ESP_OK);
+    ABORT_ON_FAIL(esp_task_wdt_status(NULL), ESP_OK);
 
     while(1)
     {
@@ -45,7 +45,7 @@ void dogLoop0(void *arg)
         printf("%s core %d time = %d mS of %d mS\n", __FUNCTION__, i,  diff, TWDT_DOG_TIMER_SEC * 1000);
 
         //reset the watchdog every 2 seconds
-        CHECK_ERROR_CODE(esp_task_wdt_reset(), ESP_OK);  //Comment this line to trigger a TWDT timeout
+        ABORT_ON_FAIL(esp_task_wdt_reset(), ESP_OK);  //Comment this line to trigger a TWDT timeout
 
         vTaskDelay(pdMS_TO_TICKS(TASK_SLEEP_PERIOD * 1000));
         
@@ -63,10 +63,10 @@ void dogLoop1(void *arg)
     //Subscribe this task to TWDT, then check if it is subscribed
 
     // put this thread under control of the WDT thread
-    CHECK_ERROR_CODE(esp_task_wdt_add(NULL), ESP_OK);
+    ABORT_ON_FAIL(esp_task_wdt_add(NULL), ESP_OK);
 
     // did it stick?
-    CHECK_ERROR_CODE(esp_task_wdt_status(NULL), ESP_OK);
+    ABORT_ON_FAIL(esp_task_wdt_status(NULL), ESP_OK);
 
     while(1)
     {
@@ -78,7 +78,7 @@ void dogLoop1(void *arg)
         printf("%s core %d time = %d mS of %d mS\n", __FUNCTION__, i,  diff,TWDT_DOG_TIMER_SEC * 1000);
 
         //reset the watchdog every X seconds
-        CHECK_ERROR_CODE(esp_task_wdt_reset(), ESP_OK);  //Comment this line to trigger a TWDT timeout
+        ABORT_ON_FAIL(esp_task_wdt_reset(), ESP_OK);  //Comment this line to trigger a TWDT timeout
 
         vTaskDelay(pdMS_TO_TICKS(TASK_SLEEP_PERIOD * 1000));
         
@@ -93,7 +93,7 @@ void test_watchDogs()
     //Initialize or reinitialize TWDT
 
     printf("Initialize TWDT test\n");
-    CHECK_ERROR_CODE(esp_task_wdt_init(TWDT_DOG_TIMER_SEC,false), ESP_OK);
+    ABORT_ON_FAIL(esp_task_wdt_init(TWDT_DOG_TIMER_SEC,false), ESP_OK);
 
     /*
         "Subscribe Idle Tasks to TWDT if they were not subscribed at startup"
@@ -151,7 +151,7 @@ void test_watchDogs()
     //Create user tasks and add them to watchdog
     //for( tskParam = 0; tskParam < portNUM_PROCESSORS; tskParam++)
     //{
-    //    CHECK_ERROR_CODE(tskParam, tskParam);
+    //    ABORT_ON_FAIL(tskParam, tskParam);
     //    xTaskCreatePinnedToCore(reset_task, "reset task", 1024 * 2 , &tsk, 10, &task_handles[tskParam], tskParam);
     //}
 }
@@ -171,18 +171,18 @@ void shutdown_dogs()
     for(int i = 0; i < portNUM_PROCESSORS; i++)
     {
         vTaskDelete(task_handles[i]);   //Delete user task first (prevents the resetting of an unsubscribed task)
-        CHECK_ERROR_CODE(esp_task_wdt_delete(task_handles[i]), ESP_OK);     //Unsubscribe task from TWDT
-        CHECK_ERROR_CODE(esp_task_wdt_status(task_handles[i]), ESP_ERR_NOT_FOUND);  //Confirm task is unsubscribed
+        ABORT_ON_FAIL(esp_task_wdt_delete(task_handles[i]), ESP_OK);     //Unsubscribe task from TWDT
+        ABORT_ON_FAIL(esp_task_wdt_status(task_handles[i]), ESP_ERR_NOT_FOUND);  //Confirm task is unsubscribed
 
         //unsubscribe idle task
-        CHECK_ERROR_CODE(esp_task_wdt_delete(xTaskGetIdleTaskHandleForCPU(i)), ESP_OK);     //Unsubscribe Idle Task from TWDT
-        CHECK_ERROR_CODE(esp_task_wdt_status(xTaskGetIdleTaskHandleForCPU(i)), ESP_ERR_NOT_FOUND);      //Confirm Idle task has unsubscribed
+        ABORT_ON_FAIL(esp_task_wdt_delete(xTaskGetIdleTaskHandleForCPU(i)), ESP_OK);     //Unsubscribe Idle Task from TWDT
+        ABORT_ON_FAIL(esp_task_wdt_status(xTaskGetIdleTaskHandleForCPU(i)), ESP_ERR_NOT_FOUND);      //Confirm Idle task has unsubscribed
     }
 
 
     //Deinit TWDT after all tasks have unsubscribed
-    CHECK_ERROR_CODE(esp_task_wdt_deinit(), ESP_OK);
-    CHECK_ERROR_CODE(esp_task_wdt_status(NULL), ESP_ERR_INVALID_STATE);     //Confirm TWDT has been deinitialized
+    ABORT_ON_FAIL(esp_task_wdt_deinit(), ESP_OK);
+    ABORT_ON_FAIL(esp_task_wdt_status(NULL), ESP_ERR_INVALID_STATE);     //Confirm TWDT has been deinitialized
 
     printf("Complete\n");
  }
@@ -193,8 +193,8 @@ static uint16_t dog_ctr = 0;
 
 void watchdog_postfix(TaskHandle_t xHandle)
 {
-    CHECK_ERROR_CODE(esp_task_wdt_delete(xHandle), ESP_OK);     //Unsubscribe task from TWDT
-    CHECK_ERROR_CODE(esp_task_wdt_status(xHandle), ESP_ERR_NOT_FOUND);  //Confirm task is unsubscribed
+    ABORT_ON_FAIL(esp_task_wdt_delete(xHandle), ESP_OK);     //Unsubscribe task from TWDT
+    ABORT_ON_FAIL(esp_task_wdt_status(xHandle), ESP_ERR_NOT_FOUND);  //Confirm task is unsubscribed
 
     dog_ctr--;
 
@@ -205,20 +205,20 @@ void watchdog_postfix(TaskHandle_t xHandle)
     {
         printf("%s no more dogs ... shutting down WDT", __FUNCTION__);
         //unsubscribe idle task, core 1 only supported
-        CHECK_ERROR_CODE(esp_task_wdt_delete(xTaskGetIdleTaskHandleForCPU(1)), ESP_OK);     //Unsubscribe Idle Task from TWDT
-        CHECK_ERROR_CODE(esp_task_wdt_status(xTaskGetIdleTaskHandleForCPU(1)), ESP_ERR_NOT_FOUND);      //Confirm Idle task has unsubscribed
+        ABORT_ON_FAIL(esp_task_wdt_delete(xTaskGetIdleTaskHandleForCPU(1)), ESP_OK);     //Unsubscribe Idle Task from TWDT
+        ABORT_ON_FAIL(esp_task_wdt_status(xTaskGetIdleTaskHandleForCPU(1)), ESP_ERR_NOT_FOUND);      //Confirm Idle task has unsubscribed
 
 
         //Deinit TWDT after all tasks have unsubscribed
-        CHECK_ERROR_CODE(esp_task_wdt_deinit(), ESP_OK);
-        CHECK_ERROR_CODE(esp_task_wdt_status(NULL), ESP_ERR_INVALID_STATE);     //Confirm TWDT has been deinitialized
+        ABORT_ON_FAIL(esp_task_wdt_deinit(), ESP_OK);
+        ABORT_ON_FAIL(esp_task_wdt_status(NULL), ESP_ERR_INVALID_STATE);     //Confirm TWDT has been deinitialized
     }
 }
 
 void watchdog_kick(void)
 {
     //reset the watchdog every X seconds
-    CHECK_ERROR_CODE(esp_task_wdt_reset(), ESP_OK);
+    ABORT_ON_FAIL(esp_task_wdt_reset(), ESP_OK);
 }
 
 //---------------------------------------------------------------------------------------
@@ -227,10 +227,10 @@ void watchdog_prefix(void)
     //Subscribe this task to TWDT, then check if it is subscribed
 
     // put this thread under control of the WDT thread
-    CHECK_ERROR_CODE(esp_task_wdt_add(NULL), ESP_OK);
+    ABORT_ON_FAIL(esp_task_wdt_add(NULL), ESP_OK);
 
     // did it stick?
-    CHECK_ERROR_CODE(esp_task_wdt_status(NULL), ESP_OK);
+    ABORT_ON_FAIL(esp_task_wdt_status(NULL), ESP_OK);
 
     dog_ctr++;
 
@@ -251,7 +251,7 @@ TaskHandle_t watchdog_task(void (*pvTaskCode)(void *),
     if (!oneTime)
     {
         printf("Initialize TWDT test\n");
-        CHECK_ERROR_CODE(esp_task_wdt_init(TWDT_DOG_TIMER_SEC,false), ESP_OK);
+        ABORT_ON_FAIL(esp_task_wdt_init(TWDT_DOG_TIMER_SEC,false), ESP_OK);
     }
 
     /*

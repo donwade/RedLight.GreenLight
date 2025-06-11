@@ -22,11 +22,11 @@ extern "C" {
 #include "watchdogs.h"
 }
 
-//#include <stdio.h>
-
+#include "Speaker.h"
+Speaker mySpeaker;
 
 static File  	hFile;
-static uint8_t 	buffer[1024];
+static uint8_t 	spkBuffer[1024 * 8];
 
 static bool bValidWavFile;
 static bool play_loop=true;
@@ -98,8 +98,8 @@ bool prepareFile(void)
 	Serial.printf("wtf = %d\n", memcmp(wheader.RIFF, "RIFF", 4)); 
 
 	
-	CHECK_ERROR_CODE(memcmp(wheader.RIFF,"RIFF",4), 0);
-	CHECK_ERROR_CODE(memcmp(wheader.WAVEfmt, "WAVEfmt", 7), 0);
+	ABORT_ON_FAIL(memcmp(wheader.RIFF,"RIFF",4), 0);
+	ABORT_ON_FAIL(memcmp(wheader.WAVEfmt, "WAVEfmt", 7), 0);
  		
 	if (memcmp(wheader.RIFF, "RIFF", 4) ||
 		memcmp(wheader.WAVEfmt, "WAVEfmt", 7) 
@@ -159,7 +159,7 @@ unsigned int get_rate(void)
 
 void  streamVoice(void *passIn) 
 {
-
+	uint32_t blk_ctr = 0;
 	watchdog_prefix();
 	while (true)
 	{
@@ -167,12 +167,12 @@ void  streamVoice(void *passIn)
 		watchdog_kick();
 		
 	    // Read more bytes from file and play
-	    auto numBytesRead = hFile.read(buffer, sizeof(buffer));
+	    auto numBytesRead = hFile.read(spkBuffer, sizeof(spkBuffer));
 
 	    if (numBytesRead <= 0)
 	    {
 	    	//hFile.close();
-			Serial.printf("TODO: fault on close file streaming done\n");
+			Serial.printf("TODO: WAV end %d blocks xfer' %d\n", blk_ctr);
 			bIsStreaming = false;
 
 			while(true)
@@ -183,7 +183,9 @@ void  streamVoice(void *passIn)
 	    }
 		
 	    // I2S write is blocking until the end of write
-	    M5.Spk.PlaySound(buffer, numBytesRead);
+		blk_ctr++;
+		mySpeaker.PlaySound(spkBuffer, numBytesRead);
+	    //M5.Spk.PlaySound(spkBuffer, numBytesRead);
 	}
 	
 	// watchdog_postfix(); no. only originator can call this.
@@ -201,9 +203,10 @@ TaskHandle_t speak_file(char *waveFilename)
 		printf("file %s does not exist\n", waveFilename);
 		return NULL;
     }
+	printf("reading file %s +++ \n", waveFilename);
 
 	unsigned int playRate = get_rate();
-    M5.Spk.InitI2SSpeakOrMic(MODE_SPK, playRate);
+    mySpeaker.InitI2SSpeakOrMic(MODE_SPK, playRate);
 	
 	
     bValidWavFile = prepareFile();
@@ -236,11 +239,20 @@ void setup_voice()
 
 	if (!SD.begin(4)) {
 	
-	  Serial.println("*****  initialization failed!");
+	  Serial.println("*** STOP missing SD card!");
 	
 	  while (1);
 	
 	}
+
+	mySpeaker.begin();
+    mySpeaker.InitI2SSpeakOrMic(MODE_SPK, 8000);
+
+	//M5.Speaker.begin(); //Initialize the speaker
+    //M5.Speaker.tone(661, 3000);    //Set the speaker to tone at 661Hz for 1000ms
+
+	//dac0 = machine.DAC(25)
+	//dac0.write(0)
 
 	Serial.println("SD card started");
 }

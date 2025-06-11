@@ -23,13 +23,22 @@
  */
 
 
-#define CHECK_ERROR_CODE(functionCall, expected) ({                     \
+#define ABORT_ON_FAIL(functionCall, expected) ({                     \
             int retval = functionCall;                                  \
             if(retval != expected){                                     \
                 printf("ERROR = %s %d\n", #functionCall, retval);       \
                 abort();                                                \
             }                                                           \
 })
+
+#define WARN_ON_FAIL(functionCall, expected) ({                     \
+                        int retval = functionCall;                                  \
+                        if(retval != expected){                                     \
+                            printf("ERROR = %s %d\n", #functionCall, retval);       \
+                            delay(3000);                                            \
+                        }                                                           \
+            })
+            
 
 TaskHandle_t watchdog_task(void  (*pvTaskCode)(void *), const char *const pcName, const uint32_t usStackDepth, void *const pvParameters, uint16_t uxPriority);
 void watchdog_postfix(TaskHandle_t x);
