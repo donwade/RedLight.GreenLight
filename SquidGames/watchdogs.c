@@ -237,6 +237,18 @@ void watchdog_prefix(void)
 }
 
 //---------------------------------------------------------------------------------------
+
+#define NEW_DOG
+#ifdef NEW_DOG
+esp_task_wdt_config_t config =
+{
+   .timeout_ms = 5000,
+   .idle_core_mask = 0,
+   .trigger_panic = true
+};
+
+#endif
+
 TaskHandle_t watchdog_task(void (*pvTaskCode)(void *), 
                     const char *const pcName, 
                     const uint32_t usStackDepth, 
@@ -251,7 +263,11 @@ TaskHandle_t watchdog_task(void (*pvTaskCode)(void *),
     if (!oneTime)
     {
         printf("Initialize TWDT test\n");
-        ABORT_ON_FAIL(esp_task_wdt_init(TWDT_DOG_TIMER_SEC,false), ESP_OK);
+        #ifdef NEW_DOG
+             ABORT_ON_FAIL(esp_task_wdt_init(&config),ESP_OK);
+        #else
+            ABORT_ON_FAIL(esp_task_wdt_init(TWDT_DOG_TIMER_SEC,false), ESP_OK);
+        #endif
     }
 
     /*
