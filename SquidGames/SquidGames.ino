@@ -129,9 +129,13 @@ void setup() {
 
 	//test_watchDogs();
 
-    //  while (*gpsStream)
-    //    if (gps.encode(*gpsStream++))
-    //      displayInfo();
+	spawnTaskAndDog( loop_GPS, 		//(void * not_used)TaskFunction_t pvTaskCode,
+                     "loop_GPS",    //const char * const pcName,
+                     1024 * 3,		//const uint32_t usStackDepth,
+                     NULL,			//void * const pvParameters,
+                     4           	//UBaseType_t uxPriority)
+                     );
+
 }
 
 
@@ -139,9 +143,9 @@ void loop() {
 #if 0
 	displayInfo();
 #else
-    loop_GPS(NULL);
+    //loop_GPS(NULL);
 #endif
-	smartDelay(1000);
+	delay(1000);
 
 }
 

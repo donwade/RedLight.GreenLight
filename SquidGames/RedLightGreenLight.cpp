@@ -24,7 +24,7 @@ https://github.com/mikalhart/TinyGPSPlus
 #include <TinyGPS++.h>
 
 #include "m5Core2-only.h"
-
+#include "watchdogs.h"
 #include <iostream>
 #include <cstring>
 #include <string>
@@ -598,8 +598,9 @@ void loop_GPS(void *not_used)
 	
 	static unsigned long lastProfileTime; 
 
-	//while(1)
+	while(1)
 	{
+		kickDog();
 		LINE;
 		getData();
 		LINE;
@@ -649,6 +650,7 @@ void loop_GPS(void *not_used)
 		
 		//startProfileTime = micros();
 
+		smartDelay(1000);
 		
 	}
 }
