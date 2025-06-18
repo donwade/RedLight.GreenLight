@@ -8,17 +8,17 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "esp_task_wdt.h"
+#include "watchdogs.h"
+
+extern "C" unsigned long millis(void);
 
 /*
     Effectively create a low priority task on each core. If the low priority
     task starves, the dog which is attached to it will trigger a WDT reset
 */
 
-#define TWDT_DOG_TIMER_SEC    3
-#define TASK_SLEEP_PERIOD     4  
+#define TWDT_DOG_TIMER_SEC    4
+#define TASK_SLEEP_PERIOD     TWDT_DOG_TIMER_SEC-1 // test should never fail      
 
 // Everything ok is TWDT_DOG_TIMER_SEC > TASK_SLEEP_PERIOD
 // DOG will trigger if TWDT_DOG_TIMER_SEC < TASK_SLEEP_PERIOD
@@ -29,6 +29,7 @@
  * incorrect code is returned.
  * It appears each core has a task called xTaskGetIdleTaskHandleForCPUx
  * provided by FreeRTOS.
+ *
  * This task will somehow accept other tasks and monitor them.
  * 
  *     Activate task called xTaskGetIdleTaskHandleForCPUx (the monitor) 
@@ -71,9 +72,8 @@ void dogLoop0(void *arg)
         ms = now;
         printf("%s core %d time = %d mS\n", __FUNCTION__, i,  diff);
 
-        //reset the watchdog every 2 seconds
-        CHECK_ERROR_CODE(esp_task_wdt_reset(), ESP_OK);  //Comment this line to trigger a TWDT timeout
-
+		kickDog();
+		
         vTaskDelay(pdMS_TO_TICKS(TASK_SLEEP_PERIOD * 1000));
         
     }
@@ -104,8 +104,7 @@ void dogLoop1(void *arg)
         ms = now;
         printf("%s core %d time = %d mS\n", __FUNCTION__, i,  diff);
 
-        //reset the watchdog every X seconds
-        CHECK_ERROR_CODE(esp_task_wdt_reset(), ESP_OK);  //Comment this line to trigger a TWDT timeout
+		kickDog();
 
         vTaskDelay(pdMS_TO_TICKS(TASK_SLEEP_PERIOD * 1000));
         
@@ -114,7 +113,7 @@ void dogLoop1(void *arg)
 
 //-------------------------------------------------------------------------
 
-void test_watchDogs()
+void test_watchDogs(void)
 {
     int tskParam;
     //Initialize or reinitialize TWDT
@@ -209,5 +208,46 @@ void shutdown_dogs()
     CHECK_ERROR_CODE(esp_task_wdt_status(NULL), ESP_ERR_INVALID_STATE);     //Confirm TWDT has been deinitialized
 
     printf("Complete\n");
+}
+//----------------------------------------------------------------------------------
+#define CORE_NUMBER 1   // core 0 does not have watchdog infrastructure
+
+TaskHandle_t spawnTaskAndDog(  TaskFunction_t pvTaskCode,
+                                const char * const pcName,
+                                const uint32_t usStackDepth,
+                                void * const pvParameters,
+                                UBaseType_t uxPriority)
+{
+    int tskParam;
+    static bool bDogInit = false;
+    TaskHandle_t retval;
+
+    //Initialize or reinitialize TWDT
+
+    if (!bDogInit)
+    {
+        bDogInit = true;
+        CHECK_ERROR_CODE(esp_task_wdt_init(TWDT_DOG_TIMER_SEC,false), ESP_OK);
+
+        // add the built-in idle task on core 1 to the watchdog.
+        esp_task_wdt_add(xTaskGetIdleTaskHandleForCPU(CORE_NUMBER));
+    }
+
+    #ifndef CONFIG_TASK_WDT_CHECK_IDLE_TASK_CPU1
+
+        xTaskCreatePinnedToCore(pvTaskCode, pcName, usStackDepth, pvParameters, uxPriority, &retval, CORE_NUMBER);
+        return retval;
+
+    #else
+        printf("!!! FreeRTOS not compiled for core 1 watchdogs\n");
+    #endif
+}
+
+//----------------------------------------------------------------------------------
+
+void kickDog(void)
+{
+	printf("*** kick ***\n");
+	CHECK_ERROR_CODE(esp_task_wdt_reset(), ESP_OK);
 }
 

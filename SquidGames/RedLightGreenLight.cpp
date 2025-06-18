@@ -590,7 +590,7 @@ void stateDisplay(void)
 }
 //---------------------------------------------------------
 
-void loop_ORIG(void *not_used)
+void loop_GPS(void *not_used)
 {
 	char msg[30];
 	unsigned long startProileTime;

@@ -2,11 +2,11 @@
 
 #include <M5Core2.h>
 #include <TinyGPS++.h>
+#include "watchdogs.h"
+
 #include "m5Core2-only.h"
 
-//#include "soc/rtc_wdt.h"
-#include "esp_int_wdt.h"
-#include "esp_task_wdt.h"
+#include "soc/rtc_wdt.h"
 
 static portMUX_TYPE my_mutex;
 
@@ -18,7 +18,8 @@ IRAM_ATTR void xsetup() {
 }
 
 
-extern void setup_ORIG(void);
+extern void setup_GPS(void);
+extern void loop_GPS(void *);
 
 // The TinyGPS++ object
 TinyGPSPlus gps;
@@ -105,7 +106,6 @@ void displayInfo() {
 }
 
 //=============================================================
-extern "C" void test_watchDogs();
 
 void setup() {
 	Serial.begin(115200);
@@ -125,22 +125,21 @@ void setup() {
 	lsetTextColor(GREEN, BLACK);
     lsetCursor(0, 0, 4); // font=4
 
-	setup_ORIG();
+	//setup_ORIG();
 
-	test_watchDogs();
+	//test_watchDogs();
 
     //  while (*gpsStream)
     //    if (gps.encode(*gpsStream++))
     //      displayInfo();
 }
 
-extern void loop_ORIG(void *);
 
 void loop() {
 #if 0
 	displayInfo();
 #else
-    loop_ORIG(NULL);
+    loop_GPS(NULL);
 #endif
 	smartDelay(1000);
 
