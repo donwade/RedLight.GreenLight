@@ -3,6 +3,7 @@
 #include <M5Core2.h>
 #include <TinyGPS++.h>
 #include "watchdogs.h"
+#include "wav2spkr.h"
 
 #include "m5Core2-only.h"
 
@@ -20,6 +21,7 @@ IRAM_ATTR void xsetup() {
 
 extern void setup_GPS(void);
 extern void loop_GPS(void *);
+extern TaskHandle_t speak_file(char *waveFilename);
 
 // The TinyGPS++ object
 TinyGPSPlus gps;
@@ -135,6 +137,7 @@ void setup() {
                      NULL,			//void * const pvParameters,
                      4           	//UBaseType_t uxPriority)
                      );
+	TaskHandle_t hSpkThread = speak_file(WAV_FILE_NAME);
 
 }
 

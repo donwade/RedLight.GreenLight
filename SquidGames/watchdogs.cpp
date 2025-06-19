@@ -37,14 +37,6 @@ extern "C" unsigned long millis(void);
  */
 
 
-#define ABORT_ON_FAIL(functionCall, expected) ({                     \
-            int retval = functionCall;                                  \
-            if(retval != expected){                                     \
-                printf("ERROR = %s %d\n", #functionCall, retval);       \
-                abort();                                                \
-            }                                                           \
-})
-
 static TaskHandle_t task_handles[portNUM_PROCESSORS];
 
 static bool bDogInit = false;   // double init causes crash... go figure.
