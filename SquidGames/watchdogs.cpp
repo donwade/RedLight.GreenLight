@@ -241,8 +241,9 @@ TaskHandle_t spawnTaskAndDog(  TaskFunction_t pvTaskCode,
 
 void kickDog(void)
 {
+	//int ret = esp_task_wdt_reset();
+/*	
 	printf("*** kick ***\n");
-	int ret = esp_task_wdt_reset();
 	switch (ret)
 	{
 		case ESP_OK: 
@@ -258,6 +259,6 @@ void kickDog(void)
 			printf("WTF %d 0x%X\n", ret, ret);
 			break;
 	}
-	
+*/	
 }
 

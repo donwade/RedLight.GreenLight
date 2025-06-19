@@ -137,10 +137,30 @@ void setup() {
                      NULL,			//void * const pvParameters,
                      4           	//UBaseType_t uxPriority)
                      );
+
+	spawnTaskAndDog( loop_ZIP, 		//(void * not_used)TaskFunction_t pvTaskCode,
+                     "loop_ZIP",    //const char * const pcName,
+                     1024 * 3,		//const uint32_t usStackDepth,
+                     NULL,			//void * const pvParameters,
+                     4           	//UBaseType_t uxPriority)
+                     );
+
+	delay(2000);
 	TaskHandle_t hSpkThread = speak_file(WAV_FILE_NAME);
 
 }
 
+extern int  xprintf(uint8_t lineNo, const char *format, ...); 
+
+void loop_ZIP(void *NOTUSED)
+{
+	while (1)
+	{
+		static unsigned cnt = 0;
+		xprintf(5,"count=%d", cnt++);
+		delay(2000);
+	}
+}
 
 void loop() {
 #if 0

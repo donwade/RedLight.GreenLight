@@ -173,11 +173,14 @@ void  streamVoice(void *passIn)
 	    if (numBytesRead <= 0)
 	    {
 	    	//hFile.close();
-			uint32_t stop = millis() - start;
-			float bps = (float) total_bytes_read / (float) stop;
-			Serial.printf("bit rate = %f\n", bps);
+			uint32_t delta = millis() - start;
+            uint32_t samples_read = total_bytes_read /2 ; // 2 bytes per sample
+
+			float bps = 1000 * (float) samples_read * 8.0/ (float) delta;
+			Serial.printf("\ndone. bit rate = %f time=%d\n", bps, delta);
+			Serial.printf("\ndone. samples xfterd = %d time=%d\n", samples_read, delta);
 			
-			Serial.printf("\nTODO: WAV end %d blocks xfer'd \n", blk_ctr);
+			Serial.printf("TODO: WAV end %d blocks xfer'd \n\n", blk_ctr);
 			bIsStreaming = false;
 
 			
@@ -262,7 +265,7 @@ void setup_voice()
     M5.Spk.InitI2SSpeakOrMic(MODE_SPK, 8000);
 
 	//M5.Speaker.begin(); //Initialize the speaker
-    //M5.Speaker.tone(661, 3000);    //Set the speaker to tone at 661Hz for 1000ms
+    //M5.Spk.tone(661, 3000);    //Set the speaker to tone at 661Hz for 1000ms
 
 	//dac0 = machine.DAC(25)
 	//dac0.write(0)
