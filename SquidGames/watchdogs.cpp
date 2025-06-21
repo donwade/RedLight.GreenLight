@@ -6,8 +6,11 @@
    software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
    CONDITIONS OF ANY KIND, either express or implied.
 */
+#include <Arduino.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include "watchdogs.h"
 
 extern "C" unsigned long millis(void);
@@ -57,7 +60,7 @@ void dogLoop0(void *arg)
     // did it stick?
     ABORT_ON_FAIL(esp_task_wdt_status(NULL), ESP_OK);
 
-    while(1)
+    //while(1)
     {
 
         static unsigned long ms;
@@ -89,7 +92,7 @@ void dogLoop1(void *arg)
     // did it stick?
     ABORT_ON_FAIL(esp_task_wdt_status(NULL), ESP_OK);
 
-    while(1)
+    //while (1)
     {
 
         static unsigned long ms;
@@ -211,6 +214,116 @@ void shutdown_dogs()
 
 #define DEFAULT_CORE 1   
 
+typedef struct dogTaskData
+{ 
+	TaskFunction_t pvTaskCode;
+	void *pvParameters;
+	uint32_t stackSize;
+	char name[20];
+};
+
+//-------------------------------------------
+// allow long delays past watchdog
+void Tdelay(unsigned int ms)
+{
+	//printf("\n%s ms=%d\n", __FUNCTION__, ms);	
+	while (ms  > TWDT_DOG_TIMER_SEC * 1000)
+	{
+		kickDog();
+		delay(TWDT_DOG_TIMER_SEC * 1000 - 1);
+		ms -= TWDT_DOG_TIMER_SEC * 1000;
+		//printf("%s in loop ms = %d (wd=%d)\n", __FUNCTION__, ms, TWDT_DOG_TIMER_SEC * 1000);
+	}
+
+	//printf("%s exited loop ... ms left = %d\n", __FUNCTION__,  ms);
+
+	kickDog();
+	if (ms > 0) delay(ms);
+}
+
+//-------------------------------------------
+
+//#define PROFILE_DOG
+
+void onEntryDog(void * const inParam)
+{
+	{
+	    //	Add this task to TWDT
+	    //  Only being inside thread can do this.
+	    //	Then see if it the RTOS kept it.
+
+	    // put this thread under control of the WDT thread
+	    ABORT_ON_FAIL(esp_task_wdt_add(NULL), ESP_OK);
+
+	    // did it stick?
+	    ABORT_ON_FAIL(esp_task_wdt_status(NULL), ESP_OK);
+
+ 	} // this has to be done before any dog kicks !
+		
+	dogTaskData *setup = (dogTaskData *) inParam;
+	dumpStack(setup->stackSize);
+
+	kickDog();
+
+#ifdef PROFILE_DOG
+	unsigned long *ms = new(unsigned long);
+#endif 
+
+	// never ending call loop.
+    while(1)
+    {
+    
+#ifdef PROFILE_DOG
+        unsigned long now=millis();
+        unsigned long diff = now - *ms;
+        *ms = now;
+        printf("***** %s dog time = %d mS\n", setup->name, diff);
+#endif
+
+		setup->pvTaskCode(setup->pvParameters);
+		
+		delay(1);
+
+    }
+}
+//-------------------------------------------------------------
+TaskHandle_t spawnTaskAndDogV2(  TaskFunction_t pvTaskCode,
+                                const char * const pcName,
+                                const uint32_t usStackDepth,
+                                void * const pvParameters,
+                                UBaseType_t uxPriority)
+{
+    int tskParam;
+    TaskHandle_t retval;
+
+    //Initialize WDT, doing it again will cause a crash
+
+    if (!bDogInit)
+    {
+        bDogInit = true;
+        ABORT_ON_FAIL(esp_task_wdt_init(TWDT_DOG_TIMER_SEC,false), ESP_OK);
+
+        // add the built-in idle task on core 1 to the watchdog.
+        ABORT_ON_FAIL(esp_task_wdt_add(xTaskGetIdleTaskHandleForCPU(DEFAULT_CORE)), ESP_OK);
+    }
+
+	printf("%s creating %s\n", __FUNCTION__, pcName);
+
+	dogTaskData *passIn = (dogTaskData*) malloc(sizeof(dogTaskData));
+
+	passIn->pvParameters = pvParameters;
+	passIn->pvTaskCode = pvTaskCode;
+	passIn->stackSize = usStackDepth;
+	strncpy(passIn->name, pcName, sizeof(passIn->name));
+	passIn->name[sizeof(passIn->name)-1] = '\0';
+
+    xTaskCreatePinnedToCore(onEntryDog, pcName, usStackDepth, passIn, uxPriority, &retval, DEFAULT_CORE);
+    return retval;
+
+}
+
+//-------------------------------------------------------------
+
 TaskHandle_t spawnTaskAndDog(  TaskFunction_t pvTaskCode,
                                 const char * const pcName,
                                 const uint32_t usStackDepth,
@@ -241,24 +354,102 @@ TaskHandle_t spawnTaskAndDog(  TaskFunction_t pvTaskCode,
 
 void kickDog(void)
 {
-	//int ret = esp_task_wdt_reset();
-/*	
-	printf("*** kick ***\n");
-	switch (ret)
-	{
-		case ESP_OK: 
-			printf("Success");
-			break;
-		case ESP_ERR_INVALID_ARG:
-			printf("Error, the task is already unsubscribed\n");
-			break;
-		case ESP_ERR_INVALID_STATE:
-			printf("Error, the TWDT has not been initialized yet\n");
-			break;
-		default:
-			printf("WTF %d 0x%X\n", ret, ret);
-			break;
-	}
-*/	
+	ABORT_ON_FAIL(esp_task_wdt_reset(), ESP_OK);
 }
+//----------------------------------------------------
+#define WIDTH 8
+
+void dumpAbout(void *address, uint32_t aboutSize) 
+{
+	printf("\n%s %p len=%d\n", __FUNCTION__, address, aboutSize);
+	
+	uint8_t *base = (uint8_t *)address;
+	int delta = aboutSize / (WIDTH *2) ;
+
+	for (int i = -delta; i < delta; i++)
+	{
+		kickDog();
+		if (!i) printf("\n");
+		
+		uint8_t *down = base + i * WIDTH;
+		printf ("0x%p [%d]:\t", down, i * WIDTH);
+		
+		int across;
+		for ( across = 0; across < WIDTH; across++)
+		{
+			uint8_t c = down[ across ];
+			printf("%02X ", c);
+		}
+		printf("   ");
+		
+		for ( across = 0; across < WIDTH; across++)
+		{
+			uint8_t c = down[ across ];
+			printf("%c", c < 0x20 ? '.' : c > 0x7F ? '.' : c);
+		}
+
+		if (!i) printf("\n");
+		printf("\n");
+
+		// must allow idle to have a go as this is i/o intensive
+		// a yeild will NOT work as idle is the lowest priority
+		// and this function always be on the READY queue.
+		
+		delay(1); // go idle task.
+	}
+
+	printf("\n");
+}
+
+uint8_t *patternMemory(void * where, uint32_t size)
+{
+	size = (size / 8) * 8;
+ 	
+	uint8_t *foo = (uint8_t*) where;
+	int x;
+	int r;
+	for (int i = 0; i < size; i+=8)
+	{
+		x = i;
+		if (i)
+		{
+			foo[0] = 'D';
+			foo[1] = 'E';
+			foo[2] = 'A';
+			foo[3] = 'D';
+			
+			r = x/1000; foo[4] = 0x30+ r; x -= r * 1000;
+			r = x/100;  foo[5] = 0x30+ r; x -= r * 100;
+			r = x/10;   foo[6] = 0x30+ r; x -= r * 10;
+			            foo[7] = 0x30+ x; 
+			foo += 8;
+		}
+		else
+		{
+			// first entry will be "CODEFOOD"
+			*foo++ = 'C';
+			*foo++ = 'O';
+			*foo++ = 'D';
+			*foo++ = 'E';
+			*foo++ = 'F';
+			*foo++ = 'O';
+			*foo++ = 'O';
+			*foo++ = 'D';
+		}
+	 }
+	
+ 	return foo;  // stop optimizaton
+}
+
+
+void * dumpStack(uint32_t stackSize) 
+{
+	char foo[] = "FIRSTCALL";
+	char *bar = (char*) malloc(stackSize);
+	
+	patternMemory(bar, stackSize);
+	dumpAbout(bar, stackSize);
+	return foo;  // stop optimization out.
+}
+
 
