@@ -29,7 +29,6 @@ https://github.com/mikalhart/TinyGPSPlus
 #include <cstring>
 #include <string>
 
-
 #include <SPI.h>
 #include <Wire.h>  
 #include "SSD1306.h" 
@@ -39,6 +38,9 @@ https://github.com/mikalhart/TinyGPSPlus
 
 #include <assert.h>
 #include "lookup.h"   //table of targets
+
+#include <mutex>
+static SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
 
 #define BUILTIN_LED 4  // TIP t-beam
 extern void smartDelay(unsigned long ms);
@@ -291,6 +293,8 @@ int  xprintf(uint8_t lineNo, const char *format, ...)
 	char buffer[30];
 	vsnprintf(buffer, sizeof(buffer)-1, format, args);
 
+	xSemaphoreTake(mutex, portMAX_DELAY);
+
     lsetCursor(0, lineNo); 
 
 	#if 0
@@ -305,6 +309,7 @@ int  xprintf(uint8_t lineNo, const char *format, ...)
 	printf("%1d %s\n", lineNo, buffer);
     lprint(buffer);
 	
+	xSemaphoreGive(mutex);	
 	va_end(args);
 	return 0;
 }
@@ -318,7 +323,8 @@ int  oprintf(uint8_t lineNo, const char *format, ...)
 	char buffer[30];
 	vsnprintf(buffer, sizeof(buffer)-1, format, args);
 
-    lsetCursor(0, lineNo); 
+	xSemaphoreTake(mutex, portMAX_DELAY);
+	lsetCursor(0, lineNo); 
 
 	#if 0
 	// erase past background to black
@@ -333,6 +339,8 @@ int  oprintf(uint8_t lineNo, const char *format, ...)
 	
 	printf("%1d %s\n", lineNo, buffer);
     lprint(buffer);
+
+	xSemaphoreGive(mutex);	
 	
 	va_end(args);
 	return 0;
@@ -349,7 +357,8 @@ int  iprintf(uint8_t lineNo, const char *format, ...)
 	char buffer[30];
 	vsnprintf(buffer, sizeof(buffer)-1, format, args);
 
-    lsetCursor(0, lineNo); 
+	xSemaphoreTake(mutex, portMAX_DELAY);
+	lsetCursor(0, lineNo); 
 
 	#if 0
 	// erase past background to WHITE
@@ -362,6 +371,8 @@ int  iprintf(uint8_t lineNo, const char *format, ...)
 
 	printf("%1d %s\n", lineNo, buffer);
     lprint(buffer);
+
+	xSemaphoreGive(mutex);	
 	
 	va_end(args);
 	return 0;
@@ -598,12 +609,9 @@ void loop_GPS(void *not_used)
 	
 	static unsigned long lastProfileTime; 
 
-	while(1)
+	//while(1)
 	{
-		kickDog();
-		LINE;
 		getData();
-		LINE;
 		
 		{
 			// update rolling history
@@ -616,10 +624,8 @@ void loop_GPS(void *not_used)
 
 			if (++sIndex == GPS_SAMPLE_SIZE) sIndex = 0;
 		}	
-		LINE;
 
 		calcGPSaverage();
-		LINE;
 
 		// get direction only if going fast enough
 		// otherwise it points all over the place
@@ -631,8 +637,6 @@ void loop_GPS(void *not_used)
 			veh_course = (int)gps.courseTo(oldest.lat, oldest.lng, iLocation.lat, iLocation.lng );
 			veh_cardinal = gps.cardinal(veh_course);
 		}
-		LINE;
-
 		
 		Serial.printf("%2d:%02d:%02d @ %+9.7f %+9.7f ^ %3d kph dir %3d %s\n", 
 				iMisc.hour,iMisc.minute,iMisc.second,
@@ -644,9 +648,7 @@ void loop_GPS(void *not_used)
 		//difftime =  micros() - startProfileTime;
 		//Serial.printf("profile = %d uS\n", difftime);
 
-		LINE;
 		stateDisplay();
-		LINE;
 		
 		//startProfileTime = micros();
 
