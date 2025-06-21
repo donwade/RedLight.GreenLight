@@ -8,6 +8,7 @@
 #include "m5Core2-only.h"
 
 #include "soc/rtc_wdt.h"
+#include "esp_debug_helpers.h"
 
 static portMUX_TYPE my_mutex;
 
@@ -26,13 +27,14 @@ extern TaskHandle_t speak_file(char *waveFilename);
 // The TinyGPS++ object
 TinyGPSPlus gps;
 
+
 //=============================================================
 void smartDelay(unsigned long ms) {
     unsigned long start = millis();
     do {
         while (Serial2.available() > 0)	gps.encode(Serial2.read());
 		///////////////////////////////////
-		delay((9600/1000)); // 9600baud in mS allow any task dogs !!!!!
+		Tdelay((9600/1000)); // 9600baud in mS allow any task dogs !!!!!
 		///////////////////////////////////
     } while (millis() - start < ms);
     //clear();
@@ -113,8 +115,8 @@ void setup() {
 	Serial.begin(115200);
 
 	while(!Serial) delay(100); // in event of crash loop
-	Serial.println("----");
-	delay(3000);
+	delay(1000);
+	Serial.printf ("\033c");
 	
 	setup_M5();	
 	
@@ -129,38 +131,59 @@ void setup() {
 
 	//setup_ORIG();
 
-	//test_watchDogs();
+	//dumper();
+	//esp_backtrace_print(2);
+	//dumpStack("hi mom");
+	//delay(-1);
+	
+	spawnTaskAndDogV2( loop_test1, 		//(void * not_used)TaskFunction_t pvTaskCode,
+                     "loop_test1",    //const char * const pcName,
+                     1024 * 3,		//const uint32_t usStackDepth,
+                     NULL,			//void * const pvParameters,
+                     4           	//UBaseType_t uxPriority)
+                     );
+	delay(-1);
+	
+	delay(2000);
+	spawnTaskAndDogV2( loop_test2, 		//(void * not_used)TaskFunction_t pvTaskCode,
+                     "loop_test2",    //const char * const pcName,
+                     1024 * 3,		//const uint32_t usStackDepth,
+                     NULL,			//void * const pvParameters,
+                     3           	//UBaseType_t uxPriority)
+                     );
 
-	spawnTaskAndDog( loop_GPS, 		//(void * not_used)TaskFunction_t pvTaskCode,
+
+	delay(2000);
+
+	spawnTaskAndDogV2( loop_GPS, 		//(void * not_used)TaskFunction_t pvTaskCode,
                      "loop_GPS",    //const char * const pcName,
                      1024 * 3,		//const uint32_t usStackDepth,
                      NULL,			//void * const pvParameters,
                      4           	//UBaseType_t uxPriority)
                      );
 
-	spawnTaskAndDog( loop_ZIP, 		//(void * not_used)TaskFunction_t pvTaskCode,
-                     "loop_ZIP",    //const char * const pcName,
-                     1024 * 3,		//const uint32_t usStackDepth,
-                     NULL,			//void * const pvParameters,
-                     4           	//UBaseType_t uxPriority)
-                     );
-
-	delay(2000);
-	TaskHandle_t hSpkThread = speak_file(WAV_FILE_NAME);
+	//TaskHandle_t hSpkThread = speak_file(WAV_FILE_NAME);
 
 }
 
 extern int  xprintf(uint8_t lineNo, const char *format, ...); 
 
-void loop_ZIP(void *NOTUSED)
+void loop_test1(void *NOTUSED)
 {
-	while (1)
-	{
 		static unsigned cnt = 0;
-		xprintf(5,"count=%d", cnt++);
-		delay(2000);
-	}
+		xprintf(5,"count1=%d", cnt++);
+		Tdelay(1000);
 }
+
+void loop_test2(void *NOTUSED)
+{
+	static unsigned xcnt = 0;
+	Serial.printf("************* %d\n", xcnt);
+	xprintf(6,"count2=%d", xcnt++);
+	Tdelay(5000);
+}
+
+
 
 void loop() {
 #if 0
