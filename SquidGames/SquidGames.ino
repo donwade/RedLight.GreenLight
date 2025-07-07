@@ -1,6 +1,7 @@
 //strip all "M5" refereces from this file. May rebase to t-beam later
 
-#include <M5Core2.h>
+//##include <M5Core2.h>
+#include <M5Unified.h>
 #include <TinyGPS++.h>
 #include "watchdogs.h"
 #include "wav2spkr.h"
@@ -133,12 +134,12 @@ void setup() {
 
 	//dumper();
 	//esp_backtrace_print(2);
-	//dumpStack("hi mom");
+	//testDump("hi mom");
 	//delay(-1);
 	
 	spawnTaskAndDogV2( loop_test1, 		//(void * not_used)TaskFunction_t pvTaskCode,
                      "loop_test1",    //const char * const pcName,
-                     1024 * 3,		//const uint32_t usStackDepth,
+                     1024 * 8,		//const uint32_t usStackDepth,
                      NULL,			//void * const pvParameters,
                      4           	//UBaseType_t uxPriority)
                      );

@@ -1,4 +1,5 @@
-#include <M5Core2.h>
+#include <M5Unified.h>
+//#include <M5Core2.h>
 #include "m5Core2-only.h"
 
 static uint8_t lastFont = 4;
@@ -61,7 +62,8 @@ void lclear(void)
 
 void setup_M5(void)
 {
-	M5.begin(true, true, true, false, kMBusModeInput, true);
+	M5.begin();
+	//M5.begin(true, true, true, false, kMBusModeInput, true);
 }
 
 void lsetTextColor(unsigned FGND, unsigned BKGND)

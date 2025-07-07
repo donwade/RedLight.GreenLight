@@ -109,7 +109,7 @@ void dogLoop1(void *arg)
 }
 
 //-------------------------------------------------------------------------
-
+#if 0
 void test_watchDogs(void)
 {
     int tskParam;
@@ -208,6 +208,7 @@ void shutdown_dogs()
 	#endif 
 }
 //----------------------------------------------------------------------------------
+#endif
 
 // CORE 0 has WDT DISABLED when the RTOS was built
 // so don't bother putting anything on 0 or it will crash.
@@ -245,6 +246,23 @@ void Tdelay(unsigned int ms)
 
 //#define PROFILE_DOG
 
+#include "freertos/FreeRTOS.h"
+
+signed nest(signed ok)
+{
+
+	char me[20];
+	if (!ok) return 0;
+
+	sprintf(me, "LEVEL %d", ok);
+	Serial.printf("%s "__TIME__"\n", me);
+
+	ok--;
+	nest(ok);
+	//dumpAboutStack(me, 1000);
+	
+}
+
 void onEntryDog(void * const inParam)
 {
 	{
@@ -259,9 +277,43 @@ void onEntryDog(void * const inParam)
 	    ABORT_ON_FAIL(esp_task_wdt_status(NULL), ESP_OK);
 
  	} // this has to be done before any dog kicks !
-		
+
+    uint32_t freeStack;
+
+	kickDog();
+
+	nest(3);
+	
+    freeStack = uxTaskGetStackHighWaterMark(NULL);
+    Serial.print("Free stack space 1: ");
+    Serial.println(freeStack);		
+	Tdelay(1000);
+	
+	
 	dogTaskData *setup = (dogTaskData *) inParam;
-	dumpStack(setup->stackSize);
+
+	unsigned int size = setup->stackSize;
+
+	size = 200; //freeStack/4 ;// - 256;
+	//size = freeStack - 256;
+	
+	//printf("taking %d from stack\n", size);
+	char thisStack[size];
+	memset(thisStack, 0x33, size);
+	strcpy(thisStack, "HELLO");
+	thisStack[size-1] = 'x';
+	
+	//void *thisStack = alloca(size);
+
+	
+    freeStack = uxTaskGetStackHighWaterMark(NULL);
+    Serial.print("Free stack space 2: ");
+    Serial.println(freeStack);		
+	
+	dumpAboutStack("top level", 1024); 
+		
+	//patternMemory(thisStack, size);
+	//dumpAbout(thisStack, size * 2);
 
 	kickDog();
 
@@ -361,6 +413,7 @@ void kickDog(void)
 
 void dumpAbout(void *address, uint32_t aboutSize) 
 {
+
 	printf("\n%s %p len=%d\n", __FUNCTION__, address, aboutSize);
 	
 	uint8_t *base = (uint8_t *)address;
@@ -441,15 +494,25 @@ uint8_t *patternMemory(void * where, uint32_t size)
  	return foo;  // stop optimizaton
 }
 
-
-void * dumpStack(uint32_t stackSize) 
+inline void dumpAboutStack(char *msg, uint32_t aboutSize) 
 {
-	char foo[] = "FIRSTCALL";
-	char *bar = (char*) malloc(stackSize);
-	
-	patternMemory(bar, stackSize);
-	dumpAbout(bar, stackSize);
-	return foo;  // stop optimization out.
+	printf("uuuuuuuuuuu\n");
+	char mark[30];
+	strncpy(mark, msg, sizeof(mark));
+	dumpAbout(mark, 1024);
 }
 
 
+/*
+void * testDump(void uint32_t stackSize) 
+{
+	char foo[] = "FIRSTCALL";
+	char *bar = (char*) alloca(stackSize);
+
+	// +33 don't stomp next caller.
+	patternMemory(bar + 32, stackSize/2);
+	dumpAbout(bar + 32, stackSize/2);
+	return foo;  // stop optimization out.
+}
+
+*/

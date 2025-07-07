@@ -3,7 +3,8 @@
 //#define WAV_FILE_NAME "/700-1c-8ksps.wav"
 //#define WAV_FILE_NAME "/400.wav"
 
-#define WAV_FILE_NAME "/300-1c-8ksps.wav"
+//#define WAV_FILE_NAME "/300-1c-8ksps.wav"
+#define WAV_FILE_NAME "/shortie-8k-1c.wav"
 
 
 TaskHandle_t speak_file(char *waveFilename = WAV_FILE_NAME);

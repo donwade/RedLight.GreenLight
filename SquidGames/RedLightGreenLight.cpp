@@ -33,7 +33,7 @@ https://github.com/mikalhart/TinyGPSPlus
 #include <Wire.h>  
 #include "SSD1306.h" 
 
-#include "BluetoothA2DPSource.h"
+//#include "BluetoothA2DPSource.h"
 #include <math.h> 
 
 #include <assert.h>
@@ -667,11 +667,11 @@ void loop_GPS(void *not_used)
 uint32_t callback_ctr =0;
 uint32_t tick_ctr = 0;
 
-BluetoothA2DPSource a2dp_source;
+//BluetoothA2DPSource a2dp_source;
 
 // The supported audio codec in ESP32 A2DP is SBC. SBC audio stream is encoded
 // from PCM data normally formatted as 44.1kHz sampling rate, two-channel 16-bit sample data
-
+/*
 int32_t get_data_frames(Frame *frame, int32_t frame_count)
 {
     static float m_time = 0.0;
@@ -732,6 +732,7 @@ bool isValid(const char* btSSID, esp_bd_addr_t address, int rssi){
   //return false;
   return true;
 }
+*/
 
 //---------------------------------------------------------
 

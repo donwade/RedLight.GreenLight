@@ -33,7 +33,10 @@ extern TaskHandle_t spawnTaskAndDog(  TaskFunction_t pvTaskCode, const char * co
 extern void kickDog(void);
 extern void test_watchDogs(void);
 extern void Tdelay(unsigned int ms);
-extern void *dumpStack(uint32_t stacksize); 
+extern void *testDump(uint32_t stacksize); 
+uint8_t *patternMemory(void * where, uint32_t size);
+void dumpAbout(void *address, uint32_t aboutSize);
+void dumpAboutStack(char *msg, uint32_t aboutSize);
 
 
 
