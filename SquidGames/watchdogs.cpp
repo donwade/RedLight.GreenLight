@@ -244,7 +244,7 @@ void Tdelay(unsigned int ms)
 
 //-------------------------------------------
 
-#define PROFILE_DOG
+//#define PROFILE_DOG
 
 #include "freertos/FreeRTOS.h"
 
