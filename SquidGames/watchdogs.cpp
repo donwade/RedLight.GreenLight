@@ -20,7 +20,7 @@ extern "C" unsigned long millis(void);
     task starves, the dog which is attached to it will trigger a WDT reset
 */
 
-#define TWDT_DOG_TIMER_SEC    4
+#define TWDT_DOG_TIMER_SEC    3
 #define TASK_SLEEP_PERIOD     TWDT_DOG_TIMER_SEC-1 // test should never fail      
 
 // Everything ok is TWDT_DOG_TIMER_SEC > TASK_SLEEP_PERIOD
@@ -244,7 +244,7 @@ void Tdelay(unsigned int ms)
 
 //-------------------------------------------
 
-//#define PROFILE_DOG
+#define PROFILE_DOG
 
 #include "freertos/FreeRTOS.h"
 
@@ -278,19 +278,20 @@ void onEntryDog(void * const inParam)
 
  	} // this has to be done before any dog kicks !
 
+	dogTaskData *setup = (dogTaskData *) inParam;
+
     uint32_t freeStack;
 
 	kickDog();
 
+/*
 	nest(3);
 	
     freeStack = uxTaskGetStackHighWaterMark(NULL);
     Serial.print("Free stack space 1: ");
     Serial.println(freeStack);		
-	Tdelay(1000);
 	
 	
-	dogTaskData *setup = (dogTaskData *) inParam;
 
 	unsigned int size = setup->stackSize;
 
@@ -314,11 +315,15 @@ void onEntryDog(void * const inParam)
 		
 	//patternMemory(thisStack, size);
 	//dumpAbout(thisStack, size * 2);
+*/
 
 	kickDog();
 
 #ifdef PROFILE_DOG
-	unsigned long *ms = new(unsigned long);
+	unsigned long ms=millis();
+    unsigned long now;
+    unsigned long diff;
+    printf("*********** START TIME = %d\n", now);
 #endif 
 
 	// never ending call loop.
@@ -326,9 +331,10 @@ void onEntryDog(void * const inParam)
     {
     
 #ifdef PROFILE_DOG
-        unsigned long now=millis();
-        unsigned long diff = now - *ms;
-        *ms = now;
+        now=millis();
+        diff = now - ms;
+
+        ms = now;
         printf("***** %s dog time = %d mS\n", setup->name, diff);
 #endif
 
@@ -448,7 +454,7 @@ void dumpAbout(void *address, uint32_t aboutSize)
 		// a yeild will NOT work as idle is the lowest priority
 		// and this function always be on the READY queue.
 		
-		delay(1); // go idle task.
+		delay(10); // go idle task.
 	}
 
 	printf("\n");
