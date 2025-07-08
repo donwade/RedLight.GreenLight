@@ -4,12 +4,19 @@
 #include <M5Unified.h>
 #include <TinyGPS++.h>
 #include "watchdogs.h"
-#include "wav2spkr.h"
+#include "wavePlayer.h"
 
 #include "m5Core2-only.h"
 
 #include "soc/rtc_wdt.h"
 #include "esp_debug_helpers.h"
+
+extern int  xprintf(uint8_t lineNo, const char *format, ...); 
+extern m5::touch_detail_t touchDetail;
+extern LGFX_Button button_pre, button_play, button_next;
+
+#define LINE Serial.printf("%s:%d\n", __FUNCTION__, __LINE__)
+
 
 static portMUX_TYPE my_mutex;
 
@@ -120,6 +127,7 @@ void setup() {
 	Serial.printf ("\033c");
 	
 	setup_M5();	
+    setup_wavePlayer();
 	
     /*   kMBusModeOutput,powered by USB or Battery
     kMBusModeInput,powered by outside input need to fill in this Otherwise
@@ -127,7 +135,7 @@ void setup() {
 	*/
     Serial2.begin(9600, SERIAL_8N1, 13, 14);
 
-	lsetTextColor(GREEN, BLACK);
+	lsetTextColor(TFT_YELLOW, TFT_BLACK);
     lsetCursor(0, 0, 4); // font=4
 
 	//setup_ORIG();
@@ -139,16 +147,14 @@ void setup() {
 	
 	spawnTaskAndDogV2( loop_test1, 		//(void * not_used)TaskFunction_t pvTaskCode,
                      "loop_test1",    //const char * const pcName,
-                     1024 * 8,		//const uint32_t usStackDepth,
+                     1024 * 10,		//const uint32_t usStackDepth,
                      NULL,			//void * const pvParameters,
                      4           	//UBaseType_t uxPriority)
                      );
-	delay(-1);
-	
 	delay(2000);
-	spawnTaskAndDogV2( loop_test2, 		//(void * not_used)TaskFunction_t pvTaskCode,
-                     "loop_test2",    //const char * const pcName,
-                     1024 * 3,		//const uint32_t usStackDepth,
+	spawnTaskAndDogV2( gui_loop, 		//(void * not_used)TaskFunction_t pvTaskCode,
+                     "gui_loop",    //const char * const pcName,
+                     1024 * 10,		//const uint32_t usStackDepth,
                      NULL,			//void * const pvParameters,
                      3           	//UBaseType_t uxPriority)
                      );
@@ -163,25 +169,42 @@ void setup() {
                      4           	//UBaseType_t uxPriority)
                      );
 
-	//TaskHandle_t hSpkThread = speak_file(WAV_FILE_NAME);
-
 }
 
-extern int  xprintf(uint8_t lineNo, const char *format, ...); 
 
 void loop_test1(void *NOTUSED)
 {
 		static unsigned cnt = 0;
+        kickDog();
+        if (cnt == 0) run_wavePlayer();
 		xprintf(5,"count1=%d", cnt++);
-		Tdelay(1000);
+        Tdelay(1000);
 }
 
-void loop_test2(void *NOTUSED)
+void gui_loop(void *NOTUSED)
 {
-	static unsigned xcnt = 0;
-	Serial.printf("************* %d\n", xcnt);
-	xprintf(6,"count2=%d", xcnt++);
-	Tdelay(5000);
+    M5.update();
+    touchDetail = M5.Touch.getDetail();
+
+    if (touchDetail.isPressed())
+	{
+        if(button_pre.contains(touchDetail.x, touchDetail.y))
+		{
+			LINE;
+            Serial.println("Btn_pre pressed");
+        }
+        else if(button_play.contains(touchDetail.x, touchDetail.y))
+		{
+			LINE;
+            Serial.println("Btn_play pressed");
+        }
+        else if(button_next.contains(touchDetail.x, touchDetail.y))
+		{
+			LINE;
+            Serial.println("Btn_next pressed");
+        }
+    }
+
 }
 
 
