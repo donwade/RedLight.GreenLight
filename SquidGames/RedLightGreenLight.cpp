@@ -456,14 +456,11 @@ void stateDisplay(void)
 
 #ifdef DATA_CAPTURE	
 	static uint8_t toggleCount = 0;
-
 	toggleCount++;
 
-	LINE;	
 	switch (absState)
 	{
 		case MARK_START:
-			LINE;
 			// distance has no meaning as we have no start point
 			
 			
@@ -489,7 +486,6 @@ void stateDisplay(void)
 		break;
 
 		case MARK_END:
-			LINE;
 
 			dist = gps.distanceBetween(startLocation.lat, startLocation.lng, gpsAverage.lat, gpsAverage.lng);
 			course = (int)gps.courseTo(startLocation.lat, startLocation.lng, gpsAverage.lat, gpsAverage.lng);
@@ -526,7 +522,6 @@ void stateDisplay(void)
 		break;
 
 		case ARRIVED:	// arrived at camera.
-			LINE;
 			// course direction is view FROM distance going to CAMERA
 			dist = gps.distanceBetween(endLocation.lat, endLocation.lng, startLocation.lat, startLocation.lng );
 			course = (int)gps.courseTo(endLocation.lat, endLocation.lng, startLocation.lat, startLocation.lng );
@@ -597,7 +592,6 @@ void stateDisplay(void)
 	}	
 
 #endif
-	LINE;
 }
 //---------------------------------------------------------
 
