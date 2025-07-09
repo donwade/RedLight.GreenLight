@@ -5,6 +5,7 @@
 #include <TinyGPS++.h>
 #include "watchdogs.h"
 #include "wavePlayer.h"
+#include "viewController.h"
 
 #include "m5Core2-only.h"
 
@@ -12,9 +13,6 @@
 #include "esp_debug_helpers.h"
 
 extern int  xprintf(uint8_t lineNo, const char *format, ...); 
-extern m5::touch_detail_t touchDetail;
-extern LGFX_Button button_pre, button_play, button_next;
-
 #define LINE Serial.printf("%s:%d\n", __FUNCTION__, __LINE__)
 
 
@@ -183,27 +181,7 @@ void loop_test1(void *NOTUSED)
 
 void gui_loop(void *NOTUSED)
 {
-    M5.update();
-    touchDetail = M5.Touch.getDetail();
-
-    if (touchDetail.isPressed())
-	{
-        if(button_pre.contains(touchDetail.x, touchDetail.y))
-		{
-			LINE;
-            Serial.println("Btn_pre pressed");
-        }
-        else if(button_play.contains(touchDetail.x, touchDetail.y))
-		{
-			LINE;
-            Serial.println("Btn_play pressed");
-        }
-        else if(button_next.contains(touchDetail.x, touchDetail.y))
-		{
-			LINE;
-            Serial.println("Btn_next pressed");
-        }
-    }
+	loop_button();
 
 }
 
