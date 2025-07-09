@@ -27,7 +27,7 @@ IRAM_ATTR void xsetup() {
 
 
 extern void setup_GPS(void);
-extern void loop_GPS(void *);
+extern void gps_task(void *);
 extern TaskHandle_t speak_file(char *waveFilename);
 
 // The TinyGPS++ object
@@ -150,8 +150,8 @@ void setup() {
                      4           	//UBaseType_t uxPriority)
                      );
 	delay(2000);
-	spawnTaskAndDogV2( gui_loop, 		//(void * not_used)TaskFunction_t pvTaskCode,
-                     "gui_loop",    //const char * const pcName,
+	spawnTaskAndDogV2( guiTask, 		//(void * not_used)TaskFunction_t pvTaskCode,
+                     "guiTask",    //const char * const pcName,
                      1024 * 10,		//const uint32_t usStackDepth,
                      NULL,			//void * const pvParameters,
                      3           	//UBaseType_t uxPriority)
@@ -160,8 +160,8 @@ void setup() {
 
 	delay(2000);
 
-	spawnTaskAndDogV2( loop_GPS, 		//(void * not_used)TaskFunction_t pvTaskCode,
-                     "loop_GPS",    //const char * const pcName,
+	spawnTaskAndDogV2( gps_task, 		//(void * not_used)TaskFunction_t pvTaskCode,
+                     "gps_task",    //const char * const pcName,
                      1024 * 3,		//const uint32_t usStackDepth,
                      NULL,			//void * const pvParameters,
                      4           	//UBaseType_t uxPriority)
@@ -179,7 +179,7 @@ void loop_test1(void *NOTUSED)
         Tdelay(1000);
 }
 
-void gui_loop(void *NOTUSED)
+void guiTask(void *NOTUSED)
 {
 	loop_button();
 
@@ -191,7 +191,7 @@ void loop() {
 #if 0
 	displayInfo();
 #else
-    //loop_GPS(NULL);
+    //gps_task(NULL);
 #endif
 	delay(1000);
 
