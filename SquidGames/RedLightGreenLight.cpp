@@ -595,7 +595,7 @@ void stateDisplay(void)
 }
 //---------------------------------------------------------
 
-void loop_GPS(void *not_used)
+void runGpsTask(void *not_used)
 {
 	char msg[30];
 	unsigned long startProileTime;
