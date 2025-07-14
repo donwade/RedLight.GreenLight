@@ -122,8 +122,11 @@ void setup() {
 
 	while(!Serial) delay(100); // in event of crash loop
 	delay(1000);
-	Serial.printf ("\033c");
-	
+	for (int j= 0; j++; j < 10) Serial.println();
+	Serial.printf("BUILT ON %s %s *** ESP-IDF VER = %s ***\n", __DATE__, __TIME__, esp_get_idf_version());
+	delay(3000);
+
+
 	setup_M5();	
     setup_wavePlayer();
 	
@@ -142,14 +145,18 @@ void setup() {
 	//esp_backtrace_print(2);
 	//testDump("hi mom");
 	//delay(-1);
-	
-	spawnTaskAndDogV2( loop_test1, 		//(void * not_used)TaskFunction_t pvTaskCode,
-                     "loop_test1",    //const char * const pcName,
+
+/*
+	spawnTaskAndDogV2( runWavPlayerTask, 		//(void * not_used)TaskFunction_t pvTaskCode,
+                     "runWavPlayerTask",    //const char * const pcName,
                      1024 * 10,		//const uint32_t usStackDepth,
                      NULL,			//void * const pvParameters,
                      4           	//UBaseType_t uxPriority)
                      );
 	delay(2000);
+*/
+
+
 	spawnTaskAndDogV2( runMenuTask, 		//(void * not_used)TaskFunction_t pvTaskCode,
                      "runMenuTask",    //const char * const pcName,
                      1024 * 10,		//const uint32_t usStackDepth,
@@ -170,10 +177,12 @@ void setup() {
 }
 
 
-void loop_test1(void *NOTUSED)
+void runWavPlayerTask(void *NOTUSED)
 {
-		static unsigned cnt = 0;
+		static unsigned cnt = 1111;
         kickDog();
+		Serial.printf("ssssssssssssskkkkkkkkkkkkkkk\n");
+		delay(2000);
         if (cnt == 0) run_wavePlayer();
 		xprintf(5,"count1=%d", cnt++);
         Tdelay(1000);
@@ -189,10 +198,52 @@ void runMenuTask(void *NOTUSED)
 void loop() {
 #if 0
 	displayInfo();
+#include "esp_system.h"
+
+	const int button = 0;         //gpio to use to trigger delay
+	const int wdtTimeout = 3000;  //time in ms to trigger the watchdog
+	hw_timer_t *timer = NULL;
+
+	void ARDUINO_ISR_ATTR resetModule() {
+	  ets_printf("reboot\n");
+	  esp_restart();
+	}
+
+	void setup() {
+	  Serial.begin(115200);
+	  Serial.println();
+	  Serial.println("running setup");
+
+	  pinMode(button, INPUT_PULLUP);                    //init control pin
+	  timer = timerBegin(0, 80, true);                  //timer 0, div 80
+	  timerAttachInterrupt(timer, &resetModule, true);  //attach callback
+	  timerAlarmWrite(timer, wdtTimeout * 1000, false); //set time in us
+	  timerAlarmEnable(timer);                          //enable interrupt
+	}
+
+	void loop() {
+	  Serial.println("running main loop");
+
+	  timerWrite(timer, 0); //reset timer (feed watchdog)
+	  long loopTime = millis();
+	  //while button is pressed, delay up to 3 seconds to trigger the timer
+	  while (!digitalRead(button)) {
+	    Serial.println("button pressed");
+	    delay(500);
+	  }
+	  delay(1000); //simulate work
+	  loopTime = millis() - loopTime;
+	  
+	  Serial.print("loop time is = ");
+	  Serial.println(loopTime); //should be under 3000
+	}
+
 #else
     //runGpsTask(NULL);
 #endif
-	delay(1000);
+	delay(100);
+	//kickDog();
+	//vTaskDelete(NULL);
 
 }
 
