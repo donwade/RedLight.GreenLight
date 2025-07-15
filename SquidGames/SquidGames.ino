@@ -177,11 +177,10 @@ void setup() {
 
 void runWavPlayerTask(void *NOTUSED)
 {
-		static unsigned cnt = 1111;
-        kickDog();
-		Tdelay(2000);
+		static unsigned cnt = 0;
         if (cnt == 0) run_wavePlayer();
-		xprintf(5,"count1=%d", cnt++);
+		xprintf(5,"count = %6d", cnt++);
+		Tdelay(5000);
 }
 
 void runMenuTask(void *NOTUSED)

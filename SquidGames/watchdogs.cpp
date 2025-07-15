@@ -180,9 +180,8 @@ void onEntryDog(void * const inParam)
 
 	dogTaskData *setup = (dogTaskData *) inParam;
 
+	delay(10);
     uint32_t freeStack;
-
-	kickDog();
 
 /*
 	nest(3);

@@ -162,9 +162,6 @@ void setup_wavePlayer()
 void run_wavePlayer()
 {
 
-  // nothing happens after setup finishes.
-  delay(4000);
-  
   Serial.println("list:");
   for(int i=0; i < fileCount; i++)
   {
