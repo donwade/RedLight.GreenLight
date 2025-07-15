@@ -109,106 +109,6 @@ void dogLoop1(void *arg)
 }
 
 //-------------------------------------------------------------------------
-#if 0
-void test_watchDogs(void)
-{
-    int tskParam;
-
-    //Initialize only once or it will fault
-
-	if (!bDogInit)
-	{
-		bDogInit = true;
-		
-	    printf("Initialize TWDT\n");
-	    ABORT_ON_FAIL(esp_task_wdt_init(TWDT_DOG_TIMER_SEC,false), ESP_OK);
-
-    /*
-        FreeRTOS has an idle thread that runs on each core (initially suspended?)
-        Add the idle thread to be under watchdog task control per core
-
-        If the idle thread cannot run due to starvation, the WDT will come into play
-        The user thread should kick the dog faster than the WDT timeout value.
-
-        FreeRTOS DOES NOT provide a idle task for all cores, that is decided at 
-        compile time of FreeRTOS. 
-
-        ****Adding a thread to a core that has no built-in idle task
-        causes mystery crashes.
-    */
-	}
-	
-    #if 0 //#ifndef CONFIG_TASK_WDT_CHECK_IDLE_TASK_CPU0
-        printf("starting idle task mon for core 0\n");
-
-        // add the built-in idle task on core 0 to the watchdog.
-        esp_task_wdt_add(xTaskGetIdleTaskHandleForCPU(0));
-        
-        // at this point the thead handle for the USER thread is not defined
-        // but we will start the USER thread. 
-
-        // When the thread starts running, THEN thread handle can be determined
-        // and that value can be added to the watch dog thread monitor
-
-        tskParam = 0;
-        xTaskCreatePinnedToCore(dogLoop0, "dogLoop0", 1024 * 2 , &tskParam, 10, &task_handles[0], 0);
-
-    #else
-        printf("Note: FreeRTOS not compiled for core 0 watchdogs\n");
-    #endif
-
-    #ifndef CONFIG_TASK_WDT_CHECK_IDLE_TASK_CPU1
-        printf("starting idle task mon for core 1\n");
-
-        // add the built-in idle task on core 1 to the watchdog.
-        esp_task_wdt_add(xTaskGetIdleTaskHandleForCPU(1));
-
-        // at this point the thead handle for the USER thread is not defined
-        // but we will start the USER thread. 
-
-        // When the thread starts running, THEN thread handle can be determined
-        // and that value can be added to the watch dog thread monitor
-
-        tskParam = 1;
-        xTaskCreatePinnedToCore(dogLoop1, "dogLoop1", 1024 * 2 , &tskParam, 10, &task_handles[1], 1);
-    #else
-        printf("!!! FreeRTOS not compiled for core 1 watchdogs\n");
-    #endif
-
-}
-	
-//----------------------------------------------------------------------
-
-void shutdown_dogs()
-{
-	#if 0  // reference only. I doubt I have need for shutting down dogs.
-    printf("Delay for 10 seconds\n");
-    vTaskDelay(pdMS_TO_TICKS(10000));   //Delay for 10 seconds
-
-    printf("Unsubscribing and deleting tasks\n");
-
-    //Delete and unsubscribe Users Tasks from Task Watchdog, then unsubscribe idle task
-    for(int i = 0; i < portNUM_PROCESSORS; i++)
-    {
-        vTaskDelete(task_handles[i]);   //Delete user task first (prevents the resetting of an unsubscribed task)
-        ABORT_ON_FAIL(esp_task_wdt_delete(task_handles[i]), ESP_OK);     //Unsubscribe task from TWDT
-        ABORT_ON_FAIL(esp_task_wdt_status(task_handles[i]), ESP_ERR_NOT_FOUND);  //Confirm task is unsubscribed
-
-        //unsubscribe idle task
-        ABORT_ON_FAIL(esp_task_wdt_delete(xTaskGetIdleTaskHandleForCPU(i)), ESP_OK);     //Unsubscribe Idle Task from TWDT
-        ABORT_ON_FAIL(esp_task_wdt_status(xTaskGetIdleTaskHandleForCPU(i)), ESP_ERR_NOT_FOUND);      //Confirm Idle task has unsubscribed
-    }
-
-
-    //Deinit TWDT after all tasks have unsubscribed
-    ABORT_ON_FAIL(esp_task_wdt_deinit(), ESP_OK);
-    ABORT_ON_FAIL(esp_task_wdt_status(NULL), ESP_ERR_INVALID_STATE);     //Confirm TWDT has been deinitialized
-
-    printf("Complete\n");
-	#endif 
-}
-//----------------------------------------------------------------------------------
-#endif
 
 // CORE 0 has WDT DISABLED when the RTOS was built
 // so don't bother putting anything on 0 or it will crash.
@@ -415,6 +315,7 @@ void kickDog(void)
 	ABORT_ON_FAIL(esp_task_wdt_reset(), ESP_OK);
 }
 //----------------------------------------------------
+#if 0
 #define WIDTH 8
 
 void dumpAbout(void *address, uint32_t aboutSize) 
@@ -522,3 +423,5 @@ void * testDump(void uint32_t stackSize)
 }
 
 */
+#endif
+
