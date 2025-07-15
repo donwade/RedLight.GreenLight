@@ -1,5 +1,6 @@
 #include <M5Unified.h>
 #include "viewController.h"
+#include "watchdogs.h"
 
 m5::touch_detail_t touchDetail;
 LGFX_Button buttonLeft, buttonMiddle, buttonRight;
@@ -107,6 +108,8 @@ void setup_button()
 
 void menu_task()
 {
+	kickDog();
+
 	M5.update();
 	touchDetail = M5.Touch.getDetail();
 
