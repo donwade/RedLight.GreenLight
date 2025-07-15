@@ -146,16 +146,14 @@ void setup() {
 	//testDump("hi mom");
 	//delay(-1);
 
-/*
+
 	spawnTaskAndDogV2( runWavPlayerTask, 		//(void * not_used)TaskFunction_t pvTaskCode,
                      "runWavPlayerTask",    //const char * const pcName,
                      1024 * 10,		//const uint32_t usStackDepth,
                      NULL,			//void * const pvParameters,
                      4           	//UBaseType_t uxPriority)
                      );
-	delay(2000);
-*/
-
+	delay(200);
 
 	spawnTaskAndDogV2( runMenuTask, 		//(void * not_used)TaskFunction_t pvTaskCode,
                      "runMenuTask",    //const char * const pcName,
@@ -165,11 +163,11 @@ void setup() {
                      );
 
 
-	delay(2000);
+	delay(200);
 
 	spawnTaskAndDogV2( runGpsTask, 		//(void * not_used)TaskFunction_t pvTaskCode,
                      "runGpsTask",    //const char * const pcName,
-                     1024 * 3,		//const uint32_t usStackDepth,
+                     1024 * 10,		//const uint32_t usStackDepth,
                      NULL,			//void * const pvParameters,
                      4           	//UBaseType_t uxPriority)
                      );
@@ -181,11 +179,9 @@ void runWavPlayerTask(void *NOTUSED)
 {
 		static unsigned cnt = 1111;
         kickDog();
-		Serial.printf("ssssssssssssskkkkkkkkkkkkkkk\n");
-		delay(2000);
+		Tdelay(2000);
         if (cnt == 0) run_wavePlayer();
 		xprintf(5,"count1=%d", cnt++);
-        Tdelay(1000);
 }
 
 void runMenuTask(void *NOTUSED)
@@ -243,7 +239,7 @@ void loop() {
 #endif
 	delay(100);
 	//kickDog();
-	//vTaskDelete(NULL);
+	vTaskDelete(NULL);
 
 }
 
