@@ -2,25 +2,33 @@
 #include <M5Unified.h>
 #include "wavePlayer.h"
 #include "watchdogs.h"
+#include <cppQueue.h>
 
 #include <esp_log.h>
 
 #define LINE Serial.printf("%s:%d\n", __FUNCTION__, __LINE__)
 
-static void printDirectory(File dir, int numTabs);
-static bool isFileType(char* filename);
+static void loadWavFiles(File dir, int numTabs);
+static bool hasWavFileExt(char* filename);
 
 static constexpr const gpio_num_t SDCARD_CSPIN = GPIO_NUM_4;
 
 static constexpr const size_t buf_num = 3;
 static constexpr const size_t buf_size = 1024;
+static SemaphoreHandle_t xCountingSemaphore;
 
 
 static File root;
 
-#define MAX_FILES 300
-static char *wavList[MAX_FILES] = {0};
-static int fileCount = 0;
+#define MAX_FILES_CACHED 200
+
+#define MAX_FILENAME_LEN 50
+#define MAX_FILES_QUEUED 8
+
+
+static char *wavList[MAX_FILES_CACHED] = {0};
+
+static int numActiveSndFiles = 0;
 
 
 static uint8_t wav_data[buf_num][buf_size];
@@ -46,7 +54,9 @@ struct __attribute__((packed)) sub_chunk_t
   uint8_t data[1];
 };
 
-static bool playSdWav(const char* filename)
+//------------------------------------------------
+
+static bool playWavFromSD(const char* filename)
 {
   char fname[80];
   strcpy(&fname[1], filename);
@@ -124,10 +134,72 @@ static bool playSdWav(const char* filename)
     }
     idx = idx < (buf_num - 1) ? idx + 1 : 0;
   }
+  
   file.close();
 
   return true;
 }
+//------------------------------------------------
+
+static cppQueue playlistQ(MAX_FILENAME_LEN, 8, FIFO);
+
+void runWavPlayerTask(void *NOTUSED)
+{
+	char playThisFile[MAX_FILENAME_LEN+1];
+	
+	while (true)
+	{
+		if (xSemaphoreTake( xCountingSemaphore, pdMS_TO_TICKS(1000) ) == pdTRUE)
+		{
+
+			playlistQ.pop(playThisFile);
+			Serial.printf("popping %s\n", playThisFile);
+			playWavFromSD(playThisFile);
+			// ???? xSemaphoreGive(xCountingSemaphore); 
+		}
+		else
+		{
+			kickDog();
+		}
+	}
+}
+
+//------------------------------------------------
+
+bool add_to_playlist(char *filename)
+{
+	int i;
+	
+	// verify sound actually exists to play.
+	for(i = 0; i < numActiveSndFiles; i++)
+	{
+		if (!strcmp (wavList[i], filename))
+		{
+			break;
+		}
+	}
+
+	if (i == numActiveSndFiles)
+	{
+	
+		Serial.printf("%s:%d miss %s \n", __FUNCTION__, __LINE__, filename);
+		return false; // file does not exist
+	}
+	
+	if (! playlistQ.push(wavList[i]))
+	{
+		//has to persist, no locals
+		Serial.printf("%s:%d full - dropped %s \n", __FUNCTION__, __LINE__, filename);
+		return false;
+	}
+
+	Serial.printf("added %s\n", wavList[i] );
+	
+	xSemaphoreGive(xCountingSemaphore);
+	
+	return true;
+}
+
 //------------------------------------------------
 
 void setup_wavePlayer()
@@ -137,56 +209,37 @@ void setup_wavePlayer()
 	  board_M5StackCore2
 	*/
 
-	//M5.begin();
-	//Serial.begin(115200);
-
 	SD.begin(SDCARD_CSPIN, SPI, 25000000);
 
 	M5.Speaker.setVolume(128);
 
 	root = SD.open("/");
-	printDirectory(root, 0);
+
+	// find number of wave files
+	loadWavFiles(root, 0); 
 
 	int maxFileEntries = (sizeof(wavList) / sizeof(wavList[0]));
 	Serial.print("maxFileEntries: ");
 	Serial.println(maxFileEntries);
 
-	Serial.print("fileCount: ");
-	Serial.println(fileCount);
+	Serial.print("numActiveSndFiles: ");
+	Serial.println(numActiveSndFiles);
 
 	Serial.println("done!");
 
+	xCountingSemaphore = xSemaphoreCreateCounting(MAX_FILES_QUEUED,0);
+
 }
 
 //------------------------------------------------
-void run_wavePlayer()
-{
-
-  Serial.println("list:");
-  for(int i=0; i < fileCount; i++)
-  {
-  	if (wavList[i] == NULL) break;
-    Serial.printf("%d:%s\n",i,  wavList[i] );
-  }
-
-  //for(int i=0; i < fileCount; i++)
-  for(int i=0; i < 5; i++)
-  {
-  	if (wavList[i] == NULL) break;
-    Serial.printf("%d:%s\n",i,  wavList[i] );
-	playSdWav(wavList[i]);
-  }
-}
-
-//------------------------------------------------
-static void printDirectory(File dir, int numTabs) {
+static void loadWavFiles(File dir, int numTabs) {
 
   while(true)
   {
 
-	if (MAX_FILES == fileCount)
+	if (MAX_FILES_CACHED == numActiveSndFiles)
 	{
-		Serial.printf("limited to %d files\n", fileCount);
+		Serial.printf("limited to %d files\n", numActiveSndFiles);
 		break;
 	}
 	
@@ -204,34 +257,38 @@ static void printDirectory(File dir, int numTabs) {
 
     String file_name = entry.name();
 
-	char *tempc = (char*) malloc(strlen(entry.name())+1);
+	unsigned int len = strlen(entry.name()) + 1;
+	assert(len < MAX_FILENAME_LEN);
+	
+	char *tempc = (char*) malloc(len);
 	strcpy(tempc, entry.name());
 	
-    if ( isFileType(tempc) && file_name.indexOf('_') != 0 )
+    if ( hasWavFileExt(tempc) && file_name.indexOf('_') != 0 )
 	{ // Here is the magic
 	
-		Serial.print(fileCount); 
+		Serial.print(numActiveSndFiles); 
 		Serial.print(" "); 
 
-		wavList[fileCount] = tempc; //add to array
+		wavList[numActiveSndFiles] = tempc; //add to array
 
-		Serial.println(wavList[fileCount]); //show array item
-		fileCount++;
+		Serial.println(wavList[numActiveSndFiles]); //show array item
+		numActiveSndFiles++;
     }
 
-    //Serial.print(entry.name());
-
+#if 0
     if (entry.isDirectory()) 
 	{ 
 		// Dir's will print regardless, you may want to exclude these
       	//Serial.print(entry.name());
       	//Serial.println("/");
-     	//printDirectory(entry, numTabs+1);
+     	//loadWavFiles(entry, numTabs+1);
     } else {
       	// files have sizes, directories do not
       	//Serial.print("\t\t");
       	//Serial.println(entry.size(), DEC);
     }
+#endif
+
     entry.close();
     
   }
@@ -241,23 +298,31 @@ static void printDirectory(File dir, int numTabs) {
 
 // note strlwr writes into src, so filename cant be const data ?
 
-static bool isFileType(char* filename) 
+static bool hasWavFileExt(char* filename) 
 {
-  int8_t len = strlen(filename);
-  bool result;
+	int8_t len = strlen(filename);
+	bool result;
 
-  if (  strstr(strlwr(filename + (len - 4)), ".mp3")
-     || strstr(strlwr(filename + (len - 4)), ".aac")
-     || strstr(strlwr(filename + (len - 4)), ".wma")
-     || strstr(strlwr(filename + (len - 4)), ".wav")
-     || strstr(strlwr(filename + (len - 4)), ".fla")
-     || strstr(strlwr(filename + (len - 4)), ".mid")
-     || strstr(strlwr(filename + (len - 4)), ".raw")
-     // and anything else you want
-    ) {
-    result = true;
-  } else {
-    result = false;
-  }
-  return result;
+	if (strstr(strlwr(filename + (len - 4)), ".wav"))
+	{
+		result = true;
+	} else
+	{
+		result = false;
+	}
+	
+	return result;
 }
+
+#if 0
+	|| strstr(strlwr(filename + (len - 4)), ".mp3")
+	|| strstr(strlwr(filename + (len - 4)), ".aac")
+	|| strstr(strlwr(filename + (len - 4)), ".wma")
+	|| strstr(strlwr(filename + (len - 4)), ".fla")
+	|| strstr(strlwr(filename + (len - 4)), ".mid")
+	|| strstr(strlwr(filename + (len - 4)), ".raw")
+	// and anything else you want
+#endif
+	
+	
+

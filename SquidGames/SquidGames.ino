@@ -172,16 +172,29 @@ void setup() {
                      4           	//UBaseType_t uxPriority)
                      );
 
+
+	add_to_playlist("terrain.wav");
+	add_to_playlist("speed.wav");
+	add_to_playlist("whoopwoop.wav");
+	add_to_playlist("terrain.wav");
+	
+	add_to_playlist("three.wav");
+	add_to_playlist("thousand.wav");
+	add_to_playlist("two.wav");
+	add_to_playlist("hundred.wav");
+	
+	add_to_playlist("forty.wav");
+	add_to_playlist("one.wav");
+
+	add_to_playlist("one.wav");
+	add_to_playlist("one.wav");
+	add_to_playlist("one.wav");
+	add_to_playlist("one.wav");
+	add_to_playlist("one.wav");
+	add_to_playlist("one.wav");
+
 }
 
-
-void runWavPlayerTask(void *NOTUSED)
-{
-		static unsigned cnt = 0;
-        if (cnt == 0) run_wavePlayer();
-		xprintf(5,"count = %6d", cnt++);
-		Tdelay(5000);
-}
 
 void runMenuTask(void *NOTUSED)
 {
