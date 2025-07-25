@@ -65,7 +65,7 @@ void setup_M5(void)
 	M5.begin();
 	M5.Power.setExtOutput(true);  // enable external bus
 
-    M5.Lcd.setTextFont(&fonts::DejaVu18);
+    M5.Lcd.setTextFont(&fonts::FreeMono18pt7b);
 	setup_button();
 	
 	//M5.begin(true, true, true, false, kMBusModeInput, true);
@@ -74,7 +74,8 @@ void setup_M5(void)
 void lsetTextColor(unsigned FGND, unsigned BKGND)
 {
 	M5.Lcd.setTextColor(FGND,BKGND);
-    M5.Lcd.setTextFont(&fonts::DejaVu18);
+    //M5.Lcd.setTextFont(&fonts::DejaVu18);
+    M5.Lcd.setTextFont(&fonts::FreeMono18pt7b);
 
 	
 	//w = M5.Lcd.width();

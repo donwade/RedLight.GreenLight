@@ -143,7 +143,7 @@ static bool playWavFromSD(const char* filename)
 
 static cppQueue playlistQ(MAX_FILENAME_LEN, 8, FIFO);
 
-void runWavPlayerTask(void *NOTUSED)
+void wavPlayerTask(void *NOTUSED)
 {
 	char playThisFile[MAX_FILENAME_LEN+1];
 	
@@ -155,7 +155,6 @@ void runWavPlayerTask(void *NOTUSED)
 			playlistQ.pop(playThisFile);
 			Serial.printf("popping %s\n", playThisFile);
 			playWavFromSD(playThisFile);
-			// ???? xSemaphoreGive(xCountingSemaphore); 
 		}
 		else
 		{

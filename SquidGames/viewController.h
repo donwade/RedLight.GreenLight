@@ -1,4 +1,4 @@
-void menu_task(void);
+void touchPanel_task(void);
 void setup_button(void);
 void button_create(void);
 

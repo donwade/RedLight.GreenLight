@@ -593,9 +593,10 @@ void stateDisplay(void)
 
 #endif
 }
+
 //---------------------------------------------------------
 
-void runGpsTask(void *not_used)
+void gpsGetDataTask(void *not_used)
 {
 	char msg[30];
 	unsigned long startProileTime;
@@ -654,6 +655,43 @@ void runGpsTask(void *not_used)
 	}
 }
 
+//---------------------------------------------------------
+
+void runDisplayTask(void *not_used)
+{
+	//unsigned long startProileTime;
+	//unsigned long difftime;
+	//static unsigned long lastProfileTime; 
+	
+	while(true)
+	{
+		if (iMisc.Kmph > MIN_SPEED_KPH )
+		{
+			gpsLocation oldest;
+			getOldestSample(&oldest);
+			veh_course = (int)gps.courseTo(oldest.lat, oldest.lng, iLocation.lat, iLocation.lng );
+			veh_cardinal = gps.cardinal(veh_course);
+		}
+		
+		Serial.printf("%2d:%02d:%02d @ %+9.7f %+9.7f ^ %3d kph dir %3d %s\n", 
+				iMisc.hour,iMisc.minute,iMisc.second,
+				iLocation.lat, iLocation.lng,
+				(int)iMisc.Kmph, (int)iMisc.course, gps.cardinal(iMisc.course)
+				);
+
+		// profile loop time. So far about 3ms total		
+		//difftime =  micros() - startProfileTime;
+		//Serial.printf("profile = %d uS\n", difftime);
+
+		stateDisplay();
+		
+		//startProfileTime = micros();
+
+		smartDelay(1000);
+	
+	}
+}
+
 
 //-----------------------------------------------------------
 // BLUETOOTH
@@ -663,113 +701,6 @@ void runGpsTask(void *not_used)
 
 uint32_t callback_ctr =0;
 uint32_t tick_ctr = 0;
-
-//BluetoothA2DPSource a2dp_source;
-
-// The supported audio codec in ESP32 A2DP is SBC. SBC audio stream is encoded
-// from PCM data normally formatted as 44.1kHz sampling rate, two-channel 16-bit sample data
-/*
-int32_t get_data_frames(Frame *frame, int32_t frame_count)
-{
-    static float m_time = 0.0;
-    float m_amplitude = 20000.0;  // -32,768 to 32,767
-    float m_tickPeriod = 1.0 / 44100.0;
-    float m_phase = 0.0;
-    float pi_2 = PI * 2.0;
-	callback_ctr++;
-	
-    // fill the channel data
-    for (int sample = 0; sample < frame_count; ++sample) 
-	{
-#if 1
-		int mod = tick_ctr / left_freq;
-		
-		if (mod & 1)
-		{
-			frame[sample].channel1 = m_amplitude;
-		}
-		else 
-		{
-			frame[sample].channel1 = -m_amplitude;
-		}
-		
-		mod = tick_ctr / right_freq;
-		if (mod & 1)
-		{
-			frame[sample].channel2 = m_amplitude;
-		}
-		else 
-		{
-			frame[sample].channel2 = -m_amplitude;
-		}
-		
-#else
-        float left_angle = pi_2 * left_freq * m_time + m_phase;
-        frame[sample].channel1 = m_amplitude * sin(left_angle);
-
-        float right_angle = pi_2 * right_freq * m_time + m_phase;
-        frame[sample].channel2 = m_amplitude * sin(right_angle);
-#endif	
-		tick_ctr++;
-        m_time += m_tickPeriod;
-    }
-
-    return frame_count;
-}
-
-// Return true to connect, false will continue scanning: You can can use this
-// callback to build a list.
-
-
-bool isValid(const char* btSSID, esp_bd_addr_t address, int rssi){
-  static uint8_t hi = 0;
-  hi++;
-  snprintf(BT_SSID, sizeof(BT_SSID), "%s", btSSID);
-  Serial.printf("available SSID: %s %d\n", btSSID, hi);
-  //return false;
-  return true;
-}
-*/
-
-//---------------------------------------------------------
-
-void setup_ORIG()
-{
-
-	setupButton();
-
-#if 0	
-	// bluetooth init
-	a2dp_source.set_ssid_callback(isValid);
-	a2dp_source.set_auto_reconnect(false);
-	a2dp_source.set_data_callback_in_frames(get_data_frames);
-	a2dp_source.set_volume(30);
-	a2dp_source.start();  
-#endif
-
-	//display.init();
-	//display.flipScreenVertically();  
-	setFont(16);
-	
-	//display.clear();
-	//display.setTextAlignment(TEXT_ALIGN_LEFT);
-
-	xprintf(0, "BUILD");
-	xprintf(1, "%s" , __DATE__);
-	xprintf(2, "%s", __TIME__);
-	//display.display();
-
-	//pinMode(BUILTIN_LED, OUTPUT);
-
-	//TaskHandle_t foo;
-	//xTaskCreate(loop1, "loop1", 4096, NULL, 5, &foo);
-
-	//xTaskCreatePinnedToCore(loop1, "loop1", 4096, NULL, 1, NULL, 0);
-
-	//xTaskCreatePinnedToCore(loop2, "loop2", 4096, NULL, 1, NULL, 1);
-
-	 
-}
 
 /*
 #if 0  // TESTING set cardinal view range

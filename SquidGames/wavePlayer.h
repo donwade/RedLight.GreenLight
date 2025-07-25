@@ -3,6 +3,6 @@
 #include <esp_log.h>
 
 extern void setup_wavePlayer();
-extern void runWavPlayerTask(void *NOTUSED);
+extern void wavPlayerTask(void *NOTUSED);
 extern bool add_to_playlist(char *filename);
 

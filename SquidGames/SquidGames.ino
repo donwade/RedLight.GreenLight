@@ -18,16 +18,10 @@ extern void setup_BN880(void);
 
 static portMUX_TYPE my_mutex;
 
-IRAM_ATTR void xsetup() {
-  rtc_wdt_protect_off();
-  rtc_wdt_disable();
-  disableCore0WDT();
-  disableLoopWDT();
-}
-
-
 extern void setup_GPS(void);
-extern void runGpsTask(void *);
+extern void gpsGetDataTask(void *);
+extern void runDisplayTask(void *not_used);
+
 extern TaskHandle_t speak_file(char *waveFilename);
 
 // The TinyGPS++ object
@@ -115,6 +109,20 @@ void displayInfo() {
     }
 }
 
+
+void runMenuTask(void *NOTUSED)
+{
+	touchPanel_task();
+}
+
+void loop() {
+	delay(100);
+	vTaskDelete(NULL);
+
+}
+
+
+
 //=============================================================
 
 void setup() {
@@ -137,16 +145,14 @@ void setup() {
 	lsetTextColor(TFT_YELLOW, TFT_BLACK);
     lsetCursor(0, 0, 4); // font=4
 
-	//setup_ORIG();
-
 	//dumper();
 	//esp_backtrace_print(2);
 	//testDump("hi mom");
 	//delay(-1);
 
 
-	spawnTaskAndDogV2( runWavPlayerTask, 		//(void * not_used)TaskFunction_t pvTaskCode,
-                     "runWavPlayerTask",    //const char * const pcName,
+	spawnTaskAndDogV2( wavPlayerTask, 		//(void * not_used)TaskFunction_t pvTaskCode,
+                     "wavPlayerTask",    //const char * const pcName,
                      1024 * 10,		//const uint32_t usStackDepth,
                      NULL,			//void * const pvParameters,
                      4           	//UBaseType_t uxPriority)
@@ -163,12 +169,21 @@ void setup() {
 
 	delay(200);
 
-	spawnTaskAndDogV2( runGpsTask, 		//(void * not_used)TaskFunction_t pvTaskCode,
-                     "runGpsTask",    //const char * const pcName,
+	spawnTaskAndDogV2( gpsGetDataTask,	//(void * not_used)TaskFunction_t pvTaskCode,
+                     "gpsGetDataTask",	//const char * const pcName,
+                     1024 * 10,			//const uint32_t usStackDepth,
+                     NULL,				//void * const pvParameters,
+                     4           		//UBaseType_t uxPriority)
+                     );
+
+
+	spawnTaskAndDogV2( runDisplayTask, 		//(void * not_used)TaskFunction_t pvTaskCode,
+                     "runDisplayTask",    //const char * const pcName,
                      1024 * 10,		//const uint32_t usStackDepth,
                      NULL,			//void * const pvParameters,
                      4           	//UBaseType_t uxPriority)
                      );
+
 
 
 	add_to_playlist("terrain.wav");
@@ -183,25 +198,6 @@ void setup() {
 	
 	add_to_playlist("forty.wav");
 	add_to_playlist("one.wav");
-
-	add_to_playlist("one.wav");
-	add_to_playlist("one.wav");
-	add_to_playlist("one.wav");
-	add_to_playlist("one.wav");
-	add_to_playlist("one.wav");
-	add_to_playlist("one.wav");
-
-}
-
-
-void runMenuTask(void *NOTUSED)
-{
-	menu_task();
-}
-
-void loop() {
-	delay(100);
-	vTaskDelete(NULL);
 
 }
 

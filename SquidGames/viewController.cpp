@@ -106,7 +106,7 @@ void setup_button()
 	twoButtonMenu("LEFTX", &keyDest, "RIGHTX", &keyDest);
 }
 
-void menu_task()
+void touchPanel_task()
 {
 	kickDog();
 
