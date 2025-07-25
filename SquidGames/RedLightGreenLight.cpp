@@ -464,8 +464,8 @@ void stateDisplay(void)
 			// distance has no meaning as we have no start point
 			
 			
-			xprintf(0, "LA=%+9.7f", gpsAverage.lat);
-			xprintf(1, "LN=%+9.7f", gpsAverage.lng);
+			xprintf(0, "LA=%+11.8f", gpsAverage.lat);
+			xprintf(1, "LN=%+11.8f", gpsAverage.lng);
 
 			xprintf(3, "MARK START");
 
