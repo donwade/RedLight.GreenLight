@@ -161,7 +161,7 @@ gpsLocation gpsAverage;
 bool bButtonPressed	= false;
 
 
-#define GPS_SAMPLE_SIZE 4
+#define GPS_SAMPLE_SIZE 12
 gpsLocation samples [ GPS_SAMPLE_SIZE ];
 uint8_t sIndex;
 
@@ -306,8 +306,9 @@ int  xprintf(uint8_t lineNo, const char *format, ...)
 	display.drawString(0, lineNo * char_height, buffer);
 	#endif
 
-	printf("%1d %s\n", lineNo, buffer);
     lprint(buffer);
+
+	//printf("%1d %s\n", lineNo, buffer);
 	
 	xSemaphoreGive(mutex);	
 	va_end(args);
@@ -464,8 +465,8 @@ void stateDisplay(void)
 			// distance has no meaning as we have no start point
 			
 			
-			xprintf(0, "LA=%+11.8f", gpsAverage.lat);
-			xprintf(1, "LN=%+11.8f", gpsAverage.lng);
+			xprintf(0, "LA=%+10.7f", gpsAverage.lat);
+			xprintf(1, "LN=%+10.7f", gpsAverage.lng);
 
 			xprintf(3, "MARK START");
 
@@ -531,16 +532,13 @@ void stateDisplay(void)
 			xprintf(1, "LO=%+9.7f", endLocation.lng);
 			xprintf(2, "END=%d %s", course, dir);
 			xprintf(3, "APPROACHING");
-			//display.display();
-
-			//setRedLED(false);
 
 			if (bButtonPressed)
 			{
 				bButtonPressed = false;
 				absState = MARK_START;   // and do it again
 			}
-
+		break;
 	}
 #else
 
@@ -602,6 +600,7 @@ void gpsGetDataTask(void *not_used)
 	unsigned long startProileTime;
 	unsigned long difftime;
 	static uint8_t oneIn4;
+	static gpsLocation oldLocation;
 	
 	static unsigned long lastProfileTime; 
 
@@ -623,7 +622,12 @@ void gpsGetDataTask(void *not_used)
 		}	
 
 		calcGPSaverage();
-
+		
+		double delta_dist = gps.distanceBetween(iLocation.lat, iLocation.lng, oldLocation.lat, oldLocation.lng );
+		oldLocation = iLocation;
+		
+		xprintf(4, "diff = %8.5f", delta_dist);
+		
 		// get direction only if going fast enough
 		// otherwise it points all over the place
 		
@@ -645,13 +649,7 @@ void gpsGetDataTask(void *not_used)
 		//difftime =  micros() - startProfileTime;
 		//Serial.printf("profile = %d uS\n", difftime);
 
-		oneIn4++;
-		if ((oneIn4 & 3) == 0) stateDisplay();
-		
-		//startProfileTime = micros();
-
 		smartDelay(250);
-		
 	}
 }
 
@@ -687,7 +685,7 @@ void runDisplayTask(void *not_used)
 		
 		//startProfileTime = micros();
 
-		smartDelay(1000);
+		Tdelay(1000);
 	
 	}
 }
