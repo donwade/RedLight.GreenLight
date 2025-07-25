@@ -600,11 +600,13 @@ void runGpsTask(void *not_used)
 	char msg[30];
 	unsigned long startProileTime;
 	unsigned long difftime;
+	static uint8_t oneIn4;
 	
 	static unsigned long lastProfileTime; 
 
 	//while(1)
 	{
+
 		getData();
 		
 		{
@@ -642,11 +644,12 @@ void runGpsTask(void *not_used)
 		//difftime =  micros() - startProfileTime;
 		//Serial.printf("profile = %d uS\n", difftime);
 
-		stateDisplay();
+		oneIn4++;
+		if ((oneIn4 & 3) == 0) stateDisplay();
 		
 		//startProfileTime = micros();
 
-		smartDelay(1000);
+		smartDelay(250);
 		
 	}
 }
