@@ -3,35 +3,29 @@
 #include <M5Unified.h>
 #include "watchdogs.h"
 #include <cppQueue.h>
+#include <TinyGPS++.h>
 
 #include <LinkedList.h>
 #include "locate.h"
 
 #include <esp_log.h>
 
+extern 	TinyGPSPlus gps;
 #define LINE Serial.printf("%s:%d\n", __FUNCTION__, __LINE__)
 
 static constexpr const gpio_num_t SDCARD_CSPIN = GPIO_NUM_4;
 
-static constexpr const size_t buf_num = 3;
-static constexpr const size_t buf_size = 1024;
-
-static SemaphoreHandle_t xCountingSemaphore;
-
+static SemaphoreHandle_t hLocationMutex;
 
 static File root;
 
-#define MAX_FILES_CACHED 200
-
-#define MAX_FILENAME_LEN 50
-#define MAX_FILES_QUEUED 8
-
-
-static int numActiveSndFiles = 0;
-
-
 //------------------------------------------------
 static LinkedList <GPS_ENTRY2 *> cameras;
+
+void setup_locate(void)
+{
+	hLocationMutex = xSemaphoreCreateMutex();
+}
 
 static int32_t readFromSD(const char* filename)
 {
@@ -40,105 +34,154 @@ static int32_t readFromSD(const char* filename)
 	char fname[80];
 	int cnt=0;
 	GPS_ENTRY2 *aCamera;
-	
-	strcpy(&fname[1], filename);
-	fname[0]='/';
-	
-	auto file = SD.open(fname);
 
-	if (!file) { return false; }
-
-	while (file.available())
+	if (xSemaphoreTake(hLocationMutex, portMAX_DELAY) == pdTRUE)
 	{
-		aCamera = new(GPS_ENTRY2);
-	
-		cnt++;
-		item = file.readStringUntil('\n');
-
-		//convert 'String' to C-String
-		cstr = new char [item.length()+1];
-		std::strcpy (cstr, item.c_str());
-		Serial.printf("%d %s\n", cnt, cstr);
+		strcpy(&fname[1], filename);
+		fname[0]='/';
 		
-		//+45.2948422,-75.8642632 ,  71, "ENE", "Bridlewood" , "Aintree"
+		auto file = SD.open(fname);
 
-		float   flat,flon;
-		int		iDir;
-		char	clat[20];
-		char	clon[20];
-		char	cDir[10];
+		if (!file) { return false; }
 
-		//https://stackoverflow.com/questions/15091284/read-comma-separated-input-with-scanf
-		int ret = sscanf(cstr, "%[^,],%[^,],%[^,],%[^,],%[^,],%[^,]", 
-						clat, clon, cDir, 
-						aCamera->cardinal, 
-						aCamera->onStreet, 
-						aCamera->crossStreet);
+		while (file.available())
+		{
+			aCamera = new(GPS_ENTRY2);
 		
-		if (ret != 6) continue; // bad data
+			cnt++;
+			item = file.readStringUntil('\n');
+
+			//convert 'String' to C-String
+			cstr = new char [item.length()+1];
+			std::strcpy (cstr, item.c_str());
+			Serial.printf("%d %s\n", cnt, cstr);
+			
+			//+45.2948422,-75.8642632 ,  71, "ENE", "Bridlewood" , "Aintree"
+
+			float   flat,flon;
+			int		iDir;
+			char	clat[20];
+			char	clon[20];
+			char	cDir[10];
+
+			//https://stackoverflow.com/questions/15091284/read-comma-separated-input-with-scanf
+			int ret = sscanf(cstr, "%[^,],%[^,],%[^,],%[^,],%[^,],%[^,]", 
+							clat, clon, cDir, 
+							aCamera->cardinal, 
+							aCamera->onStreet, 
+							aCamera->crossStreet);
+			
+			if (ret != 6) continue; // bad data
+			
+			iDir = atoi(cDir);
+			flat = atof(clat);	
+			flon = atof(clon);	
+
+			aCamera->lat = flat;
+			aCamera->lng = flon;
+			aCamera->bearing = iDir;
+			
+			//Serial.printf("xx %f %f %d\n", flat, flon, iDir);
+			//Serial.printf("%s on %s \n", aCamera->onStreet, aCamera->crossStreet);
+
+			cameras.add(aCamera);
+			delete cstr;
+		}
 		
-		iDir = atoi(cDir);
-		flat = atof(clat);	
-		flon = atof(clon);	
+		file.close();
 
-		aCamera->lat = flat;
-		aCamera->lng = flon;
-		aCamera->bearing = iDir;
+		for (int i = 0; i < cameras.size(); i++)
+		{
+			Serial.print("Element at index ");
+			Serial.print(i);
+			Serial.print(": ");
+			aCamera = cameras.get(i);
+			Serial.printf("%f/%f on=%s ac=%s\n", 
+					aCamera->lat,
+					aCamera->lng,
+					aCamera->onStreet,
+					aCamera->crossStreet);
+		}
 		
-		//Serial.printf("xx %f %f %d\n", flat, flon, iDir);
-		//Serial.printf("%s on %s \n", aCamera->onStreet, aCamera->crossStreet);
+		xSemaphoreGive(hLocationMutex);
+	}	
 
-		cameras.add(aCamera);
-		delete cstr;
-	}
-	
-	file.close();
-
-	for (int i = 0; i < cameras.size(); i++)
-	{
-		Serial.print("Element at index ");
-		Serial.print(i);
-		Serial.print(": ");
-		aCamera = cameras.get(i);
-		Serial.printf("%f/%f on=%s ac=%s\n", 
-				aCamera->lat,
-				aCamera->lng,
-				aCamera->onStreet,
-				aCamera->crossStreet);
-	}
-
-	
 	return cnt;
 }
 
 uint32_t loadGpsDb(char *database)
 {
+	setup_locate();
 	readFromSD(database);
 }
 
+GPS_ENTRY2 *closestCam;
+GPS_ENTRY2 *nextClosestCam;
 
-//------------------------------------------------
-#if 0
-static cppQueue playlistQ(MAX_FILENAME_LEN, 8, FIFO);
-
-void junkTask(void *NOTUSED)
+bool findNearestCamera(float vehicleLat, float vehicleLng)
 {
-	char playThisFile[MAX_FILENAME_LEN+1];
-	
-	while (true)
-	{
-		if (xSemaphoreTake( xCountingSemaphore, pdMS_TO_TICKS(1000) ) == pdTRUE)
-		{
 
-			playlistQ.pop(playThisFile);
-			Serial.printf("popping %s\n", playThisFile);
-			readFromSD(playThisFile);
-		}
-		else
+	GPS_ENTRY2 *aCamera;
+
+	if (xSemaphoreTake(hLocationMutex, portMAX_DELAY) == pdTRUE)
+	{
+		int dist;
+		int course;
+		int i;
+		int closestDist = INT_MAX;
+			
+		// do not do any GPS with 0.0 it will hang (hi GD).
+		if (vehicleLat < 1.0 ) goto byebye;
+		
+		for (int i = 0; i < cameras.size(); i++)
 		{
-			kickDog();
+			aCamera = cameras.get(i);
+			
+			//Serial.printf("%+9.7f  %+9.7f\n",  cameraLocations[i].lat, cameraLocations[i].lng);
+			//course = (int)gps.courseTo(vehicleLat, vehicleLng, cameraLocations[i].lat, cameraLocations[i].lng);
+			//cardinal = gps.cardinal(course);
+	
+			dist = (int) gps.distanceBetween(vehicleLat, vehicleLng, aCamera->lat, aCamera->lng);
+	
+			if ( dist < closestDist )
+			{
+				nextClosestCam = closestCam;
+				closestDist = dist;
+				closestCam = aCamera;
+			}
+	
 		}
-	}
-}
+#if 1
+//#ifdef SHOW_DECISIONS 
+		Serial.println();
+		Serial.printf("lat=%9.7f lng=%9.7f \n", vehicleLat, vehicleLng);
+		
+		for (int i = 0; i < cameras.size(); i++)
+		{
+			const char *cardinal;
+			int course;
+			
+			aCamera = cameras.get(i);
+			
+			dist = (int)gps.distanceBetween(vehicleLat, vehicleLng, aCamera->lat, aCamera->lng);
+			course = (int)gps.courseTo(vehicleLat, vehicleLng, aCamera->lat, aCamera->lng);
+			cardinal = gps.cardinal(course);
+			
+			char star;
+	
+			star = (aCamera == closestCam) ? '1' : ' ';
+			if ( star != '1' ) star = (aCamera == nextClosestCam) ? '2' : ' ';
+			
+			if (star != ' ') Serial.printf("%c [%2d] dist=%4d course=%3d cardinal=%s\n",
+				star, i,  dist, course, cardinal);
+			
+		}
 #endif
+
+byebye:
+		xSemaphoreGive(hLocationMutex);
+	}	
+
+	return true;
+}
 

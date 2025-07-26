@@ -9,5 +9,9 @@ typedef struct
          char crossStreet[30];
 } GPS_ENTRY2;
 
+extern GPS_ENTRY2 *closestCam;
+extern GPS_ENTRY2 *nextClosestCam;
+
+extern bool findNearestCamera(float vehicleLat, float vehicleLng);
 
 

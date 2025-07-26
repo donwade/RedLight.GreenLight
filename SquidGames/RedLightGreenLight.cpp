@@ -40,6 +40,8 @@ https://github.com/mikalhart/TinyGPSPlus
 #include "lookup.h"   //table of targets
 
 #include <mutex>
+#include "locate.h"
+
 static SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
 
 #define BUILTIN_LED 4  // TIP t-beam
@@ -416,6 +418,9 @@ void stateDisplay(void)
 
 			xprintf(3, "MARK START");
 
+			findNearestCamera(gpsAverage.lat, gpsAverage.lng);
+
+
 			if (iMisc.Kmph > 5)
 				xprintf(2, "%3d %s", veh_course, veh_cardinal);
 			else
@@ -494,6 +499,7 @@ void stateDisplay(void)
 		LINE;
 		
 		findClosestCamera(iLocation.lat, iLocation.lng);
+		findNearestCamera(iLocation.lat, iLocation.lng);
 		
 		
 		course = (int)gps.courseTo(iLocation.lat, iLocation.lng, cameraLocations[firstChoiceIndex].lat, cameraLocations[firstChoiceIndex].lng);
