@@ -8,6 +8,7 @@
 #include "viewController.h"
 
 #include "m5Core2-only.h"
+#include "locate.h"
 
 #include "soc/rtc_wdt.h"
 #include "esp_debug_helpers.h"
@@ -138,6 +139,7 @@ void setup() {
 	setup_M5();	
     setup_wavePlayer();
 	setup_BN880();
+	loadGpsDb();
 
 	//BN880 takes care of below.
     //Serial2.begin(9600, SERIAL_8N1, 13, 14);
