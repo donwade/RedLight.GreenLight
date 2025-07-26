@@ -2,26 +2,17 @@
 #include "m5Core2-only.h"
 #include "viewController.h"
 
-static uint8_t lastFont = 4;
 static uint8_t vert = 0;
 
-void lsetCursor(uint16_t X, uint16_t Y, uint8_t font)
+void lsetCursor(uint16_t X, uint16_t Y)
 {
-	lastFont = font;
-
 	//int16_t horz =M5.Lcd.textWidth(" ", font);
 	//printf("charX=%d\n", horz);
 
 	if (!vert) vert = M5.Lcd.fontHeight() + 4;
 	//printf("charY=%d\n", vert);
 	
-	M5.Lcd.setCursor(X, Y * vert, font);
-}
-
-
-void lsetCursor(uint16_t X, uint16_t Y)
-{
-	M5.Lcd.setCursor(X, Y * vert , lastFont);
+	M5.Lcd.setCursor(X, Y * vert);
 }
 
 void lprint(const __FlashStringHelper *x)
@@ -59,23 +50,36 @@ void lclear(void)
 {
 	M5.Lcd.clear();
 }
+//--------------------------------------------------
+#include <Adafruit_GFX.h>    // Core graphics library
+// below must follow above
+#include <Fonts/FreeMonoBoldOblique12pt7b.h>
+#include <Fonts/FreeMono12pt7b.h>
+
+#define WIDGET_FONT  &fonts::FreeMonoBoldOblique12pt7b
+#define DEFAULT_FONT &fonts::FreeMono12pt7b
+
+//--------------------------------------------------
+
 
 void setup_M5(void)
 {
 	M5.begin();
 	M5.Power.setExtOutput(true);  // enable external bus
 
-    M5.Lcd.setTextFont(&fonts::FreeMono18pt7b);
-	setup_button();
+	// confusing. this sets font for background display
+    M5.Lcd.setTextFont(DEFAULT_FONT);
+
+	// confusing. this sets font for buttons
+	M5.Lcd.setFont(WIDGET_FONT);
 	
-	//M5.begin(true, true, true, false, kMBusModeInput, true);
+	setup_button();
 }
 
 void lsetTextColor(unsigned FGND, unsigned BKGND)
 {
 	M5.Lcd.setTextColor(FGND,BKGND);
-    //M5.Lcd.setTextFont(&fonts::DejaVu18);
-    M5.Lcd.setTextFont(&fonts::FreeMono18pt7b);
+    M5.Lcd.setTextFont(DEFAULT_FONT);
 
 	
 	//w = M5.Lcd.width();

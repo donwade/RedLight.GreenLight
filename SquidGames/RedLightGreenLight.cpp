@@ -259,6 +259,7 @@ void setupButton()
 //------------------------------------------------------------------
 
 u_int8_t char_height = 0;
+u_int8_t linelen[10];
 
 static void setFont(uint8_t size)
 {
@@ -291,90 +292,35 @@ int  xprintf(uint8_t lineNo, const char *format, ...)
 	va_list args;
 	va_start(args, format);
 	char buffer[30];
+	
 	vsnprintf(buffer, sizeof(buffer)-1, format, args);
+
 
 	xSemaphoreTake(mutex, portMAX_DELAY);
 
+	
     lsetCursor(0, lineNo); 
 
-	#if 0
-	// erase past background to black
-	display.setColor(BLACK);
-	display.fillRect(0, lineNo * char_height, display.getWidth(), char_height);
-	display.setColor(WHITE);
+	// time to kill off any chars from old print
+	uint32_t ll = strlen(buffer);
 	
-	display.drawString(0, lineNo * char_height, buffer);
-	#endif
-
+	if ( ll < linelen[lineNo])
+	{
+		uint32_t add = linelen[lineNo] - ll;
+		Serial.println(add);
+		// mono spaced font right :)
+		for (int i = 0; i < add+1; i++) strcat(buffer," ");
+	}
+	
+	linelen[lineNo] = ll;
+	
     lprint(buffer);
+
+	
 
 	//printf("%1d %s\n", lineNo, buffer);
 	
 	xSemaphoreGive(mutex);	
-	va_end(args);
-	return 0;
-}
-
-//---------------------------------------------------------
-
-int  oprintf(uint8_t lineNo, const char *format, ...) 
-{
-	va_list args;
-	va_start(args, format);
-	char buffer[30];
-	vsnprintf(buffer, sizeof(buffer)-1, format, args);
-
-	xSemaphoreTake(mutex, portMAX_DELAY);
-	lsetCursor(0, lineNo); 
-
-	#if 0
-	// erase past background to black
-	display.setColor(BLACK);
-	display.fillRect(0, lineNo * char_height, display.getWidth(), char_height);
-	
-	display.setColor(WHITE);
-	display.drawRect(0, (lineNo * char_height)+1 , display.getWidth(), char_height );
-	
-	display.drawString(0, lineNo * char_height, buffer);
-	#endif
-	
-	printf("%1d %s\n", lineNo, buffer);
-    lprint(buffer);
-
-	xSemaphoreGive(mutex);	
-	
-	va_end(args);
-	return 0;
-}
-
-
-//---------------------------------------------------------
-// inverted printf  (black text on white background)
-
-int  iprintf(uint8_t lineNo, const char *format, ...) 
-{
-	va_list args;
-	va_start(args, format);
-	char buffer[30];
-	vsnprintf(buffer, sizeof(buffer)-1, format, args);
-
-	xSemaphoreTake(mutex, portMAX_DELAY);
-	lsetCursor(0, lineNo); 
-
-	#if 0
-	// erase past background to WHITE
-	display.setColor(WHITE);
-	display.fillRect(0, lineNo * char_height, display.getWidth(), char_height);
-	display.setColor(BLACK);
-	
-	display.drawString(0, lineNo * char_height, buffer);
-	#endif
-
-	printf("%1d %s\n", lineNo, buffer);
-    lprint(buffer);
-
-	xSemaphoreGive(mutex);	
-	
 	va_end(args);
 	return 0;
 }

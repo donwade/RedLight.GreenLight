@@ -45,7 +45,7 @@ void displayInfo() {
 
 	lclear();
 	
-    lsetCursor(0, 40, 4); // font=4
+    lsetCursor(0, 40);
     lprint(F("Latitude:    "));
     if (gps.location.isValid()) {
         lprint(gps.location.lat(), 6);
@@ -143,13 +143,7 @@ void setup() {
     //Serial2.begin(9600, SERIAL_8N1, 13, 14);
 
 	lsetTextColor(TFT_YELLOW, TFT_BLACK);
-    lsetCursor(0, 0, 4); // font=4
-
-	//dumper();
-	//esp_backtrace_print(2);
-	//testDump("hi mom");
-	//delay(-1);
-
+    lsetCursor(0, 0);
 
 	spawnTaskAndDogV2( wavPlayerTask, 		//(void * not_used)TaskFunction_t pvTaskCode,
                      "wavPlayerTask",    //const char * const pcName,
