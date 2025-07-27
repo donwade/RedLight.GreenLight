@@ -22,10 +22,7 @@ static File root;
 //------------------------------------------------
 static LinkedList <GPS_ENTRY2 *> cameras;
 
-void setup_locate(void)
-{
-	hLocationMutex = xSemaphoreCreateMutex();
-}
+//-------------------------------------------------------------
 
 static int32_t readFromSD(const char* filename)
 {
@@ -109,26 +106,57 @@ static int32_t readFromSD(const char* filename)
 	return cnt;
 }
 
-uint32_t loadGpsDb(char *database)
+//-------------------------------------------------------------
+static int32_t addCamera(GPS_ENTRY2 *data)
 {
-	setup_locate();
-	readFromSD(database);
+	String item;
+	char *cstr;
+	char fname[80];
+	int cnt=0;
+	GPS_ENTRY2 *aCamera;
+
+	if (xSemaphoreTake(hLocationMutex, portMAX_DELAY) == pdTRUE)
+	{
+		char bigString[120];
+		
+		aCamera = new(GPS_ENTRY2);
+		aCamera = data;
+		
+		//+45.2948422,-75.8642632 ,  71, "ENE", "Bridlewood" , "Aintree"
+
+		sprintf(bigString, "%f,%f , %d, \"%s\", \"%s\", \"%s\" ", 
+			aCamera->lng,
+			aCamera->lat,
+			aCamera->bearing,
+			aCamera->cardinal,
+			aCamera->onStreet,
+			aCamera->crossStreet);
+
+					
+		cameras.add(aCamera);
+	}
+		
+	xSemaphoreGive(hLocationMutex);
+	return cameras.size();
 }
+
+
 
 GPS_ENTRY2 *closestCam;
 GPS_ENTRY2 *nextClosestCam;
 
-bool findNearestCamera(float vehicleLat, float vehicleLng)
+
+int findNearestCamera(float vehicleLat, float vehicleLng)
 {
 
 	GPS_ENTRY2 *aCamera;
+	int closestDist = INT_MAX;
 
 	if (xSemaphoreTake(hLocationMutex, portMAX_DELAY) == pdTRUE)
 	{
 		int dist;
 		int course;
 		int i;
-		int closestDist = INT_MAX;
 			
 		// do not do any GPS with 0.0 it will hang (hi GD).
 		if (vehicleLat < 1.0 ) goto byebye;
@@ -182,6 +210,15 @@ byebye:
 		xSemaphoreGive(hLocationMutex);
 	}	
 
-	return true;
+	return closestDist;
 }
+
+//-------------------------------------------------------------
+
+void setup_locate(void)
+{
+	hLocationMutex = xSemaphoreCreateMutex();
+	readFromSD("gps.db");
+}
+
 

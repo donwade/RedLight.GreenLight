@@ -1,4 +1,4 @@
-extern uint32_t loadGpsDb(char *database = "gps.db");
+extern void setup_locate(void);
 
 typedef struct  
 {        float lat; 
@@ -12,6 +12,7 @@ typedef struct
 extern GPS_ENTRY2 *closestCam;
 extern GPS_ENTRY2 *nextClosestCam;
 
-extern bool findNearestCamera(float vehicleLat, float vehicleLng);
+// distance to closest camera is returned.
+extern int findNearestCamera(float vehicleLat, float vehicleLng);
 
 

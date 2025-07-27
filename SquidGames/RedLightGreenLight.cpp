@@ -41,6 +41,7 @@ https://github.com/mikalhart/TinyGPSPlus
 
 #include <mutex>
 #include "locate.h"
+#include "viewController.h"
 
 static SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
 
@@ -385,9 +386,9 @@ int findClosestCamera(float vehicleLat, float vehicleLng)
 }
 
 //---------------------------------------------------------
-typedef enum absStates_e { MARK_START, MARK_END, ARRIVED };
+typedef enum absStates_e { MARK_START, MARK_END, ARRIVED, INIT };
 
-absStates_e absState = MARK_START;
+absStates_e absState = INIT;
 
 gpsLocation startLocation;
 gpsLocation endLocation;
@@ -400,15 +401,31 @@ void stateDisplay(void)
 	int dist;
 	int course;
 	const char *dir;
-
+	static KEY_STATE here;
+	
+	kickDog();
 #define DATA_CAPTURE
 
 #ifdef DATA_CAPTURE	
 	static uint8_t toggleCount = 0;
 	toggleCount++;
-
+	
 	switch (absState)
 	{
+		case INIT:
+			
+			threeButtonMenu(
+				"AWAY", 
+				&here, 		//ptrKeyWrite pLeftNotify,
+				"SAVE", 
+				&here, 		//ptrKeyWrite pMiddleNotify,
+				"CAMERA", 
+				&here 		//ptrKeyWrite pRightNotify
+				);
+			absState = MARK_START;
+			
+		break;
+			
 		case MARK_START:
 			// distance has no meaning as we have no start point
 			
@@ -417,9 +434,6 @@ void stateDisplay(void)
 			xprintf(1, "LN=%+10.7f", gpsAverage.lng);
 
 			xprintf(3, "MARK START");
-
-			findNearestCamera(gpsAverage.lat, gpsAverage.lng);
-
 
 			if (iMisc.Kmph > 5)
 				xprintf(2, "%3d %s", veh_course, veh_cardinal);

@@ -139,7 +139,7 @@ void setup() {
 	setup_M5();	
     setup_wavePlayer();
 	setup_BN880();
-	loadGpsDb();
+	setup_locate();
 
 	//BN880 takes care of below.
     //Serial2.begin(9600, SERIAL_8N1, 13, 14);
