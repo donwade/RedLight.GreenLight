@@ -395,7 +395,8 @@ void getNEMA(void) // 31.12 CFG-NMEA (0x06 0x17)
 void getSetUart(uint32_t baudrate = 0) // 31.16.2 Polls the configuration for one I/O Port
 {
 	uint8_t aPacket[50];
-
+	bool bToggleRate = false;
+	
 again:
 	uint8_t portID[] = {1}; // 1=UART 3=USB 4=SPI
 	makeMessage("31.16.2 CFG-UART (get baud)", 0x06, 0x0, portID, sizeof(portID));
@@ -405,24 +406,27 @@ again:
 	
 	if (!payload_len)
 	{
+		uint32_t rate = bToggleRate ? 9600: 115200;
+		bToggleRate = !bToggleRate;
+		
 		// 2) we could be talking at 9600 but h/w alread up at 115200
 		//	  therefore we would get not repsonse it this scenario.
 		//	  Change arduino to 115200 and ask for baud rate again
 		
 		Serial.printf("%s: timeout occurred\n", __FUNCTION__);
-		Serial.printf("h/w could already be at 115200, retrying cmd at 115200 baud\n");
-		Serial2.begin(115200);
+		Serial.printf("h/w flip to baud %d\n", rate);
+		Serial2.begin(rate);
 		goto again;
 	}
 
 	// got a response. 
 	// we could be 9600 or 115200 on both ends.
-	// Don't care. ALWAYS issue a 115200 config request.
 
 	// baud rate is 8 bytes into the payload
 	uint32_t *baud = (uint32_t *) &aPacket[OFFSET2_PAYLOAD + 8];
 	
 	Serial.printf("gps baud rate (h/w) is %d\n", *baud);
+	if (*baud != 115200) goto again;
 
 	if (!baudrate) return;  // 0 = query only
 
