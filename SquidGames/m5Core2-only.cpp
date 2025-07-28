@@ -79,8 +79,6 @@ void setup_M5(void)
 void lsetTextColor(unsigned FGND, unsigned BKGND)
 {
 	M5.Lcd.setTextColor(FGND,BKGND);
-    M5.Lcd.setTextFont(DEFAULT_FONT);
-
 	
 	//w = M5.Lcd.width();
     //h = M5.Lcd.height();

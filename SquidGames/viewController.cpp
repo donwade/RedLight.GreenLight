@@ -36,6 +36,7 @@ void button_create()
 	
 }
 
+static uint32_t bMenuIsActive = 0xDEADBEEF;
 
 void threeButtonMenu(
 	char *leftButtonText, 
@@ -46,6 +47,9 @@ void threeButtonMenu(
 	ptrKeyWrite pRightNotify
 	)
 {
+	Serial.printf("%s ACTIVE ddddddddddddddddddddddd\n", __FUNCTION__);
+
+	bMenuIsActive = true;
 	buttonWidth = phyDispWidth /3;
 	
 	// coordinates specify center of button hence odd math
@@ -76,6 +80,9 @@ void twoButtonMenu(
 	ptrKeyWrite evRightNotify
 	)
 {
+	Serial.printf("%s ACTIVE ddddddddddddddddddddddd\n", __FUNCTION__);
+
+	bMenuIsActive = true;
 	buttonWidth = phyDispWidth /2;
 	
 	// coordinates specify center of button hence odd math
@@ -106,11 +113,19 @@ void setup_button()
 	//twoButtonMenu("LEFTX", &keyDest, "RIGHTX", &keyDest);
 }
 
-void touchPanel_task()
+void touchPanel_impl()
 {
 	kickDog();
 
+	if (!bMenuIsActive)
+	{
+		delay(1);
+		return;
+	}
+	
+	// don't update if menu not running.
 	M5.update();
+	
 	touchDetail = M5.Touch.getDetail();
 
 	if (touchDetail.isPressed())

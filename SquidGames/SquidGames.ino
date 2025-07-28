@@ -113,7 +113,7 @@ void displayInfo() {
 
 void runMenuTask(void *NOTUSED)
 {
-	touchPanel_task();
+	touchPanel_impl();
 }
 
 void loop() {
@@ -125,6 +125,7 @@ void loop() {
 
 
 //=============================================================
+static const gpio_num_t SDCARD_CSPIN = GPIO_NUM_4;
 
 void setup() {
 	Serial.begin(115200);
@@ -135,7 +136,9 @@ void setup() {
 	Serial.printf("BUILT ON %s %s *** ESP-IDF VER = %s ***\n", __DATE__, __TIME__, esp_get_idf_version());
 	delay(3000);
 
-
+	bool ok = SD.begin(SDCARD_CSPIN, SPI, 1000000);
+	Serial.printf("SD=%d\n", ok);
+	
 	setup_M5();	
     setup_wavePlayer();
 	setup_BN880();
@@ -155,13 +158,13 @@ void setup() {
                      );
 	delay(200);
 
+	Serial.println("dwade - run menu disabled");
 	spawnTaskAndDogV2( runMenuTask, 		//(void * not_used)TaskFunction_t pvTaskCode,
                      "runMenuTask",    //const char * const pcName,
                      1024 * 10,		//const uint32_t usStackDepth,
                      NULL,			//void * const pvParameters,
-                     3           	//UBaseType_t uxPriority)
+                     4           	//UBaseType_t uxPriority)
                      );
-
 
 	delay(200);
 
@@ -181,12 +184,11 @@ void setup() {
                      );
 
 
-
 	add_to_playlist("terrain.wav");
 	add_to_playlist("speed.wav");
 	add_to_playlist("whoopwoop.wav");
 	add_to_playlist("terrain.wav");
-	
+/*	
 	add_to_playlist("three.wav");
 	add_to_playlist("thousand.wav");
 	add_to_playlist("two.wav");
@@ -194,6 +196,6 @@ void setup() {
 	
 	add_to_playlist("forty.wav");
 	add_to_playlist("one.wav");
-
+*/
 }
 

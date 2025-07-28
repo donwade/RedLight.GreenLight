@@ -11,7 +11,6 @@
 static void loadWavFiles(File dir, int numTabs);
 static bool hasWavFileExt(char* filename);
 
-static constexpr const gpio_num_t SDCARD_CSPIN = GPIO_NUM_4;
 
 static constexpr const size_t buf_num = 3;
 static constexpr const size_t buf_size = 1024;
@@ -208,7 +207,7 @@ void setup_wavePlayer()
 	  board_M5StackCore2
 	*/
 
-	SD.begin(SDCARD_CSPIN, SPI, 25000000);
+	//SD.begin(SDCARD_CSPIN, SPI, 25000000);
 
 	M5.Speaker.setVolume(128);
 
