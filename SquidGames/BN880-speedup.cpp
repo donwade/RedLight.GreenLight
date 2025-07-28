@@ -616,7 +616,7 @@ void SendPacket(char *explain, const uint8_t *pPacket, uint8_t packetSize, bool 
 		
 		clone[packetSize -2 ] = c_sum >> 8; 
 		clone[packetSize -1 ] = c_sum & 0xFF;
-		SendPacket("adjusted CSUM", clone, packetSize, true);
+		SendPacket("adjusted CSUM", clone, packetSize);
 	}
 }
 
@@ -664,7 +664,7 @@ void setup_BN880()
   //getSetUart();   // 31.16.2 Polls the configuration for one I/O Port
 
   // crank up the reporting clock to .1 second
-  SendPacket("Navrate to 4hz", Navrate4hz, sizeof(Navrate4hz), true);
+  SendPacket("Navrate to 4hz", Navrate4hz, sizeof(Navrate4hz));
 
 }
 
