@@ -14,5 +14,6 @@ extern GPS_ENTRY2 *nextClosestCam;
 
 // distance to closest camera is returned.
 extern int findNearestCamera(float vehicleLat, float vehicleLng);
+extern int32_t writeToSD(char* filename = "backup.db" );
 
 

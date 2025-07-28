@@ -13,7 +13,7 @@
 extern 	TinyGPSPlus gps;
 #define LINE Serial.printf("%s:%d\n", __FUNCTION__, __LINE__)
 
-static constexpr const gpio_num_t SDCARD_CSPIN = GPIO_NUM_4;
+//static constexpr const gpio_num_t SDCARD_CSPIN = GPIO_NUM_4;
 
 static SemaphoreHandle_t hLocationMutex;
 
@@ -31,12 +31,13 @@ static int32_t readFromSD(const char* filename)
 	char fname[80];
 	int cnt=0;
 	GPS_ENTRY2 *aCamera;
-
+	
 	if (xSemaphoreTake(hLocationMutex, portMAX_DELAY) == pdTRUE)
 	{
 		strcpy(&fname[1], filename);
 		fname[0]='/';
-		
+
+		Serial.printf("%s open %s for reading\n", __FUNCTION__, fname);
 		auto file = SD.open(fname);
 
 		if (!file) { return false; }
@@ -100,6 +101,55 @@ static int32_t readFromSD(const char* filename)
 					aCamera->crossStreet);
 		}
 		
+		xSemaphoreGive(hLocationMutex);
+	}	
+
+	return cnt;
+}
+
+
+//-------------------------------------------------------------
+
+int32_t writeToSD(char* filename)
+{
+	char fname[80];
+	int cnt=0;
+	char bigMessage[150];
+	int i;
+	
+	GPS_ENTRY2 *aCamera;
+
+	if (xSemaphoreTake(hLocationMutex, portMAX_DELAY) == pdTRUE)
+	{
+		strcpy(&fname[1], filename);
+		fname[0]='/';
+
+		Serial.printf("%s open %s for writing\n", __FUNCTION__, fname);
+		auto file = SD.open(fname, FILE_WRITE);
+
+		if (!file) { return false; }
+
+		for (i = 0; i < cameras.size(); i++)
+		{
+			aCamera = cameras.get(i);
+
+			//+45.2948422,-75.8642632 ,  71, "ENE", "Bridlewood" , "Aintree"
+			sprintf(bigMessage, "%f,%f , %d, %s , %s, %s ", 
+				aCamera->lat,
+				aCamera->lng,
+				aCamera->bearing,
+				aCamera->cardinal,
+				aCamera->onStreet,
+				aCamera->crossStreet);
+			
+			file.println(bigMessage);
+			
+			//Serial.printf("xyz: %s\n", bigMessage);
+
+		}
+
+		file.close();
+		Serial.printf("%s closed  %d items written\n", fname, i);
 		xSemaphoreGive(hLocationMutex);
 	}	
 
@@ -219,6 +269,7 @@ void setup_locate(void)
 {
 	hLocationMutex = xSemaphoreCreateMutex();
 	readFromSD("gps.db");
+	// testing writeToSD("backup.db");
 }
 
 
