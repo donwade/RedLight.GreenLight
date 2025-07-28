@@ -109,7 +109,7 @@ void setup_button()
 {
 	phyDispWidth = M5.Lcd.width();
 	phyDispHeigth = M5.Lcd.height();
-	//threeButtonMenu("LEFT", &keyDest, "MIDDLE", &keyDest , "RIGHT", &keyDest);
+	threeButtonMenu("LEFT", &keyDest, "MIDDLE", &keyDest , "RIGHT", &keyDest);
 	//twoButtonMenu("LEFTX", &keyDest, "RIGHTX", &keyDest);
 }
 
