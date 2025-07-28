@@ -404,16 +404,17 @@ void stateDisplay(void)
 	static KEY_STATE here;
 	
 	kickDog();
+	
 #define DATA_CAPTURE
 
 #ifdef DATA_CAPTURE	
 	static uint8_t toggleCount = 0;
 	toggleCount++;
-	
+
 	switch (absState)
 	{
 		case INIT:
-			
+#if 0
 			threeButtonMenu(
 				"AWAY", 
 				&here, 		//ptrKeyWrite pLeftNotify,
@@ -422,9 +423,9 @@ void stateDisplay(void)
 				"CAMERA", 
 				&here 		//ptrKeyWrite pRightNotify
 				);
+#endif			
 			absState = MARK_START;
-			
-		break;
+		break;	
 			
 		case MARK_START:
 			// distance has no meaning as we have no start point
@@ -570,9 +571,7 @@ void gpsGetDataTask(void *not_used)
 	
 	static unsigned long lastProfileTime; 
 
-	//while(1)
 	{
-
 		getData();
 		
 		{
@@ -627,7 +626,6 @@ void runDisplayTask(void *not_used)
 	//unsigned long difftime;
 	//static unsigned long lastProfileTime; 
 	
-	while(true)
 	{
 		if (iMisc.Kmph > MIN_SPEED_KPH )
 		{
@@ -651,7 +649,7 @@ void runDisplayTask(void *not_used)
 		
 		//startProfileTime = micros();
 
-		Tdelay(1000);
+		delay(1000);
 	
 	}
 }
