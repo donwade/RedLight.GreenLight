@@ -1,10 +1,11 @@
 #include <M5Unified.h>
+#include <RedLightGreenLight.h>
 #include <m5Core2-only.h>
 #include "viewController.h"
 #include "watchdogs.h"
 
 m5::touch_detail_t touchDetail;
-LGFX_Button buttonLeft, buttonMiddle, buttonRight;
+LGFX_Button *buttonLeft, *buttonMiddle, *buttonRight;
 
 
 static unsigned char buttonWidth = 60;
@@ -27,13 +28,13 @@ void button_create()
 	buttonWidth = phyDispWidth /3;
 	
 	// coordinates specify center of button hence odd math
-	buttonLeft.initButton(&M5.Lcd,	buttonWidth * 0 + buttonWidth/2, 215, buttonWidth, buttonHeight, TFT_WHITE, TFT_GREEN, TFT_BLACK, "CAMERA", 1, 1);
-	buttonLeft.drawButton();
-	buttonMiddle.initButton(&M5.Lcd, buttonWidth * 1 + buttonWidth/2, 215, buttonWidth, buttonHeight, TFT_WHITE, TFT_YELLOW, TFT_BLACK, "AWAY", 1, 1);
-	buttonMiddle.drawButton();
+	buttonLeft->initButton(&M5.Lcd,	buttonWidth * 0 + buttonWidth/2, 215, buttonWidth, buttonHeight, TFT_WHITE, TFT_GREEN, TFT_BLACK, "CAMERA", 1, 1);
+	buttonLeft->drawButton();
+	buttonMiddle->initButton(&M5.Lcd, buttonWidth * 1 + buttonWidth/2, 215, buttonWidth, buttonHeight, TFT_WHITE, TFT_YELLOW, TFT_BLACK, "AWAY", 1, 1);
+	buttonMiddle->drawButton();
 	
-	buttonRight.initButton(&M5.Lcd, buttonWidth * 2 + buttonWidth/2 ,215, buttonWidth, buttonHeight, TFT_WHITE, TFT_RED, TFT_BLACK, "SAVE", 1, 1);
-	buttonRight.drawButton();
+	buttonRight->initButton(&M5.Lcd, buttonWidth * 2 + buttonWidth/2 ,215, buttonWidth, buttonHeight, TFT_WHITE, TFT_RED, TFT_BLACK, "SAVE", 1, 1);
+	buttonRight->drawButton();
 	
 }
 
@@ -55,20 +56,20 @@ void threeButtonMenu(
 	buttonWidth = phyDispWidth /3;
 	
 	// coordinates specify center of button hence odd math
-	buttonLeft.initButton(&M5.Lcd,	buttonWidth * 0 + buttonWidth/2, 210, buttonWidth, buttonHeight, TFT_WHITE, TFT_GREEN, TFT_BLACK, leftButtonText, 1, 1);
-	buttonLeft.drawButton();
+	buttonLeft->initButton(&M5.Lcd,	buttonWidth * 0 + buttonWidth/2, 210, buttonWidth, buttonHeight, TFT_WHITE, TFT_GREEN, TFT_BLACK, leftButtonText, 1, 1);
+	buttonLeft->drawButton();
 	g_evLeftNotify = pLeftNotify;	
 	g_stateLeftButton = KEY_UNKNOWN;
 	if (pLeftNotify) *pLeftNotify = KEY_UNKNOWN;
 	
-	buttonMiddle.initButton(&M5.Lcd, buttonWidth * 1 + buttonWidth/2, 210, buttonWidth, buttonHeight, TFT_WHITE, TFT_YELLOW, TFT_BLACK, middleButtonText, 1, 1);
-	buttonMiddle.drawButton();
+	buttonMiddle->initButton(&M5.Lcd, buttonWidth * 1 + buttonWidth/2, 210, buttonWidth, buttonHeight, TFT_WHITE, TFT_YELLOW, TFT_BLACK, middleButtonText, 1, 1);
+	buttonMiddle->drawButton();
 	g_evMiddleNotify = pMiddleNotify;	
     g_stateMiddleButton = KEY_UNKNOWN;
 	if (pMiddleNotify) *pLeftNotify = KEY_UNKNOWN;
 
-	buttonRight.initButton(&M5.Lcd, buttonWidth * 2 + buttonWidth/2 ,210, buttonWidth, buttonHeight, TFT_WHITE, TFT_RED, TFT_BLACK, rightButtonText, 1, 1);
-	buttonRight.drawButton();
+	buttonRight->initButton(&M5.Lcd, buttonWidth * 2 + buttonWidth/2 ,210, buttonWidth, buttonHeight, TFT_WHITE, TFT_RED, TFT_BLACK, rightButtonText, 1, 1);
+	buttonRight->drawButton();
 	g_evRightNotify = pRightNotify;	
 	g_stateRightButton = KEY_UNKNOWN;
 	if (pRightNotify) *pRightNotify = KEY_UNKNOWN;
@@ -90,8 +91,8 @@ void twoButtonMenu(
 	buttonWidth = phyDispWidth /2;
 	
 	// coordinates specify center of button hence odd math
-	buttonLeft.initButton(&M5.Lcd,	buttonWidth * 0 + buttonWidth/2, 210, buttonWidth, buttonHeight, TFT_WHITE, TFT_GREEN, TFT_BLACK, leftButtonText, 1, 1);
-	buttonLeft.drawButton();
+	buttonLeft->initButton(&M5.Lcd,	buttonWidth * 0 + buttonWidth/2, 210, buttonWidth, buttonHeight, TFT_WHITE, TFT_GREEN, TFT_BLACK, leftButtonText, 1, 1);
+	buttonLeft->drawButton();
 	g_evLeftNotify = evLeftNotify;	
 	g_stateLeftButton = KEY_UNKNOWN;
 	if (evLeftNotify) *evLeftNotify = KEY_UNKNOWN;
@@ -99,8 +100,8 @@ void twoButtonMenu(
 	g_evMiddleNotify = NULL;	
     g_stateMiddleButton = -1;
 
-	buttonRight.initButton(&M5.Lcd, buttonWidth * 1 + buttonWidth/2 ,210, buttonWidth, buttonHeight, TFT_WHITE, TFT_RED, TFT_BLACK, rightButtonText, 1, 1);
-	buttonRight.drawButton();
+	buttonRight->initButton(&M5.Lcd, buttonWidth * 1 + buttonWidth/2 ,210, buttonWidth, buttonHeight, TFT_WHITE, TFT_RED, TFT_BLACK, rightButtonText, 1, 1);
+	buttonRight->drawButton();
 	g_evRightNotify = evRightNotify;	
 	g_stateRightButton = KEY_UNKNOWN;
 	if (evRightNotify) *evRightNotify = KEY_UNKNOWN;
@@ -113,20 +114,53 @@ void setup_button()
 {
 	phyDispWidth = M5.Lcd.width();
 	phyDispHeigth = M5.Lcd.height();
-	threeButtonMenu("LEFT", &keyDest, "MIDDLE", &keyDest , "RIGHT", &keyDest);
+	//threeButtonMenu("LEFT", &keyDest, "MIDDLE", &keyDest , "RIGHT", &keyDest);
 	//twoButtonMenu("LEFTX", &keyDest, "RIGHTX", &keyDest);
+
+	
+	buttonLeft  = new LGFX_Button;
+	buttonMiddle = new LGFX_Button;
+	buttonRight= new LGFX_Button;
+	
 }
+
+static bool button_inited = false;
+static unsigned test = 1;
 
 void touchPanel_impl()
 {
 	kickDog();
+
+	if (!button_inited)
+	{
+		threeButtonMenu("LEFT", &keyDest, "MIDDLE", &keyDest , "RIGHT", &keyDest);
+		button_inited = true;
+	}
 
 	if (!bMenuIsActive)
 	{
 		delay(1);
 		return;
 	}
-	
+
+#if 1
+	if (! (test % 1000))
+	{
+		static uint32_t simple = 0;
+		char msg1[10];
+		sprintf(msg1, "%d", simple++);
+
+		xSemaphoreTake(displayMutex, portMAX_DELAY);
+
+        buttonLeft->setLabelText(msg1);
+		buttonLeft->drawButton();
+
+		xSemaphoreGive(displayMutex);
+		
+	}
+	test++;
+#endif
+
 	// don't update if menu not running.
 	M5.update();
 	
@@ -134,7 +168,7 @@ void touchPanel_impl()
 
 	if (touchDetail.isPressed())
 	{
-		if(buttonLeft.contains(touchDetail.x, touchDetail.y))
+		if(buttonLeft->contains(touchDetail.x, touchDetail.y))
 		{
 			if (g_evLeftNotify && g_stateLeftButton != KEY_DOWN)
 			{
@@ -143,7 +177,7 @@ void touchPanel_impl()
 				g_stateLeftButton = KEY_DOWN;
 			}
 		}
-		else if(buttonMiddle.contains(touchDetail.x, touchDetail.y))
+		else if(buttonMiddle->contains(touchDetail.x, touchDetail.y))
 		{
 			if (g_evMiddleNotify && g_stateMiddleButton != KEY_DOWN)
 			{
@@ -152,7 +186,7 @@ void touchPanel_impl()
 				g_stateMiddleButton = KEY_DOWN;
 			}
 		}
-		else if(buttonRight.contains(touchDetail.x, touchDetail.y))
+		else if(buttonRight->contains(touchDetail.x, touchDetail.y))
 		{
 			if (g_evRightNotify && g_stateRightButton != KEY_DOWN)
 			{
@@ -165,7 +199,7 @@ void touchPanel_impl()
 
 	if (touchDetail.isReleased())
 	{
-		if(buttonLeft.contains(touchDetail.x, touchDetail.y))
+		if(buttonLeft->contains(touchDetail.x, touchDetail.y))
 		{
 			if (g_evLeftNotify && g_stateLeftButton != KEY_UP)
 			{
@@ -174,7 +208,7 @@ void touchPanel_impl()
 				g_stateLeftButton = KEY_UP;
 			}
 		}
-		else if(buttonMiddle.contains(touchDetail.x, touchDetail.y))
+		else if(buttonMiddle->contains(touchDetail.x, touchDetail.y))
 		{
 			if (g_evMiddleNotify && g_stateMiddleButton != KEY_UP)
 			{
@@ -183,7 +217,7 @@ void touchPanel_impl()
 				g_stateMiddleButton = KEY_UP;
 			}
 		}
-		else if(buttonRight.contains(touchDetail.x, touchDetail.y))
+		else if(buttonRight->contains(touchDetail.x, touchDetail.y))
 		{
 			if (g_evRightNotify && g_stateRightButton != KEY_UP)
 			{

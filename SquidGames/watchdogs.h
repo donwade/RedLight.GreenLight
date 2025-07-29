@@ -15,7 +15,6 @@
         printf("PASS =  %s %d\n", #functionCall, retval);       \
     }                                                           \
  })
-#else
 
 // report and stop only on failure
 #define ABORT_ON_FAIL(functionCall, expected) ({                \
@@ -27,6 +26,7 @@
  })
 
 #endif
+#define ABORT_ON_FAIL 
 
 extern TaskHandle_t spawnTaskAndDogV2(  TaskFunction_t pvTaskCode, const char * const pcName, const uint32_t usStackDepth, void * const pvParameters, UBaseType_t uxPriority);
 extern TaskHandle_t spawnTaskAndDog(  TaskFunction_t pvTaskCode, const char * const pcName, const uint32_t usStackDepth, void * const pvParameters, UBaseType_t uxPriority);

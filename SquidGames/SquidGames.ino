@@ -10,7 +10,7 @@
 #include "m5Core2-only.h"
 #include "locate.h"
 
-#include "soc/rtc_wdt.h"
+#include "rtc_wdt.h"
 #include "esp_debug_helpers.h"
 
 extern int  xprintf(uint8_t lineNo, const char *format, ...); 

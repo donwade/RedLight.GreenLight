@@ -43,7 +43,7 @@ https://github.com/mikalhart/TinyGPSPlus
 #include "locate.h"
 #include "viewController.h"
 
-static SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
+SemaphoreHandle_t displayMutex = xSemaphoreCreateMutex();
 
 #define BUILTIN_LED 4  // TIP t-beam
 extern void smartDelay(unsigned long ms);
@@ -299,7 +299,7 @@ int  xprintf(uint8_t lineNo, const char *format, ...)
 	vsnprintf(buffer, sizeof(buffer)-1, format, args);
 
 
-	xSemaphoreTake(mutex, portMAX_DELAY);
+	xSemaphoreTake(displayMutex, portMAX_DELAY);
 
 	
     lsetCursor(0, lineNo); 
@@ -323,7 +323,7 @@ int  xprintf(uint8_t lineNo, const char *format, ...)
 
 	//printf("%1d %s\n", lineNo, buffer);
 	
-	xSemaphoreGive(mutex);	
+	xSemaphoreGive(displayMutex);	
 	va_end(args);
 	return 0;
 }

@@ -254,7 +254,7 @@ TaskHandle_t spawnTaskAndDogV2(  TaskFunction_t pvTaskCode,
     TaskHandle_t retval;
 
     //Initialize WDT, doing it again will cause a crash
-
+#if 0
     if (!bDogInit)
     {
         bDogInit = true;
@@ -263,6 +263,7 @@ TaskHandle_t spawnTaskAndDogV2(  TaskFunction_t pvTaskCode,
         // add the built-in idle task on core 1 to the watchdog.
         ABORT_ON_FAIL(esp_task_wdt_add(xTaskGetIdleTaskHandleForCPU(DEFAULT_CORE)), ESP_OK);
     }
+#endif
 
 	printf("%s creating %s\n", __FUNCTION__, pcName);
 
@@ -295,10 +296,10 @@ TaskHandle_t spawnTaskAndDog(  TaskFunction_t pvTaskCode,
     if (!bDogInit)
     {
         bDogInit = true;
-        ABORT_ON_FAIL(esp_task_wdt_init(TWDT_DOG_TIMER_SEC,false), ESP_OK);
+       // ABORT_ON_FAIL(esp_task_wdt_init(TWDT_DOG_TIMER_SEC,false), ESP_OK);
 
         // add the built-in idle task on core 1 to the watchdog.
-        esp_task_wdt_add(xTaskGetIdleTaskHandleForCPU(DEFAULT_CORE));
+        //esp_task_wdt_add(xTaskGetIdleTaskHandleForCPU(DEFAULT_CORE));
     }
 
 	printf("creating %s\n", pcName); 
