@@ -56,9 +56,6 @@ void lclear(void)
 #include <Fonts/FreeMonoBoldOblique12pt7b.h>
 #include <Fonts/FreeMono12pt7b.h>
 
-#define WIDGET_FONT  &fonts::FreeMonoBoldOblique12pt7b
-#define DEFAULT_FONT &fonts::FreeMono12pt7b
-
 //--------------------------------------------------
 
 
@@ -78,6 +75,7 @@ void setup_M5(void)
 
 void lsetTextColor(unsigned FGND, unsigned BKGND)
 {
+    M5.Lcd.setTextFont(DEFAULT_FONT);
 	M5.Lcd.setTextColor(FGND,BKGND);
 	
 	//w = M5.Lcd.width();

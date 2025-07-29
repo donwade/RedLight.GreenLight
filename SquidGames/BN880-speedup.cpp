@@ -392,7 +392,7 @@ void getNEMA(void) // 31.12 CFG-NMEA (0x06 0x17)
 }
 
 //------------------------------------------------------
-void getSetUart(uint32_t baudrate = 0) // 31.16.2 Polls the configuration for one I/O Port
+uint32_t getSetUart(uint32_t baudrate = 0) // 31.16.2 Polls the configuration for one I/O Port
 {
 	uint8_t aPacket[50];
 	bool bToggleRate = false;
@@ -416,6 +416,7 @@ again:
 		Serial.printf("%s: timeout occurred\n", __FUNCTION__);
 		Serial.printf("h/w flip to baud %d\n", rate);
 		Serial2.begin(rate);
+		delay(200);
 		goto again;
 	}
 
@@ -424,11 +425,11 @@ again:
 
 	// baud rate is 8 bytes into the payload
 	uint32_t *baud = (uint32_t *) &aPacket[OFFSET2_PAYLOAD + 8];
+
 	
 	Serial.printf("gps baud rate (h/w) is %d\n", *baud);
-	if (*baud != 115200) goto again;
-
-	if (!baudrate) return;  // 0 = query only
+	if (!baudrate) return *baud;  // 0 = query only
+ 
 
 	// config for 115200
 	// good thing its a little endian message order
@@ -439,8 +440,12 @@ again:
 	//dumpPacket(aPacket, payload_len + 8);
 
 	SendPacket("31.16.2 CFG-UART (set to 115200)", aPacket, payload_len + 2 + 2 + 2 + 2);
-	getSetUart(0); // did it stick?
+
 	
+	if (getSetUart(0) != baudrate) goto again; // did it stick?
+
+	Serial.printf("\n**** baudrate = %d\n", baudrate);
+	return baudrate;
 }
 
 //------------------------------------------------------

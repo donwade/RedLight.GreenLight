@@ -14,5 +14,10 @@ extern void lclear(void);
 extern void setup_M5(void);
 extern void lsetTextColor(unsigned FGND, unsigned BKGND);
 
+#define WIDGET_FONT  &fonts::FreeMonoBoldOblique12pt7b
+#define DEFAULT_FONT &fonts::FreeMono12pt7b
+
+
+
 
 

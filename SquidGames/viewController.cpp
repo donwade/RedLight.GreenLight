@@ -1,4 +1,5 @@
 #include <M5Unified.h>
+#include <m5Core2-only.h>
 #include "viewController.h"
 #include "watchdogs.h"
 
@@ -48,6 +49,7 @@ void threeButtonMenu(
 	)
 {
 	Serial.printf("%s ACTIVE ddddddddddddddddddddddd\n", __FUNCTION__);
+    M5.Lcd.setTextFont(WIDGET_FONT);
 
 	bMenuIsActive = true;
 	buttonWidth = phyDispWidth /3;
@@ -81,6 +83,8 @@ void twoButtonMenu(
 	)
 {
 	Serial.printf("%s ACTIVE ddddddddddddddddddddddd\n", __FUNCTION__);
+
+    M5.Lcd.setTextFont(WIDGET_FONT);
 
 	bMenuIsActive = true;
 	buttonWidth = phyDispWidth /2;

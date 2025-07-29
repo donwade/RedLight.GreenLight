@@ -136,7 +136,7 @@ void setup() {
 	Serial.printf("BUILT ON %s %s *** ESP-IDF VER = %s ***\n", __DATE__, __TIME__, esp_get_idf_version());
 	delay(3000);
 
-	bool ok = SD.begin(SDCARD_CSPIN, SPI, 1000000);
+    bool ok = SD.begin(SDCARD_CSPIN, SPI, 25000000);
 	Serial.printf("SD=%d\n", ok);
 	
 	setup_M5();	
