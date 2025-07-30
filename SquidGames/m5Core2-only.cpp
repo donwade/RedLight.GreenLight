@@ -9,7 +9,7 @@ void lsetCursor(uint16_t X, uint16_t Y)
 	//int16_t horz =M5.Lcd.textWidth(" ", font);
 	//printf("charX=%d\n", horz);
 
-	if (!vert) vert = M5.Lcd.fontHeight() + 4;
+	if (!vert) vert = M5.Lcd.fontHeight() + 3;
 	//printf("charY=%d\n", vert);
 	
 	M5.Lcd.setCursor(X, Y * vert);
@@ -73,9 +73,10 @@ void setup_M5(void)
 	setup_button();
 }
 
-void lsetTextColor(unsigned FGND, unsigned BKGND)
+void lsetTextColor(uint32_t FGND, uint32_t BKGND)
 {
     M5.Lcd.setTextFont(DEFAULT_FONT);
+	//M5.Lcd.setTextColor(FGND);
 	M5.Lcd.setTextColor(FGND,BKGND);
 	
 	//w = M5.Lcd.width();

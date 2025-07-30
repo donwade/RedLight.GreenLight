@@ -146,7 +146,7 @@ void setup() {
 	//BN880 takes care of below.
     //Serial2.begin(9600, SERIAL_8N1, 13, 14);
 
-	lsetTextColor(TFT_YELLOW, TFT_BLACK);
+	lsetTextColor(_WHITE, _BLACK);
     lsetCursor(0, 0);
 
 	spawnTaskAndDogV2( wavPlayerTask, 		//(void * not_used)TaskFunction_t pvTaskCode,
@@ -157,7 +157,6 @@ void setup() {
                      );
 	delay(200);
 
-	Serial.println("dwade - run menu disabled");
 	spawnTaskAndDogV2( runMenuTask, 		//(void * not_used)TaskFunction_t pvTaskCode,
                      "runMenuTask",    //const char * const pcName,
                      1024 * 10,		//const uint32_t usStackDepth,

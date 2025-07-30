@@ -22,6 +22,7 @@ https://github.com/mikalhart/TinyGPSPlus
 
 
 #include <TinyGPS++.h>
+#include <M5Unified.h>
 
 #include "m5Core2-only.h"
 #include "watchdogs.h"
@@ -33,7 +34,6 @@ https://github.com/mikalhart/TinyGPSPlus
 
 #include <SPI.h>
 #include <Wire.h>  
-#include "SSD1306.h" 
 
 //#include "BluetoothA2DPSource.h"
 #include <math.h> 
@@ -345,11 +345,8 @@ int findClosestCamera(float vehicleLat, float vehicleLng)
 }
 
 //---------------------------------------------------------
-typedef enum absStates_e { MARK_START, MARK_END, ARRIVED, INIT };
 
-absStates_e absState = INIT;
-
-gpsLocation startLocation;
+gpsLocation cameraLocation;
 gpsLocation endLocation;
 
 static int veh_course;
@@ -370,90 +367,62 @@ void stateDisplay(BUTTON_EVENT some_key)
 	static uint8_t toggleCount = 0;
 	toggleCount++;
 
-	switch (absState)
+	xprintf(0, "LA=%+10.7f", gpsAverage.lat);
+	xprintf(1, "LN=%+10.7f", gpsAverage.lng);
+
+#if 0
+	if (iMisc.Kmph > 5)
+		xprintf(2, "%3d %s", veh_course, veh_cardinal);
+	else
+		xprintf(2, "%2d/%2d/%4d S=%2d", gps.date.day(), gps.date.month(), 
+				gps.date.year(), gps.satellites.value());
+#endif	
+
+	switch (some_key)
 	{
-		case INIT:
-			absState = MARK_START;
+		case BUTTON_INIT:
+			threeButtonMenu("AWAY", "SAVE", "CAMERA");
 		break;	
 			
-		case MARK_START:
-			// distance has no meaning as we have no start point
-			
-			
-			xprintf(0, "LA=%+10.7f", gpsAverage.lat);
-			xprintf(1, "LN=%+10.7f", gpsAverage.lng);
+		case LBUTTON_UP:
+		case LBUTTON_DN:
 
-			xprintf(3, "MARK START");
-
-			if (iMisc.Kmph > 5)
-				xprintf(2, "%3d %s", veh_course, veh_cardinal);
-			else
-				xprintf(2, "%2d/%2d/%4d S=%2d", gps.date.day(), gps.date.month(), 
-						gps.date.year(), gps.satellites.value());
-
-			if (bButtonPressed)
+			if (some_key == LBUTTON_DN)
 			{
-				startLocation = gpsAverage;
-				bButtonPressed = false;
-				absState = MARK_END;
+				cameraLocation = gpsAverage;
+				cprintf(_GREEN, 4, "LA=%+9.7f", gpsAverage.lat);
+				cprintf(_GREEN, 5, "LO=%+9.7f", gpsAverage.lng);
+				cprintf(_ORANGE, 6, "NEXT CAMERA or SAVE");
 				Serial.println("");
 			}
 			
 		break;
 
-		case MARK_END:
+		case RBUTTON_UP:
+		case RBUTTON_DN:
 
-			dist = gps.distanceBetween(startLocation.lat, startLocation.lng, gpsAverage.lat, gpsAverage.lng);
-			course = (int)gps.courseTo(startLocation.lat, startLocation.lng, gpsAverage.lat, gpsAverage.lng);
-			dir = gps.cardinal(course);
-			
-			xprintf(0, "LA=%+9.7f", gpsAverage.lat);
-			xprintf(1, "LO=%+9.7f", gpsAverage.lng);
-			xprintf(2, "END=%d %s", course, dir);
-			xprintf(3, "MARK END!");
-			//display.display();
-
-
-			if (bButtonPressed)
+			if (some_key == RBUTTON_DN)
 			{
 				endLocation = gpsAverage;
-				bButtonPressed = false;
-				absState = ARRIVED;
-
-				// immediately report to serial port 
-				// calc using approch logic
-				dist = gps.distanceBetween(endLocation.lat, endLocation.lng, startLocation.lat, startLocation.lng );
-				course = (int)gps.courseTo(endLocation.lat, endLocation.lng, startLocation.lat, startLocation.lng );
-				dir = gps.cardinal(course);
-
-				// throw out arrival, prep for C program
-				// fill in onStreet and crossStreet from google maps later
-				// formated nicely for cut/paste into google maps lat/long fmt
-				
-				Serial.printf("   { %+9.7f,%+9.7f , %3d, \"%3s\", \"onStreet\" , \"crossStreet\" }, \n"
-				, endLocation.lat, endLocation.lng, course, dir);
-
+				Serial.println("");
+				cprintf(_RED, 2, "LA=%+9.7f", gpsAverage.lat);
+				cprintf(_RED ,3, "LO=%+9.7f", gpsAverage.lng);
+				cprintf(_ORANGE, 6, "NEXT AWAY or SAVE");
 			}
-			
+
 		break;
 
-		case ARRIVED:	// arrived at camera.
-			// course direction is view FROM distance going to CAMERA
-			dist = gps.distanceBetween(endLocation.lat, endLocation.lng, startLocation.lat, startLocation.lng );
-			course = (int)gps.courseTo(endLocation.lat, endLocation.lng, startLocation.lat, startLocation.lng );
+		case MBUTTON_DN:
+		case MBUTTON_UP:
+
+			dist = gps.distanceBetween(cameraLocation.lat, cameraLocation.lng, endLocation.lat, endLocation.lng);
+			course = (int)gps.courseTo(cameraLocation.lat, cameraLocation.lng, endLocation.lat, endLocation.lng);
 			dir = gps.cardinal(course);
-			
-			xprintf(0, "LA=%+9.7f", endLocation.lat);
-			xprintf(1, "LO=%+9.7f", endLocation.lng);
-			xprintf(2, "END=%d %s", course, dir);
-			xprintf(3, "APPROACHING");
 
-			if (bButtonPressed)
-			{
-				bButtonPressed = false;
-				absState = MARK_START;   // and do it again
-			}
+			cprintf(_YELLOW, 6, "course = %d dir=%3s", course, dir);
+			
 		break;
+
 	}
 #else
 
@@ -540,7 +509,7 @@ void gpsGetDataTask(void *not_used)
 		double delta_dist = gps.distanceBetween(iLocation.lat, iLocation.lng, oldLocation.lat, oldLocation.lng );
 		oldLocation = iLocation;
 		
-		xprintf(4, "diff = %8.5f", delta_dist);
+		xprintf(7, "diff=%7.4f s=%d", delta_dist, gps.satellites.value());
 		
 		// get direction only if going fast enough
 		// otherwise it points all over the place
@@ -571,43 +540,31 @@ void gpsGetDataTask(void *not_used)
 
 void runDisplayTask(void *not_used)
 {
-	//unsigned long startProileTime;
-	//unsigned long difftime;
-	//static unsigned long lastProfileTime; 
-	
+	if (iMisc.Kmph > MIN_SPEED_KPH )
 	{
-		if (iMisc.Kmph > MIN_SPEED_KPH )
-		{
-			gpsLocation oldest;
-			getOldestSample(&oldest);
-			veh_course = (int)gps.courseTo(oldest.lat, oldest.lng, iLocation.lat, iLocation.lng );
-			veh_cardinal = gps.cardinal(veh_course);
-		}
-		
-		Serial.printf("%2d:%02d:%02d @ %+9.7f %+9.7f ^ %3d kph dir %3d %s\n", 
-				iMisc.hour,iMisc.minute,iMisc.second,
-				iLocation.lat, iLocation.lng,
-				(int)iMisc.Kmph, (int)iMisc.course, gps.cardinal(iMisc.course)
-				);
-
-		// profile loop time. So far about 3ms total		
-		//difftime =  micros() - startProfileTime;
-		//Serial.printf("profile = %d uS\n", difftime);
-
-		BUTTON_MESSAGE abutton;
-
-		if (xSemaphoreTake( keyCountingSemaphore, pdMS_TO_TICKS(1000) ) == pdTRUE)
-		{
-			buttonQueue.pop(&abutton);
-			Serial.printf("%s BUTTON = %d\n", __FUNCTION__, abutton.key);
-			stateDisplay(abutton.key);
-		}
-		else
-			stateDisplay(MT);
-			
-		
-		
+		gpsLocation oldest;
+		getOldestSample(&oldest);
+		veh_course = (int)gps.courseTo(oldest.lat, oldest.lng, iLocation.lat, iLocation.lng );
+		veh_cardinal = gps.cardinal(veh_course);
 	}
+	
+	Serial.printf("%2d:%02d:%02d @ %+9.7f %+9.7f ^ %3d kph dir %3d %s\n", 
+			iMisc.hour,iMisc.minute,iMisc.second,
+			iLocation.lat, iLocation.lng,
+			(int)iMisc.Kmph, (int)iMisc.course, gps.cardinal(iMisc.course)
+			);
+
+	BUTTON_MESSAGE abutton;
+
+	if (xSemaphoreTake( keyCountingSemaphore, pdMS_TO_TICKS(1000) ) == pdTRUE)
+	{
+		buttonQueue.pop(&abutton);
+
+		Serial.printf("%s BUTTON = %d\n", __FUNCTION__, abutton.key);
+		stateDisplay(abutton.key);
+	}
+	else
+		stateDisplay(MT);
 }
 
 

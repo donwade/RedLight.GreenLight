@@ -8,7 +8,6 @@ SemaphoreHandle_t keyCountingSemaphore;
 
 
 //---------------------------------------------------------
-
 int  xprintf(uint8_t lineNo, const char *format, ...) 
 {
 	static u_int8_t linelen[10];
@@ -19,7 +18,8 @@ int  xprintf(uint8_t lineNo, const char *format, ...)
 	vsnprintf(buffer, sizeof(buffer)-1, format, args);
 
 	xSemaphoreTake(displayMutex, portMAX_DELAY);
-	
+
+	lsetTextColor(_WHITE, _BLACK);
 	lsetCursor(0, lineNo); 
 
 	// time to kill off any chars from old print
@@ -37,8 +37,42 @@ int  xprintf(uint8_t lineNo, const char *format, ...)
 	linelen[lineNo] = ll;
 	lprint(buffer);
 
-	//printf("%1d %s\n", lineNo, buffer);
+	xSemaphoreGive(displayMutex);	
+	va_end(args);
+	return 0;
+}
+
+int  cprintf(uint32_t color, uint8_t lineNo, const char *format, ...) 
+{
+	static u_int8_t linelen[10];
+	va_list args;
+	va_start(args, format);
+	char buffer[40];
 	
+	vsnprintf(buffer, sizeof(buffer)-1, format, args);
+
+	xSemaphoreTake(displayMutex, portMAX_DELAY);
+	
+	lsetTextColor(color, _BLACK);
+	lsetCursor(0, lineNo); 
+
+	// time to kill off any chars from old print
+	uint32_t ll = strlen(buffer);
+	
+	if ( ll < linelen[lineNo])
+	{
+		// overstrike past text with spaces if needed
+		uint32_t add = linelen[lineNo] - ll +1 ; //+1 doesnt clear 100.00%
+
+		// mono spaced font right :) I'm lazy.
+		for (int i = 0; i < add+1; i++) strcat(buffer," ");
+	}
+	
+	linelen[lineNo] = ll;
+	lprint(buffer);
+
+	lsetTextColor(_WHITE, _BLACK);
+
 	xSemaphoreGive(displayMutex);	
 	va_end(args);
 	return 0;
@@ -88,6 +122,8 @@ void threeButtonMenu(
 	buttonRight.drawButton();
 	rightButtonState = KEY_UNKNOWN;
 
+	BUTTON_MESSAGE msg;
+
 	xSemaphoreGive(displayMutex);	
 	
 }
@@ -127,12 +163,19 @@ cppQueue buttonQueue(sizeof(BUTTON_MESSAGE), MAX_KEYS_QUEUED, FIFO);
 
 void setup_button()
 {
+	Serial.printf("    >>> %s done\n", __FUNCTION__);
 	keyCountingSemaphore = xSemaphoreCreateCounting(MAX_KEYS_QUEUED,0);
 
 	phyDispWidth = M5.Lcd.width();
 	phyDispHeigth = M5.Lcd.height();
-	threeButtonMenu("LEFT", "MIDDLE", "RIGHT");
+	//threeButtonMenu("LEFT", "MIDDLE", "RIGHT");
 	//twoButtonMenu("LEFTX", "RIGHTX");
+
+	
+	BUTTON_MESSAGE msg;
+	msg.key = BUTTON_INIT;
+	buttonQueue.push(&msg);
+	xSemaphoreGive(keyCountingSemaphore);
 }
 
 void touchPanel_impl()
