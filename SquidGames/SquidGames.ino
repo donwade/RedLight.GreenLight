@@ -112,7 +112,6 @@ void displayInfo() {
 
 void runMenuTask(void *NOTUSED)
 {
-	while(true) {}  // dog me
 	touchPanel_impl();
 }
 

@@ -4,6 +4,7 @@
 #include "watchdogs.h"
 
 static SemaphoreHandle_t displayMutex = xSemaphoreCreateMutex();
+SemaphoreHandle_t keyCountingSemaphore;
 
 
 //---------------------------------------------------------
@@ -53,7 +54,6 @@ int  xprintf(uint8_t lineNo, const char *format, ...)
 
 m5::touch_detail_t touchDetail;
 LGFX_Button buttonLeft, buttonMiddle, buttonRight;
-
 
 static unsigned char buttonWidth = 60;
 static unsigned char buttonHeight = 60;
@@ -162,19 +162,29 @@ void twoButtonMenu(
 
 }
 
+#define MAX_KEYS_QUEUED 8
+
 
 KEY_STATE keyDest;
 
+cppQueue buttonQueue(sizeof(BUTTON_MESSAGE), MAX_KEYS_QUEUED, FIFO);
+
 void setup_button()
 {
+
+
+	keyCountingSemaphore = xSemaphoreCreateCounting(MAX_KEYS_QUEUED,0);
+
 	phyDispWidth = M5.Lcd.width();
 	phyDispHeigth = M5.Lcd.height();
 	threeButtonMenu("LEFT", &keyDest, "MIDDLE", &keyDest , "RIGHT", &keyDest);
 	//twoButtonMenu("LEFTX", &keyDest, "RIGHTX", &keyDest);
+	
 }
 
 void touchPanel_impl()
 {
+	BUTTON_MESSAGE *msg;
 	kickDog();
 
 	if (!bMenuIsActive)
@@ -192,6 +202,7 @@ void touchPanel_impl()
 
 	if (touchDetail.isPressed())
 	{
+		
 		if(buttonLeft.contains(touchDetail.x, touchDetail.y))
 		{
 			if (g_evLeftNotify && g_stateLeftButton != KEY_DOWN)
@@ -199,6 +210,11 @@ void touchPanel_impl()
 				Serial.println("Left pressed");
 				*g_evLeftNotify = KEY_DOWN;
 				g_stateLeftButton = KEY_DOWN;
+				
+				msg = (BUTTON_MESSAGE *) malloc(sizeof(BUTTON_MESSAGE));
+				msg->key = LBUTTON_DN;
+				buttonQueue.push(msg);
+				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
 		else if(buttonMiddle.contains(touchDetail.x, touchDetail.y))
@@ -208,6 +224,10 @@ void touchPanel_impl()
 				Serial.println("Middle pressed");
 				*g_evMiddleNotify = KEY_DOWN;
 				g_stateMiddleButton = KEY_DOWN;
+				msg = (BUTTON_MESSAGE *) malloc(sizeof(BUTTON_MESSAGE));
+				msg->key = MBUTTON_DN;
+				buttonQueue.push(msg);
+				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
 		else if(buttonRight.contains(touchDetail.x, touchDetail.y))
@@ -217,12 +237,19 @@ void touchPanel_impl()
 				Serial.println("Right pressed");
 				*g_evRightNotify = KEY_DOWN;
 				g_stateRightButton = KEY_DOWN;
+				msg = (BUTTON_MESSAGE *) malloc(sizeof(BUTTON_MESSAGE));
+				msg->key = RBUTTON_DN;
+				buttonQueue.push(msg);
+				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
+		
 	}
 
 	if (touchDetail.isReleased())
 	{
+		msg = (BUTTON_MESSAGE *) malloc(sizeof(BUTTON_MESSAGE));
+		
 		if(buttonLeft.contains(touchDetail.x, touchDetail.y))
 		{
 			if (g_evLeftNotify && g_stateLeftButton != KEY_UP)
@@ -230,6 +257,10 @@ void touchPanel_impl()
 				Serial.println("Left released");
 				*g_evLeftNotify = KEY_UP;
 				g_stateLeftButton = KEY_UP;
+				msg = (BUTTON_MESSAGE *) malloc(sizeof(BUTTON_MESSAGE));
+				msg->key = LBUTTON_UP;
+				buttonQueue.push(msg);
+				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
 		else if(buttonMiddle.contains(touchDetail.x, touchDetail.y))
@@ -239,6 +270,10 @@ void touchPanel_impl()
 				Serial.println("Middle released");
 				*g_evMiddleNotify = KEY_UP;
 				g_stateMiddleButton = KEY_UP;
+				msg = (BUTTON_MESSAGE *) malloc(sizeof(BUTTON_MESSAGE));
+				msg->key = MBUTTON_UP;
+				buttonQueue.push(msg);
+				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
 		else if(buttonRight.contains(touchDetail.x, touchDetail.y))
@@ -248,6 +283,10 @@ void touchPanel_impl()
 				Serial.println("Right released");
 				*g_evRightNotify = KEY_UP;
 				g_stateRightButton = KEY_UP;
+				msg = (BUTTON_MESSAGE *) malloc(sizeof(BUTTON_MESSAGE));
+				msg->key = RBUTTON_UP;
+				buttonQueue.push(msg);
+				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
 	}

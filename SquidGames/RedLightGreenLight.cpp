@@ -25,6 +25,8 @@ https://github.com/mikalhart/TinyGPSPlus
 
 #include "m5Core2-only.h"
 #include "watchdogs.h"
+#include "viewController.h"
+
 #include <iostream>
 #include <cstring>
 #include <string>
@@ -353,7 +355,7 @@ gpsLocation endLocation;
 static int veh_course;
 static const char *veh_cardinal = "???";
 
-void stateDisplay(void)
+void stateDisplay(BUTTON_EVENT some_key)
 {
 	int dist;
 	int course;
@@ -602,12 +604,19 @@ void runDisplayTask(void *not_used)
 		//difftime =  micros() - startProfileTime;
 		//Serial.printf("profile = %d uS\n", difftime);
 
-		stateDisplay();
-		
-		//startProfileTime = micros();
+		BUTTON_MESSAGE abutton;
 
-		delay(1000);
-	
+		if (xSemaphoreTake( keyCountingSemaphore, pdMS_TO_TICKS(1000) ) == pdTRUE)
+		{
+			buttonQueue.pop(&abutton);
+			Serial.printf("%s BUTTON = %d\n", __FUNCTION__, abutton.key);
+			stateDisplay(abutton.key);
+		}
+		else
+			stateDisplay(MT);
+			
+		
+		
 	}
 }
 
