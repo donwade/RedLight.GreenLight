@@ -2,6 +2,8 @@
 #define VIEW_CONTROLLER
 
 #include "cppQueue.h"
+typedef enum KEY_STATE { KEY_UNKNOWN, KEY_DOWN, KEY_UP};
+
 
 extern int  xprintf(uint8_t lineNo, const char *format, ...); 
 
@@ -22,29 +24,16 @@ typedef struct {
 	BUTTON_EVENT key;
 } BUTTON_MESSAGE;
 
-
-
-
-typedef enum KEY_STATE { KEY_UNKNOWN, KEY_DOWN, KEY_UP};
-
-typedef KEY_STATE *ptrKeyWrite;
-
-
 void threeButtonMenu(
 	char *leftButtonText, 
-    ptrKeyWrite leftNotify,
 	char *middleButtonText, 
-	ptrKeyWrite middleNotify,
-	char *rightButtonText, 
-    ptrKeyWrite rightNotify
+	char *rightButtonText 
 	);
 
 
 void twoButtonMenu(
     char *leftButtonText, 
-    ptrKeyWrite leftNotify,
-    char *rightButtonText, 
-    ptrKeyWrite rightNotify
+    char *rightButtonText 
     );
 
 

@@ -373,16 +373,6 @@ void stateDisplay(BUTTON_EVENT some_key)
 	switch (absState)
 	{
 		case INIT:
-#if 0
-			threeButtonMenu(
-				"AWAY", 
-				&here, 		//ptrKeyWrite pLeftNotify,
-				"SAVE", 
-				&here, 		//ptrKeyWrite pMiddleNotify,
-				"CAMERA", 
-				&here 		//ptrKeyWrite pRightNotify
-				);
-#endif			
 			absState = MARK_START;
 		break;	
 			

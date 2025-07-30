@@ -14,13 +14,11 @@ int  xprintf(uint8_t lineNo, const char *format, ...)
 	static u_int8_t linelen[10];
 	va_list args;
 	va_start(args, format);
-	char buffer[30];
+	char buffer[40];
 	
 	vsnprintf(buffer, sizeof(buffer)-1, format, args);
 
-
 	xSemaphoreTake(displayMutex, portMAX_DELAY);
-
 	
 	lsetCursor(0, lineNo); 
 
@@ -29,17 +27,15 @@ int  xprintf(uint8_t lineNo, const char *format, ...)
 	
 	if ( ll < linelen[lineNo])
 	{
+		// overstrike past text with spaces if needed
 		uint32_t add = linelen[lineNo] - ll;
-		Serial.println(add);
-		// mono spaced font right :)
+
+		// mono spaced font right :) I'm lazy.
 		for (int i = 0; i < add+1; i++) strcat(buffer," ");
 	}
 	
 	linelen[lineNo] = ll;
-	
 	lprint(buffer);
-
-	
 
 	//printf("%1d %s\n", lineNo, buffer);
 	
@@ -60,11 +56,6 @@ static unsigned char buttonHeight = 60;
 
 static unsigned int phyDispWidth;
 static unsigned int phyDispHeigth;
-
-
-ptrKeyWrite g_evLeftNotify;
-ptrKeyWrite g_evMiddleNotify;
-ptrKeyWrite g_evRightNotify;
 
 int8_t g_stateLeftButton = -1;
 int8_t g_stateRightButton = -1;
@@ -89,16 +80,11 @@ static uint32_t bMenuIsActive = 0xDEADBEEF;
 
 void threeButtonMenu(
 	char *leftButtonText, 
-	ptrKeyWrite pLeftNotify,
 	char *middleButtonText, 
-	ptrKeyWrite pMiddleNotify,
-	char *rightButtonText, 
-	ptrKeyWrite pRightNotify
-	)
+	char *rightButtonText)
 {
 	xSemaphoreTake(displayMutex, portMAX_DELAY);
 
-	Serial.printf("%s ACTIVE ddddddddddddddddddddddd\n", __FUNCTION__);
     M5.Lcd.setTextFont(WIDGET_FONT);
 
 	bMenuIsActive = true;
@@ -107,21 +93,15 @@ void threeButtonMenu(
 	// coordinates specify center of button hence odd math
 	buttonLeft.initButton(&M5.Lcd,	buttonWidth * 0 + buttonWidth/2, 210, buttonWidth, buttonHeight, TFT_WHITE, TFT_GREEN, TFT_BLACK, leftButtonText, 1, 1);
 	buttonLeft.drawButton();
-	g_evLeftNotify = pLeftNotify;	
 	g_stateLeftButton = KEY_UNKNOWN;
-	if (pLeftNotify) *pLeftNotify = KEY_UNKNOWN;
 	
 	buttonMiddle.initButton(&M5.Lcd, buttonWidth * 1 + buttonWidth/2, 210, buttonWidth, buttonHeight, TFT_WHITE, TFT_YELLOW, TFT_BLACK, middleButtonText, 1, 1);
 	buttonMiddle.drawButton();
-	g_evMiddleNotify = pMiddleNotify;	
     g_stateMiddleButton = KEY_UNKNOWN;
-	if (pMiddleNotify) *pLeftNotify = KEY_UNKNOWN;
 
 	buttonRight.initButton(&M5.Lcd, buttonWidth * 2 + buttonWidth/2 ,210, buttonWidth, buttonHeight, TFT_WHITE, TFT_RED, TFT_BLACK, rightButtonText, 1, 1);
 	buttonRight.drawButton();
-	g_evRightNotify = pRightNotify;	
 	g_stateRightButton = KEY_UNKNOWN;
-	if (pRightNotify) *pRightNotify = KEY_UNKNOWN;
 
 	xSemaphoreGive(displayMutex);	
 	
@@ -129,13 +109,9 @@ void threeButtonMenu(
 
 void twoButtonMenu(
 	char *leftButtonText, 
-	ptrKeyWrite evLeftNotify,
-	char *rightButtonText, 
-	ptrKeyWrite evRightNotify
+	char *rightButtonText
 	)
 {
-	Serial.printf("%s ACTIVE ddddddddddddddddddddddd\n", __FUNCTION__);
-
 	xSemaphoreTake(displayMutex, portMAX_DELAY);
     M5.Lcd.setTextFont(WIDGET_FONT);
 
@@ -145,18 +121,13 @@ void twoButtonMenu(
 	// coordinates specify center of button hence odd math
 	buttonLeft.initButton(&M5.Lcd,	buttonWidth * 0 + buttonWidth/2, 210, buttonWidth, buttonHeight, TFT_WHITE, TFT_GREEN, TFT_BLACK, leftButtonText, 1, 1);
 	buttonLeft.drawButton();
-	g_evLeftNotify = evLeftNotify;	
 	g_stateLeftButton = KEY_UNKNOWN;
-	if (evLeftNotify) *evLeftNotify = KEY_UNKNOWN;
 	
-	g_evMiddleNotify = NULL;	
     g_stateMiddleButton = -1;
 
 	buttonRight.initButton(&M5.Lcd, buttonWidth * 1 + buttonWidth/2 ,210, buttonWidth, buttonHeight, TFT_WHITE, TFT_RED, TFT_BLACK, rightButtonText, 1, 1);
 	buttonRight.drawButton();
-	g_evRightNotify = evRightNotify;	
 	g_stateRightButton = KEY_UNKNOWN;
-	if (evRightNotify) *evRightNotify = KEY_UNKNOWN;
 
 	xSemaphoreGive(displayMutex);	
 
@@ -171,20 +142,17 @@ cppQueue buttonQueue(sizeof(BUTTON_MESSAGE), MAX_KEYS_QUEUED, FIFO);
 
 void setup_button()
 {
-
-
 	keyCountingSemaphore = xSemaphoreCreateCounting(MAX_KEYS_QUEUED,0);
 
 	phyDispWidth = M5.Lcd.width();
 	phyDispHeigth = M5.Lcd.height();
-	threeButtonMenu("LEFT", &keyDest, "MIDDLE", &keyDest , "RIGHT", &keyDest);
-	//twoButtonMenu("LEFTX", &keyDest, "RIGHTX", &keyDest);
-	
+	threeButtonMenu("LEFT", "MIDDLE", "RIGHT");
+	//twoButtonMenu("LEFTX", "RIGHTX");
 }
 
 void touchPanel_impl()
 {
-	BUTTON_MESSAGE *msg;
+	BUTTON_MESSAGE msg;
 	kickDog();
 
 	if (!bMenuIsActive)
@@ -205,41 +173,36 @@ void touchPanel_impl()
 		
 		if(buttonLeft.contains(touchDetail.x, touchDetail.y))
 		{
-			if (g_evLeftNotify && g_stateLeftButton != KEY_DOWN)
+			if (g_stateLeftButton != KEY_DOWN)
 			{
 				Serial.println("Left pressed");
-				*g_evLeftNotify = KEY_DOWN;
 				g_stateLeftButton = KEY_DOWN;
 				
-				msg = (BUTTON_MESSAGE *) malloc(sizeof(BUTTON_MESSAGE));
-				msg->key = LBUTTON_DN;
-				buttonQueue.push(msg);
+				msg.key = LBUTTON_DN;
+				buttonQueue.push(&msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
 		else if(buttonMiddle.contains(touchDetail.x, touchDetail.y))
 		{
-			if (g_evMiddleNotify && g_stateMiddleButton != KEY_DOWN)
+			if (g_stateMiddleButton != KEY_DOWN)
 			{
 				Serial.println("Middle pressed");
-				*g_evMiddleNotify = KEY_DOWN;
 				g_stateMiddleButton = KEY_DOWN;
-				msg = (BUTTON_MESSAGE *) malloc(sizeof(BUTTON_MESSAGE));
-				msg->key = MBUTTON_DN;
-				buttonQueue.push(msg);
+				msg.key = MBUTTON_DN;
+				buttonQueue.push(&msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
 		else if(buttonRight.contains(touchDetail.x, touchDetail.y))
 		{
-			if (g_evRightNotify && g_stateRightButton != KEY_DOWN)
+			if (g_stateRightButton != KEY_DOWN)
 			{
 				Serial.println("Right pressed");
-				*g_evRightNotify = KEY_DOWN;
 				g_stateRightButton = KEY_DOWN;
-				msg = (BUTTON_MESSAGE *) malloc(sizeof(BUTTON_MESSAGE));
-				msg->key = RBUTTON_DN;
-				buttonQueue.push(msg);
+
+				msg.key = RBUTTON_DN;
+				buttonQueue.push(&msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
@@ -248,44 +211,40 @@ void touchPanel_impl()
 
 	if (touchDetail.isReleased())
 	{
-		msg = (BUTTON_MESSAGE *) malloc(sizeof(BUTTON_MESSAGE));
-		
+			
 		if(buttonLeft.contains(touchDetail.x, touchDetail.y))
 		{
-			if (g_evLeftNotify && g_stateLeftButton != KEY_UP)
+			if ( g_stateLeftButton != KEY_UP)
 			{
 				Serial.println("Left released");
-				*g_evLeftNotify = KEY_UP;
 				g_stateLeftButton = KEY_UP;
-				msg = (BUTTON_MESSAGE *) malloc(sizeof(BUTTON_MESSAGE));
-				msg->key = LBUTTON_UP;
-				buttonQueue.push(msg);
+
+				msg.key = LBUTTON_UP;
+				buttonQueue.push(&msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
 		else if(buttonMiddle.contains(touchDetail.x, touchDetail.y))
 		{
-			if (g_evMiddleNotify && g_stateMiddleButton != KEY_UP)
+			if (g_stateMiddleButton != KEY_UP)
 			{
 				Serial.println("Middle released");
-				*g_evMiddleNotify = KEY_UP;
 				g_stateMiddleButton = KEY_UP;
-				msg = (BUTTON_MESSAGE *) malloc(sizeof(BUTTON_MESSAGE));
-				msg->key = MBUTTON_UP;
-				buttonQueue.push(msg);
+
+				msg.key = MBUTTON_UP;
+				buttonQueue.push(&msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
 		else if(buttonRight.contains(touchDetail.x, touchDetail.y))
 		{
-			if (g_evRightNotify && g_stateRightButton != KEY_UP)
+			if (g_stateRightButton != KEY_UP)
 			{
 				Serial.println("Right released");
-				*g_evRightNotify = KEY_UP;
 				g_stateRightButton = KEY_UP;
-				msg = (BUTTON_MESSAGE *) malloc(sizeof(BUTTON_MESSAGE));
-				msg->key = RBUTTON_UP;
-				buttonQueue.push(msg);
+
+				msg.key = RBUTTON_UP;
+				buttonQueue.push(&msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
