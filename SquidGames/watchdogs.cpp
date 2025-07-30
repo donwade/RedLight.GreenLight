@@ -42,8 +42,20 @@ extern "C" unsigned long millis(void);
 
 static TaskHandle_t task_handles[portNUM_PROCESSORS];
 
-static bool bDogInit = false;   // double init causes crash... go figure.
+void setup_watchdogs(void)
+{
 
+	// Configure the Task Watchdog Timer
+	esp_task_wdt_config_t twdt_config = {
+		.timeout_ms = 5000, // Set timeout to 5 seconds
+		.idle_core_mask = (1 << configNUM_CORES) - 1, // Monitor all cores' idle tasks
+		.trigger_panic = true, // Trigger a panic (and reboot) on timeout
+	};
+
+    // Initialize the TWDT with the specified configuration
+    ESP_ERROR_CHECK(esp_task_wdt_init(&twdt_config));
+
+}
 //-------------------------------------------------------------------------
 
 // spawned task for core0. 
@@ -255,15 +267,6 @@ TaskHandle_t spawnTaskAndDogV2(  TaskFunction_t pvTaskCode,
 
     //Initialize WDT, doing it again will cause a crash
 
-    if (!bDogInit)
-    {
-        bDogInit = true;
-        ABORT_ON_FAIL(esp_task_wdt_init(TWDT_DOG_TIMER_SEC,false), ESP_OK);
-
-        // add the built-in idle task on core 1 to the watchdog.
-        ABORT_ON_FAIL(esp_task_wdt_add(xTaskGetIdleTaskHandleForCPU(DEFAULT_CORE)), ESP_OK);
-    }
-
 	printf("%s creating %s\n", __FUNCTION__, pcName);
 
 	dogTaskData *passIn = (dogTaskData*) malloc(sizeof(dogTaskData));
@@ -291,15 +294,6 @@ TaskHandle_t spawnTaskAndDog(  TaskFunction_t pvTaskCode,
     TaskHandle_t retval;
 
     //Initialize WDT, doing it again will cause a crash
-
-    if (!bDogInit)
-    {
-        bDogInit = true;
-        ABORT_ON_FAIL(esp_task_wdt_init(TWDT_DOG_TIMER_SEC,false), ESP_OK);
-
-        // add the built-in idle task on core 1 to the watchdog.
-        esp_task_wdt_add(xTaskGetIdleTaskHandleForCPU(DEFAULT_CORE));
-    }
 
 	printf("creating %s\n", pcName); 
     xTaskCreatePinnedToCore(pvTaskCode, pcName, usStackDepth, pvParameters, uxPriority, &retval, DEFAULT_CORE);

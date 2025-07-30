@@ -1,3 +1,6 @@
+extern int  xprintf(uint8_t lineNo, const char *format, ...); 
+
+
 void touchPanel_impl(void);
 void setup_button(void);
 void button_create(void);

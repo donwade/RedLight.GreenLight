@@ -43,8 +43,6 @@ https://github.com/mikalhart/TinyGPSPlus
 #include "locate.h"
 #include "viewController.h"
 
-static SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
-
 #define BUILTIN_LED 4  // TIP t-beam
 extern void smartDelay(unsigned long ms);
 
@@ -262,7 +260,6 @@ void setupButton()
 //------------------------------------------------------------------
 
 u_int8_t char_height = 0;
-u_int8_t linelen[10];
 
 static void setFont(uint8_t size)
 {
@@ -288,46 +285,6 @@ static void setFont(uint8_t size)
 	}
 */
 }
-//---------------------------------------------------------
-
-int  xprintf(uint8_t lineNo, const char *format, ...) 
-{
-	va_list args;
-	va_start(args, format);
-	char buffer[30];
-	
-	vsnprintf(buffer, sizeof(buffer)-1, format, args);
-
-
-	xSemaphoreTake(mutex, portMAX_DELAY);
-
-	
-    lsetCursor(0, lineNo); 
-
-	// time to kill off any chars from old print
-	uint32_t ll = strlen(buffer);
-	
-	if ( ll < linelen[lineNo])
-	{
-		uint32_t add = linelen[lineNo] - ll;
-		Serial.println(add);
-		// mono spaced font right :)
-		for (int i = 0; i < add+1; i++) strcat(buffer," ");
-	}
-	
-	linelen[lineNo] = ll;
-	
-    lprint(buffer);
-
-	
-
-	//printf("%1d %s\n", lineNo, buffer);
-	
-	xSemaphoreGive(mutex);	
-	va_end(args);
-	return 0;
-}
-
 //---------------------------------------------------------
 // return index to closest target.
 

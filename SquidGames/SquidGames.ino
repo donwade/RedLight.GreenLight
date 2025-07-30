@@ -10,10 +10,9 @@
 #include "m5Core2-only.h"
 #include "locate.h"
 
-#include "soc/rtc_wdt.h"
+#include "rtc_wdt.h"
 #include "esp_debug_helpers.h"
 
-extern int  xprintf(uint8_t lineNo, const char *format, ...); 
 #define LINE Serial.printf("%s:%d\n", __FUNCTION__, __LINE__)
 extern void setup_BN880(void);
 
@@ -113,6 +112,7 @@ void displayInfo() {
 
 void runMenuTask(void *NOTUSED)
 {
+	while(true) {}  // dog me
 	touchPanel_impl();
 }
 

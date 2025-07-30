@@ -3,6 +3,54 @@
 #include "viewController.h"
 #include "watchdogs.h"
 
+static SemaphoreHandle_t displayMutex = xSemaphoreCreateMutex();
+
+
+//---------------------------------------------------------
+
+int  xprintf(uint8_t lineNo, const char *format, ...) 
+{
+	static u_int8_t linelen[10];
+	va_list args;
+	va_start(args, format);
+	char buffer[30];
+	
+	vsnprintf(buffer, sizeof(buffer)-1, format, args);
+
+
+	xSemaphoreTake(displayMutex, portMAX_DELAY);
+
+	
+	lsetCursor(0, lineNo); 
+
+	// time to kill off any chars from old print
+	uint32_t ll = strlen(buffer);
+	
+	if ( ll < linelen[lineNo])
+	{
+		uint32_t add = linelen[lineNo] - ll;
+		Serial.println(add);
+		// mono spaced font right :)
+		for (int i = 0; i < add+1; i++) strcat(buffer," ");
+	}
+	
+	linelen[lineNo] = ll;
+	
+	lprint(buffer);
+
+	
+
+	//printf("%1d %s\n", lineNo, buffer);
+	
+	xSemaphoreGive(displayMutex);	
+	va_end(args);
+	return 0;
+}
+
+
+
+
+
 m5::touch_detail_t touchDetail;
 LGFX_Button buttonLeft, buttonMiddle, buttonRight;
 
@@ -48,6 +96,8 @@ void threeButtonMenu(
 	ptrKeyWrite pRightNotify
 	)
 {
+	xSemaphoreTake(displayMutex, portMAX_DELAY);
+
 	Serial.printf("%s ACTIVE ddddddddddddddddddddddd\n", __FUNCTION__);
     M5.Lcd.setTextFont(WIDGET_FONT);
 
@@ -72,6 +122,8 @@ void threeButtonMenu(
 	g_evRightNotify = pRightNotify;	
 	g_stateRightButton = KEY_UNKNOWN;
 	if (pRightNotify) *pRightNotify = KEY_UNKNOWN;
+
+	xSemaphoreGive(displayMutex);	
 	
 }
 
@@ -84,6 +136,7 @@ void twoButtonMenu(
 {
 	Serial.printf("%s ACTIVE ddddddddddddddddddddddd\n", __FUNCTION__);
 
+	xSemaphoreTake(displayMutex, portMAX_DELAY);
     M5.Lcd.setTextFont(WIDGET_FONT);
 
 	bMenuIsActive = true;
@@ -104,6 +157,9 @@ void twoButtonMenu(
 	g_evRightNotify = evRightNotify;	
 	g_stateRightButton = KEY_UNKNOWN;
 	if (evRightNotify) *evRightNotify = KEY_UNKNOWN;
+
+	xSemaphoreGive(displayMutex);	
+
 }
 
 
@@ -126,6 +182,8 @@ void touchPanel_impl()
 		delay(1);
 		return;
 	}
+	
+	xSemaphoreTake(displayMutex, portMAX_DELAY);
 	
 	// don't update if menu not running.
 	M5.update();
@@ -193,6 +251,8 @@ void touchPanel_impl()
 			}
 		}
 	}
+
+	xSemaphoreGive(displayMutex);	
 
 }
 
