@@ -57,26 +57,11 @@ static unsigned char buttonHeight = 60;
 static unsigned int phyDispWidth;
 static unsigned int phyDispHeigth;
 
-int8_t g_stateLeftButton = -1;
-int8_t g_stateRightButton = -1;
-int8_t g_stateMiddleButton = -1;
+int8_t leftButtonState = -1;
+int8_t rightButtonState = -1;
+int8_t middleButtonState = -1;
 
-void button_create()
-{
-	buttonWidth = phyDispWidth /3;
-	
-	// coordinates specify center of button hence odd math
-	buttonLeft.initButton(&M5.Lcd,	buttonWidth * 0 + buttonWidth/2, 215, buttonWidth, buttonHeight, TFT_WHITE, TFT_GREEN, TFT_BLACK, "CAMERA", 1, 1);
-	buttonLeft.drawButton();
-	buttonMiddle.initButton(&M5.Lcd, buttonWidth * 1 + buttonWidth/2, 215, buttonWidth, buttonHeight, TFT_WHITE, TFT_YELLOW, TFT_BLACK, "AWAY", 1, 1);
-	buttonMiddle.drawButton();
-	
-	buttonRight.initButton(&M5.Lcd, buttonWidth * 2 + buttonWidth/2 ,215, buttonWidth, buttonHeight, TFT_WHITE, TFT_RED, TFT_BLACK, "SAVE", 1, 1);
-	buttonRight.drawButton();
-	
-}
-
-static uint32_t bMenuIsActive = 0xDEADBEEF;
+static uint32_t bMenuIsActive = false;
 
 void threeButtonMenu(
 	char *leftButtonText, 
@@ -93,15 +78,15 @@ void threeButtonMenu(
 	// coordinates specify center of button hence odd math
 	buttonLeft.initButton(&M5.Lcd,	buttonWidth * 0 + buttonWidth/2, 210, buttonWidth, buttonHeight, TFT_WHITE, TFT_GREEN, TFT_BLACK, leftButtonText, 1, 1);
 	buttonLeft.drawButton();
-	g_stateLeftButton = KEY_UNKNOWN;
+	leftButtonState = KEY_UNKNOWN;
 	
 	buttonMiddle.initButton(&M5.Lcd, buttonWidth * 1 + buttonWidth/2, 210, buttonWidth, buttonHeight, TFT_WHITE, TFT_YELLOW, TFT_BLACK, middleButtonText, 1, 1);
 	buttonMiddle.drawButton();
-    g_stateMiddleButton = KEY_UNKNOWN;
+    middleButtonState = KEY_UNKNOWN;
 
 	buttonRight.initButton(&M5.Lcd, buttonWidth * 2 + buttonWidth/2 ,210, buttonWidth, buttonHeight, TFT_WHITE, TFT_RED, TFT_BLACK, rightButtonText, 1, 1);
 	buttonRight.drawButton();
-	g_stateRightButton = KEY_UNKNOWN;
+	rightButtonState = KEY_UNKNOWN;
 
 	xSemaphoreGive(displayMutex);	
 	
@@ -121,13 +106,13 @@ void twoButtonMenu(
 	// coordinates specify center of button hence odd math
 	buttonLeft.initButton(&M5.Lcd,	buttonWidth * 0 + buttonWidth/2, 210, buttonWidth, buttonHeight, TFT_WHITE, TFT_GREEN, TFT_BLACK, leftButtonText, 1, 1);
 	buttonLeft.drawButton();
-	g_stateLeftButton = KEY_UNKNOWN;
+	leftButtonState = KEY_UNKNOWN;
 	
-    g_stateMiddleButton = -1;
+    middleButtonState = -1;
 
 	buttonRight.initButton(&M5.Lcd, buttonWidth * 1 + buttonWidth/2 ,210, buttonWidth, buttonHeight, TFT_WHITE, TFT_RED, TFT_BLACK, rightButtonText, 1, 1);
 	buttonRight.drawButton();
-	g_stateRightButton = KEY_UNKNOWN;
+	rightButtonState = KEY_UNKNOWN;
 
 	xSemaphoreGive(displayMutex);	
 
@@ -173,10 +158,10 @@ void touchPanel_impl()
 		
 		if(buttonLeft.contains(touchDetail.x, touchDetail.y))
 		{
-			if (g_stateLeftButton != KEY_DOWN)
+			if (leftButtonState != KEY_DOWN)
 			{
 				Serial.println("Left pressed");
-				g_stateLeftButton = KEY_DOWN;
+				leftButtonState = KEY_DOWN;
 				
 				msg.key = LBUTTON_DN;
 				buttonQueue.push(&msg);
@@ -185,10 +170,10 @@ void touchPanel_impl()
 		}
 		else if(buttonMiddle.contains(touchDetail.x, touchDetail.y))
 		{
-			if (g_stateMiddleButton != KEY_DOWN)
+			if (middleButtonState != KEY_DOWN)
 			{
 				Serial.println("Middle pressed");
-				g_stateMiddleButton = KEY_DOWN;
+				middleButtonState = KEY_DOWN;
 				msg.key = MBUTTON_DN;
 				buttonQueue.push(&msg);
 				xSemaphoreGive(keyCountingSemaphore);
@@ -196,10 +181,10 @@ void touchPanel_impl()
 		}
 		else if(buttonRight.contains(touchDetail.x, touchDetail.y))
 		{
-			if (g_stateRightButton != KEY_DOWN)
+			if (rightButtonState != KEY_DOWN)
 			{
 				Serial.println("Right pressed");
-				g_stateRightButton = KEY_DOWN;
+				rightButtonState = KEY_DOWN;
 
 				msg.key = RBUTTON_DN;
 				buttonQueue.push(&msg);
@@ -214,10 +199,10 @@ void touchPanel_impl()
 			
 		if(buttonLeft.contains(touchDetail.x, touchDetail.y))
 		{
-			if ( g_stateLeftButton != KEY_UP)
+			if ( leftButtonState != KEY_UP)
 			{
 				Serial.println("Left released");
-				g_stateLeftButton = KEY_UP;
+				leftButtonState = KEY_UP;
 
 				msg.key = LBUTTON_UP;
 				buttonQueue.push(&msg);
@@ -226,10 +211,10 @@ void touchPanel_impl()
 		}
 		else if(buttonMiddle.contains(touchDetail.x, touchDetail.y))
 		{
-			if (g_stateMiddleButton != KEY_UP)
+			if (middleButtonState != KEY_UP)
 			{
 				Serial.println("Middle released");
-				g_stateMiddleButton = KEY_UP;
+				middleButtonState = KEY_UP;
 
 				msg.key = MBUTTON_UP;
 				buttonQueue.push(&msg);
@@ -238,10 +223,10 @@ void touchPanel_impl()
 		}
 		else if(buttonRight.contains(touchDetail.x, touchDetail.y))
 		{
-			if (g_stateRightButton != KEY_UP)
+			if (rightButtonState != KEY_UP)
 			{
 				Serial.println("Right released");
-				g_stateRightButton = KEY_UP;
+				rightButtonState = KEY_UP;
 
 				msg.key = RBUTTON_UP;
 				buttonQueue.push(&msg);
