@@ -56,5 +56,9 @@ void twoButtonMenu(
     char *rightButtonText 
     );
 
+void threeButtonText(
+	char *leftButtonText, 
+	char *middleButtonText, 
+	char *rightButtonText);
 
 #endif

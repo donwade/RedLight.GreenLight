@@ -69,8 +69,20 @@ void setup_M5(void)
 
 	// confusing. this sets font for buttons
 	M5.Lcd.setFont(WIDGET_FONT);
+
+	lfillRect(0, 0, 50, 50, 0x0000FF);
+	delay(2000);
 	
 	setup_button();
+}
+
+void lfillRect(uint16_t x, uint16_t y, uint16_t wide, uint16_t height, uint32_t RGB)
+{
+	uint16_t w = wide ? wide : M5.Lcd.width();
+    uint16_t h = height ? height : M5.Lcd.height();
+    M5.Lcd.writeFillRectPreclipped(x, y, w, h, 0xFFFFFF);
+	
+    M5.Lcd.fillScreen(WHITE);
 }
 
 void lsetTextColor(uint32_t FGND, uint32_t BKGND)

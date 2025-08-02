@@ -250,101 +250,9 @@ void calcGPSaverage(void)
 	result.lng /= float(GPS_SAMPLE_SIZE);
 	gpsAverage = result;
 }
-
-//----------------------------
-
-void setupButton() 
-{
-	Serial.printf("TODO: need some sort of input\n");
-    //pinMode(GPIO_BUTTON, INPUT_PULLUP);
-    //attachInterrupt(GPIO_BUTTON, snapShotISR, FALLING);
-}
 //------------------------------------------------------------------
 
 u_int8_t char_height = 0;
-
-static void setFont(uint8_t size)
-{
-	Serial.printf("TODO: how do we set font size now\n");
-	return;
-/*		
-	switch (size)
-	{
-		case 10:
-			display.setFont(ArialMT_Plain_10);
-			char_height = 10;
-		break;
-		
-		case 16:
-			display.setFont(ArialMT_Plain_16);
-			char_height = 16;
-		break;
-
-		case 24:
-			display.setFont(ArialMT_Plain_24);
-			char_height = 24;
-		break;
-	}
-*/
-}
-//---------------------------------------------------------
-// return index to closest target.
-
-int firstChoiceIndex;
-int secondChoiceIndex;
-
-int findClosestCamera(float vehicleLat, float vehicleLng)
-{
-	int dist;
-	int course;
-	int i;
-	int closestDist = INT_MAX;
-		
-	const char *cardinal;
-	
-	// do not do any GPS with 0.0 it will hang (hi GD).
-	if (vehicleLat < 1.0 ) return 0;
-	
-	for (i = 0; i <  NUM_GPS_ENTRIES; i++)
-	{
-		//Serial.printf("%+9.7f  %+9.7f\n",  cameraLocations[i].lat, cameraLocations[i].lng);
-		//course = (int)gps.courseTo(vehicleLat, vehicleLng, cameraLocations[i].lat, cameraLocations[i].lng);
-		//cardinal = gps.cardinal(course);
-
-		dist = (int) gps.distanceBetween(vehicleLat, vehicleLng, cameraLocations[i].lat, cameraLocations[i].lng);
-
-		if ( dist < closestDist )
-		{
-			secondChoiceIndex = firstChoiceIndex;
-			closestDist = dist;
-			firstChoiceIndex = i;
-		}
-
-	}
-	
-#ifdef SHOW_DECISIONS 
-	Serial.println();
-	Serial.printf("lat=%9.7f lng=%9.7f \n", vehicleLat, vehicleLng);
-	
-	for (i = 0; i <  NUM_GPS_ENTRIES; i++)
-	{
-		dist = (int)gps.distanceBetween(vehicleLat, vehicleLng, cameraLocations[i].lat, cameraLocations[i].lng);
-		course = (int)gps.courseTo(vehicleLat, vehicleLng, cameraLocations[i].lat, cameraLocations[i].lng);
-		cardinal = gps.cardinal(course);
-		
-		char star;
-
-		star = (i == firstChoiceIndex) ? '1' : ' ';
-		if ( star != '1' ) star = (i == secondChoiceIndex) ? '2' : ' ';
-		
-		Serial.printf("%c [%2d] dist=%4d course=%3d cardinal=%s\n",
-			star, i,  dist, course, cardinal);
-		
-	}
-#endif
-}
-
-//---------------------------------------------------------
 
 gpsLocation cameraLocation;
 gpsLocation endLocation;
@@ -352,7 +260,10 @@ gpsLocation endLocation;
 static int veh_course;
 static const char *veh_cardinal = "???";
 
-void stateDisplay(BUTTON_EVENT some_key)
+
+static void * reportingMode(BUTTON_EVENT some_key);
+
+static void * learningMode(BUTTON_EVENT some_key)
 {
 	int dist;
 	int course;
@@ -360,12 +271,6 @@ void stateDisplay(BUTTON_EVENT some_key)
 	static KEY_STATE here;
 	
 	kickDog();
-	
-#define DATA_CAPTURE
-
-#ifdef DATA_CAPTURE	
-	static uint8_t toggleCount = 0;
-	toggleCount++;
 
 	xprintf(0, "LA=%+10.7f", gpsAverage.lat);
 	xprintf(1, "LN=%+10.7f", gpsAverage.lng);
@@ -381,7 +286,7 @@ void stateDisplay(BUTTON_EVENT some_key)
 	switch (some_key)
 	{
 		case BUTTON_INIT:
-			threeButtonMenu("AWAY", "SAVE", "CAMERA");
+			threeButtonText("AWAY", "SAVE", "CAMERA");
 		break;	
 			
 		case LBUTTON_UP:
@@ -420,62 +325,153 @@ void stateDisplay(BUTTON_EVENT some_key)
 			dir = gps.cardinal(course);
 
 			cprintf(_YELLOW, 6, "course = %d dir=%3s", course, dir);
+			return (void*) reportingMode;
 			
 		break;
 
 	}
-#else
 
+	int i = 1;
+	
+	LINE;
+	return (void*) learningMode;
+	
+	//return &i;
+	//return learningMode;
+}
+
+
+static void * reportingMode(BUTTON_EVENT some_key)
+{
+	int dist;
+	int course;
+	const char *dir;
+	static KEY_STATE here;
+	const char *cardinal;
+	
+	kickDog();
+
+	switch (some_key)
 	{
-		int dist, course;
-		const char *cardinal;
-		LINE;
-		
-		findClosestCamera(iLocation.lat, iLocation.lng);
-		findNearestCamera(iLocation.lat, iLocation.lng);
-		
-		
-		course = (int)gps.courseTo(iLocation.lat, iLocation.lng, cameraLocations[firstChoiceIndex].lat, cameraLocations[firstChoiceIndex].lng);
-		cardinal = gps.cardinal(course);
+		case BUTTON_INIT:
+			LINE;
+			threeButtonText("QUIET", "OK", "BYTEME");
+			LINE;
+		break;	
+			
+		case LBUTTON_UP:
+		case LBUTTON_DN:
 
-		dist = (int) gps.distanceBetween(iLocation.lat, iLocation.lng, cameraLocations[firstChoiceIndex].lat, cameraLocations[firstChoiceIndex].lng);
-		
-		xprintf(0, "%s", cameraLocations[firstChoiceIndex].onStreet);
-		xprintf(1, "%s",  cameraLocations[firstChoiceIndex].crossStreet);
+			if (some_key == LBUTTON_DN)
+			{
+				cameraLocation = gpsAverage;
+				cprintf(_GREEN, 4, "LA=%+9.7f", gpsAverage.lat);
+				cprintf(_GREEN, 5, "LO=%+9.7f", gpsAverage.lng);
+				cprintf(_ORANGE, 6, "NEXT CAMERA or SAVE");
+			}
+			
+		break;
+
+		case RBUTTON_UP:
+		case RBUTTON_DN:
+
+			if (some_key == RBUTTON_DN)
+			{
+				endLocation = gpsAverage;
+				cprintf(_RED, 2, "LA=%+9.7f", gpsAverage.lat);
+				cprintf(_RED ,3, "LO=%+9.7f", gpsAverage.lng);
+				cprintf(_ORANGE, 6, "NEXT AWAY or SAVE");
+			}
+
+		break;
+
+		case MBUTTON_DN:
+		case MBUTTON_UP:
+
+			dist = gps.distanceBetween(cameraLocation.lat, cameraLocation.lng, endLocation.lat, endLocation.lng);
+			course = (int)gps.courseTo(cameraLocation.lat, cameraLocation.lng, endLocation.lat, endLocation.lng);
+			dir = gps.cardinal(course);
+
+			cprintf(_YELLOW, 6, "course = %d dir=%3s", course, dir);
+			return (void*) learningMode;
+			
+		break;
+
+	}
+
+	findNearestCamera(iLocation.lat, iLocation.lng);
+	
+	course = (int)gps.courseTo(iLocation.lat, iLocation.lng, closestCam->lat, closestCam->lng);
+	cardinal = gps.cardinal(course);
+
+	dist = (int) gps.distanceBetween(iLocation.lat, iLocation.lng, closestCam->lat, closestCam->lng);
+	
+	xprintf(0, "%s", closestCam->onStreet);
+	xprintf(1, "%s",  closestCam->crossStreet);
 
 /*
-		What is HDOP 
-		< 1 Ideal
+	What is HDOP 
+	< 1 Ideal
 
-		1-2 Excellent
-		Highest possible confidence level to be used for applications demanding the highest possible precision at all times.
-		At this confidence level, positional measurements are considered accurate enough to meet all but the most sensitive applications.
+	1-2 Excellent
+	Highest possible confidence level to be used for applications demanding the highest possible precision at all times.
+	At this confidence level, positional measurements are considered accurate enough to meet all but the most sensitive applications.
 
-		2-5 Good
+	2-5 Good
 
-		Represents a level that marks the minimum appropriate for making accurate decisions. Positional measurements could be used to make reliable in-route navigation suggestions to the user.
-		Positional measurements could be used for calculations, but the fix quality could still be improved. A more open view of the sky is
+	Represents a level that marks the minimum appropriate for making accurate decisions. Positional measurements could be used to make reliable in-route navigation suggestions to the user.
+	Positional measurements could be used for calculations, but the fix quality could still be improved. A more open view of the sky is
 
-		5-10 Moderate
+	5-10 Moderate
 
-		10-20 Fair
-		Represents a low confidence level. Positional measurements should be discarded or used only to indicate a very rough estimate
+	10-20 Fair
+	Represents a low confidence level. Positional measurements should be discarded or used only to indicate a very rough estimate
 
-		>20 Poor At this level, measurements should be discarded
+	>20 Poor At this level, measurements should be discarded
 */
 
-		xprintf(3, "%3d kph %3s %3.1f", (int)iMisc.Kmph, veh_cardinal, iMisc.hdop);
+	xprintf(3, "%3d kph %3s %3.1f", (int)iMisc.Kmph, veh_cardinal, iMisc.hdop);
 
-		if (dist > 100)
-			xprintf(2, "%3d m %3d %s", dist, course, cardinal);
-		else
-			oprintf(2, "%3d m %3d %s", dist, course, cardinal);
+	if (dist > 100)
+		cprintf(_GREEN, 2, "%3d m %3d %s", dist, course, cardinal);
+	else
+		cprintf(_RED, 2, "%3d m %3d %s", dist, course, cardinal);
 
-		//display.display();
-	}	
+	LINE;
+	return (void *) reportingMode;
+}	
 
-#endif
+//------------------------------------------------------
+typedef  void* (*pStateFunction)(BUTTON_EVENT);
+
+
+pStateFunction stateMachines[] =
+{
+	learningMode,
+	reportingMode
+};
+
+void stateDisplay(BUTTON_EVENT some_key)
+{
+	static volatile pStateFunction lastCall = learningMode;
+	pStateFunction nowCall;
+	
+	nowCall = (pStateFunction)lastCall(some_key);
+
+	if (nowCall != lastCall)
+	{
+		BUTTON_MESSAGE abutton;
+		abutton.key = BUTTON_INIT;  // refresh screen
+		buttonQueue.push(&abutton);
+
+		lastCall = nowCall;
+		lfillRect(0,0, 10, 10, _RED);
+		
+		(pStateFunction)lastCall(BUTTON_INIT);
+	}
+	
 }
+
 
 //---------------------------------------------------------
 
@@ -521,12 +517,14 @@ void gpsGetDataTask(void *not_used)
 			veh_course = (int)gps.courseTo(oldest.lat, oldest.lng, iLocation.lat, iLocation.lng );
 			veh_cardinal = gps.cardinal(veh_course);
 		}
-		
+
+#ifdef CHATTY		
 		Serial.printf("%2d:%02d:%02d @ %+9.7f %+9.7f ^ %3d kph dir %3d %s\n", 
 				iMisc.hour,iMisc.minute,iMisc.second,
 				iLocation.lat, iLocation.lng,
 				(int)iMisc.Kmph, (int)iMisc.course, gps.cardinal(iMisc.course)
 				);
+#endif
 
 		// profile loop time. So far about 3ms total		
 		//difftime =  micros() - startProfileTime;
@@ -547,20 +545,21 @@ void runDisplayTask(void *not_used)
 		veh_course = (int)gps.courseTo(oldest.lat, oldest.lng, iLocation.lat, iLocation.lng );
 		veh_cardinal = gps.cardinal(veh_course);
 	}
-	
+
+#ifdef CHATTY
 	Serial.printf("%2d:%02d:%02d @ %+9.7f %+9.7f ^ %3d kph dir %3d %s\n", 
 			iMisc.hour,iMisc.minute,iMisc.second,
 			iLocation.lat, iLocation.lng,
 			(int)iMisc.Kmph, (int)iMisc.course, gps.cardinal(iMisc.course)
 			);
-
+#endif
 	BUTTON_MESSAGE abutton;
 
 	if (xSemaphoreTake( keyCountingSemaphore, pdMS_TO_TICKS(1000) ) == pdTRUE)
 	{
 		buttonQueue.pop(&abutton);
 
-		Serial.printf("%s BUTTON = %d\n", __FUNCTION__, abutton.key);
+		Serial.printf("\n%s POP BUTTON = %d\n", __FUNCTION__, abutton.key);
 		stateDisplay(abutton.key);
 	}
 	else

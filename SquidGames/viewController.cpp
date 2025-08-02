@@ -97,6 +97,26 @@ int8_t middleButtonState = -1;
 
 static uint32_t bMenuIsActive = false;
 
+void threeButtonText(
+	char *leftButtonText, 
+	char *middleButtonText, 
+	char *rightButtonText)
+{
+	xSemaphoreTake(displayMutex, portMAX_DELAY);
+
+	if (leftButtonText) buttonLeft.setLabelText(leftButtonText);
+	if (rightButtonText) buttonRight.setLabelText(rightButtonText);
+	if (middleButtonText) buttonMiddle.setLabelText(middleButtonText);
+
+	buttonLeft.drawButton();
+	buttonRight.drawButton();
+	buttonMiddle.drawButton();
+	
+	xSemaphoreGive(displayMutex);	
+	
+};
+
+
 void threeButtonMenu(
 	char *leftButtonText, 
 	char *middleButtonText, 
@@ -163,16 +183,15 @@ cppQueue buttonQueue(sizeof(BUTTON_MESSAGE), MAX_KEYS_QUEUED, FIFO);
 
 void setup_button()
 {
-	Serial.printf("    >>> %s done\n", __FUNCTION__);
 	keyCountingSemaphore = xSemaphoreCreateCounting(MAX_KEYS_QUEUED,0);
 
 	phyDispWidth = M5.Lcd.width();
 	phyDispHeigth = M5.Lcd.height();
-	//threeButtonMenu("LEFT", "MIDDLE", "RIGHT");
-	//twoButtonMenu("LEFTX", "RIGHTX");
 
+	threeButtonMenu("LEFT", "MIDDLE", "RIGHT");
 	
 	BUTTON_MESSAGE msg;
+	
 	msg.key = BUTTON_INIT;
 	buttonQueue.push(&msg);
 	xSemaphoreGive(keyCountingSemaphore);
