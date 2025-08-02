@@ -160,21 +160,6 @@ void Tdelay(unsigned int ms)
 
 #include "freertos/FreeRTOS.h"
 
-signed nest(signed ok)
-{
-
-	char me[20];
-	if (!ok) return 0;
-
-	sprintf(me, "LEVEL %d", ok);
-	Serial.printf("%s "__TIME__"\n", me);
-
-	ok--;
-	nest(ok);
-	//dumpAboutStack(me, 1000);
-	
-}
-
 void onEntryDog(void * const inParam)
 {
 	{
@@ -262,10 +247,9 @@ TaskHandle_t spawnTaskAndDog(  TaskFunction_t pvTaskCode,
 
     //Initialize WDT, doing it again will cause a crash
 
-	printf("creating %s\n", pcName); 
+	printf("creating  %s\n", pcName); 
     xTaskCreatePinnedToCore(pvTaskCode, pcName, usStackDepth, pvParameters, uxPriority, &retval, DEFAULT_CORE);
     return retval;
-
 }
 
 //----------------------------------------------------------------------------------

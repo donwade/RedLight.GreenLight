@@ -6,6 +6,20 @@
 static SemaphoreHandle_t displayMutex = xSemaphoreCreateMutex();
 SemaphoreHandle_t keyCountingSemaphore;
 
+//-------------------------------------------------------------
+void lfillRect(uint16_t x, uint16_t y, uint16_t wide, uint16_t height, uint32_t RGB)
+{
+	xSemaphoreTake(displayMutex, portMAX_DELAY);
+	
+	uint16_t w = wide ? wide : M5.Lcd.width();
+    uint16_t h = height ? height : M5.Lcd.height();
+    M5.Lcd.writeFillRectPreclipped(x, y, w, h, 0x00FFFF);
+	
+    //M5.Lcd.fillScreen(WHITE);
+	
+	xSemaphoreGive(displayMutex);	
+}
+
 
 //---------------------------------------------------------
 int  xprintf(uint8_t lineNo, const char *format, ...) 
