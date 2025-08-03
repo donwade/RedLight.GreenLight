@@ -156,7 +156,7 @@ void threeButtonMenu(
 	buttonRight.drawButton();
 	rightButtonState = KEY_UNKNOWN;
 
-	BUTTON_MESSAGE msg;
+	BUTTON_EVENT msg;
 
 	xSemaphoreGive(displayMutex);	
 	
@@ -193,7 +193,7 @@ void twoButtonMenu(
 
 KEY_STATE keyDest;
 
-cppQueue buttonQueue(sizeof(BUTTON_MESSAGE), MAX_KEYS_QUEUED, FIFO);
+ArduinoQueue<BUTTON_EVENT> buttonQueue(20);
 
 void setup_button()
 {
@@ -204,18 +204,19 @@ void setup_button()
 
 	threeButtonMenu("LEFT", "MIDDLE", "RIGHT");
 	
-	BUTTON_MESSAGE msg;
+	BUTTON_EVENT msg;
 	
-	msg.key = BUTTON_INIT;
-	buttonQueue.push(&msg);
+	msg = BUTTON_INIT;
+	buttonQueue.enqueue(msg);
 	xSemaphoreGive(keyCountingSemaphore);
 }
 
 void touchPanel_impl()
 {
-	BUTTON_MESSAGE msg;
+	BUTTON_EVENT msg;
 	kickDog();
-
+	delay(200); // poor man debounce
+	
 	if (!bMenuIsActive)
 	{
 		delay(1);
@@ -226,7 +227,7 @@ void touchPanel_impl()
 	
 	// don't update if menu not running.
 	M5.update();
-	
+
 	touchDetail = M5.Touch.getDetail();
 
 	if (touchDetail.isPressed())
@@ -239,8 +240,9 @@ void touchPanel_impl()
 				Serial.println("Left pressed");
 				leftButtonState = KEY_DOWN;
 				
-				msg.key = LBUTTON_DN;
-				buttonQueue.push(&msg);
+				msg = LBUTTON_DN;
+				buttonQueue.enqueue(msg);
+				Serial.printf("push %d\n", msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
@@ -250,8 +252,10 @@ void touchPanel_impl()
 			{
 				Serial.println("Middle pressed");
 				middleButtonState = KEY_DOWN;
-				msg.key = MBUTTON_DN;
-				buttonQueue.push(&msg);
+				
+				msg = MBUTTON_DN;
+				buttonQueue.enqueue(msg);
+				Serial.printf("push %d\n", msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
@@ -262,8 +266,9 @@ void touchPanel_impl()
 				Serial.println("Right pressed");
 				rightButtonState = KEY_DOWN;
 
-				msg.key = RBUTTON_DN;
-				buttonQueue.push(&msg);
+				msg = RBUTTON_DN;
+				buttonQueue.enqueue(msg);
+				Serial.printf("push %d\n", msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
@@ -280,8 +285,9 @@ void touchPanel_impl()
 				Serial.println("Left released");
 				leftButtonState = KEY_UP;
 
-				msg.key = LBUTTON_UP;
-				buttonQueue.push(&msg);
+				msg = LBUTTON_UP;
+				buttonQueue.enqueue(msg);
+				Serial.printf("push %d\n", msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
@@ -292,8 +298,9 @@ void touchPanel_impl()
 				Serial.println("Middle released");
 				middleButtonState = KEY_UP;
 
-				msg.key = MBUTTON_UP;
-				buttonQueue.push(&msg);
+				msg = MBUTTON_UP;
+				buttonQueue.enqueue(msg);
+				Serial.printf("push %d\n", msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
@@ -304,8 +311,9 @@ void touchPanel_impl()
 				Serial.println("Right released");
 				rightButtonState = KEY_UP;
 
-				msg.key = RBUTTON_UP;
-				buttonQueue.push(&msg);
+				msg = RBUTTON_UP;
+				buttonQueue.enqueue(msg);
+				Serial.printf("push %d\n", msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}

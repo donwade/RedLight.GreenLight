@@ -1,7 +1,8 @@
 #ifndef VIEW_CONTROLLER
 #define VIEW_CONTROLLER
 
-#include "cppQueue.h"
+//#include "cppQueue.h"
+#include <ArduinoQueue.h>
 
 #define _BLACK       0x000000
 #define _WHITE       0xFFFFFF
@@ -27,7 +28,7 @@ extern int  xprintf(uint8_t lineNo, const char *format, ...);
 extern int  cprintf(uint32_t color, uint8_t lineNo, const char *format, ...);
 extern void lfillRect(uint16_t x, uint16_t y, uint16_t wide, uint16_t height, uint32_t RGB);
 
-extern cppQueue buttonQueue;
+
 extern SemaphoreHandle_t keyCountingSemaphore;
 
 void touchPanel_impl(void);
@@ -35,15 +36,12 @@ void setup_button(void);
 void button_create(void);
 
 typedef enum { 
-	MT, //nothing
-    BUTTON_INIT,
-	LBUTTON_UP, LBUTTON_DN, 
-	MBUTTON_UP, MBUTTON_DN, 
-	RBUTTON_UP, RBUTTON_DN } BUTTON_EVENT;
+	DISPLAY_REFRESH, //nothing
+	LBUTTON_DN, LBUTTON_UP, // odd DOWN. Even UP
+	MBUTTON_DN, MBUTTON_UP, 
+	RBUTTON_DN, RBUTTON_UP,
+    BUTTON_INIT    } BUTTON_EVENT;
 
-typedef struct {
-	BUTTON_EVENT key;
-} BUTTON_MESSAGE;
 
 void threeButtonMenu(
 	char *leftButtonText, 
@@ -61,5 +59,7 @@ void threeButtonText(
 	char *leftButtonText, 
 	char *middleButtonText, 
 	char *rightButtonText);
+
+extern ArduinoQueue<BUTTON_EVENT>  buttonQueue;
 
 #endif

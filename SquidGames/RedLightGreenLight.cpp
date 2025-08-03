@@ -270,8 +270,6 @@ static void * learningMode(BUTTON_EVENT some_key)
 	const char *dir;
 	static KEY_STATE here;
 	
-	kickDog();
-
 	xprintf(0, "LA=%+10.7f", gpsAverage.lat);
 	xprintf(1, "LN=%+10.7f", gpsAverage.lng);
 
@@ -283,33 +281,40 @@ static void * learningMode(BUTTON_EVENT some_key)
 				gps.date.year(), gps.satellites.value());
 #endif	
 
+	// all display updates done ... just keys left
+	if (some_key == DISPLAY_REFRESH) return (void*) learningMode;
+	
+	Serial.printf("handled key %d\n", some_key);
+
 	switch (some_key)
 	{
 		case BUTTON_INIT:
+			lfillRect(0,0, 50, 50, _BLUE);
 			threeButtonText("AWAY", "SAVE", "CAMERA");
+			cprintf(_RED,	2, "LA=%+9.7f", gpsAverage.lat);
+			cprintf(_RED ,	3, "LO=%+9.7f", gpsAverage.lng);
+			cprintf(_GREEN, 4, "LA=%+9.7f", gpsAverage.lat);
+			cprintf(_GREEN, 5, "LO=%+9.7f", gpsAverage.lng);
+			cprintf(_ORANGE,6, "CAMERA or AWAY");
 		break;	
 			
 		case LBUTTON_UP:
 		case LBUTTON_DN:
-
 			if (some_key == LBUTTON_DN)
 			{
 				cameraLocation = gpsAverage;
 				cprintf(_GREEN, 4, "LA=%+9.7f", gpsAverage.lat);
 				cprintf(_GREEN, 5, "LO=%+9.7f", gpsAverage.lng);
 				cprintf(_ORANGE, 6, "NEXT CAMERA or SAVE");
-				Serial.println("");
 			}
 			
 		break;
 
 		case RBUTTON_UP:
 		case RBUTTON_DN:
-
 			if (some_key == RBUTTON_DN)
 			{
 				endLocation = gpsAverage;
-				Serial.println("");
 				cprintf(_RED, 2, "LA=%+9.7f", gpsAverage.lat);
 				cprintf(_RED ,3, "LO=%+9.7f", gpsAverage.lng);
 				cprintf(_ORANGE, 6, "NEXT AWAY or SAVE");
@@ -319,25 +324,21 @@ static void * learningMode(BUTTON_EVENT some_key)
 
 		case MBUTTON_DN:
 		case MBUTTON_UP:
-
 			dist = gps.distanceBetween(cameraLocation.lat, cameraLocation.lng, endLocation.lat, endLocation.lng);
 			course = (int)gps.courseTo(cameraLocation.lat, cameraLocation.lng, endLocation.lat, endLocation.lng);
 			dir = gps.cardinal(course);
 
 			cprintf(_YELLOW, 6, "course = %d dir=%3s", course, dir);
-			return (void*) reportingMode;
 			
+			if (some_key == MBUTTON_DN)
+			{
+				return (void*) reportingMode;
+			}			
+			break;
 		break;
 
 	}
-
-	int i = 1;
-	
-	LINE;
 	return (void*) learningMode;
-	
-	//return &i;
-	//return learningMode;
 }
 
 
@@ -349,14 +350,23 @@ static void * reportingMode(BUTTON_EVENT some_key)
 	static KEY_STATE here;
 	const char *cardinal;
 	
-	kickDog();
+	// all display updates done ... just keys left
+	if (some_key == DISPLAY_REFRESH) return (void*) reportingMode;
+
+	Serial.printf("handled key %d\n", some_key);
 
 	switch (some_key)
 	{
 		case BUTTON_INIT:
-			LINE;
+			lfillRect(0,0, 50, 50, _RED);
 			threeButtonText("QUIET", "OK", "BYTEME");
-			LINE;
+			
+			cprintf(_RED,	2, "TODO        ");
+			cprintf(_RED ,	3, "TODO        ");
+			cprintf(_GREEN, 4, "TODO        ");
+			cprintf(_GREEN, 5, "TODO        ");
+			cprintf(_ORANGE,6, "TODO        ");
+			
 		break;	
 			
 		case LBUTTON_UP:
@@ -392,8 +402,10 @@ static void * reportingMode(BUTTON_EVENT some_key)
 			course = (int)gps.courseTo(cameraLocation.lat, cameraLocation.lng, endLocation.lat, endLocation.lng);
 			dir = gps.cardinal(course);
 
-			cprintf(_YELLOW, 6, "course = %d dir=%3s", course, dir);
-			return (void*) learningMode;
+			if (some_key == MBUTTON_DN)
+			{
+				return (void*) learningMode;
+			}			
 			
 		break;
 
@@ -455,19 +467,19 @@ void stateDisplay(BUTTON_EVENT some_key)
 {
 	static volatile pStateFunction lastCall = learningMode;
 	pStateFunction nowCall;
-	
+
+	kickDog();
 	nowCall = (pStateFunction)lastCall(some_key);
 
 	if (nowCall != lastCall)
 	{
-		BUTTON_MESSAGE abutton;
-		abutton.key = BUTTON_INIT;  // refresh screen
-		buttonQueue.push(&abutton);
+
+		buttonQueue.enqueue(BUTTON_INIT);
+		xSemaphoreGive(keyCountingSemaphore);
+
+		Serial.printf("enquing BUTTON_INIT (%d)\n", BUTTON_INIT);
 
 		lastCall = nowCall;
-		lfillRect(0,0, 10, 10, _RED);
-		
-		(pStateFunction)lastCall(BUTTON_INIT);
 	}
 	
 }
@@ -553,17 +565,15 @@ void runDisplayTask(void *not_used)
 			(int)iMisc.Kmph, (int)iMisc.course, gps.cardinal(iMisc.course)
 			);
 #endif
-	BUTTON_MESSAGE abutton;
+	BUTTON_EVENT abutton;
 
-	if (xSemaphoreTake( keyCountingSemaphore, pdMS_TO_TICKS(1000) ) == pdTRUE)
+	while (xSemaphoreTake( keyCountingSemaphore, pdMS_TO_TICKS(250) ) == pdTRUE)
 	{
-		buttonQueue.pop(&abutton);
-
-		Serial.printf("\n%s POP BUTTON = %d\n", __FUNCTION__, abutton.key);
-		stateDisplay(abutton.key);
+		abutton = buttonQueue.dequeue();
+		stateDisplay(abutton);
 	}
-	else
-		stateDisplay(MT);
+	
+	stateDisplay(DISPLAY_REFRESH);
 }
 
 

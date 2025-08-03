@@ -2,7 +2,9 @@
 #include <cstring>
 #include <M5Unified.h>
 #include "watchdogs.h"
-#include <cppQueue.h>
+//#include <cppQueue.h>
+#include <ArduinoQueue.h>
+
 #include <TinyGPS++.h>
 
 #include <LinkedList.h>
