@@ -59,7 +59,7 @@ typedef struct gpsMisc
 {
 	float speed;
 	const char *cardinal;
-	float hdop;
+	float qual;
 	float Kmph;
 	float course;		//direction in float degrees
 	
@@ -146,7 +146,7 @@ void getData(void)
 	iMisc.minute = gps.time.minute();
 	iMisc.second = gps.time.second();
 	iMisc.Kmph = gps.speed.kmph();
-	iMisc.hdop = gps.hdop.hdop();
+	iMisc.qual = gps.hdop.hdop();
 	iMisc.course = gps.course.deg();
 
 	/* not required. tbeam builds char by char 
@@ -270,9 +270,6 @@ static void * learningMode(BUTTON_EVENT some_key)
 	const char *dir;
 	static KEY_STATE here;
 	
-	xprintf(0, "LA=%+10.7f", gpsAverage.lat);
-	xprintf(1, "LN=%+10.7f", gpsAverage.lng);
-
 #if 0
 	if (iMisc.Kmph > 5)
 		xprintf(2, "%3d %s", veh_course, veh_cardinal);
@@ -280,7 +277,19 @@ static void * learningMode(BUTTON_EVENT some_key)
 		xprintf(2, "%2d/%2d/%4d S=%2d", gps.date.day(), gps.date.month(), 
 				gps.date.year(), gps.satellites.value());
 #endif	
+	cprintf(_WHITE, 0, "NOW    LA=%+10.7f", gpsAverage.lat);
+	cprintf(_WHITE, 1, "NOW    LN=%+10.7f", gpsAverage.lng);
+	cprintf(_RED, 2,   "CAMERA LA=%+9.7f", cameraLocation.lat);
+	cprintf(_RED ,3,   "CAMERA LO=%+9.7f", cameraLocation.lng);
+	cprintf(_GREEN, 4, "AWAY   LA=%+9.7f", endLocation.lat);
+	cprintf(_GREEN, 5, "AWAY   LO=%+9.7f", endLocation.lng);
 
+	dist = gps.distanceBetween(cameraLocation.lat, cameraLocation.lng, endLocation.lat, endLocation.lng);
+	course = (int)gps.courseTo(cameraLocation.lat, cameraLocation.lng, endLocation.lat, endLocation.lng);
+	dir = gps.cardinal(course);
+	
+	cprintf(_YELLOW, 6, "course = %d dir=%3s", course, dir);
+	
 	// all display updates done ... just keys left
 	if (some_key == DISPLAY_REFRESH) return (void*) learningMode;
 	
@@ -302,9 +311,7 @@ static void * learningMode(BUTTON_EVENT some_key)
 		case LBUTTON_DN:
 			if (some_key == LBUTTON_DN)
 			{
-				cameraLocation = gpsAverage;
-				cprintf(_GREEN, 4, "LA=%+9.7f", gpsAverage.lat);
-				cprintf(_GREEN, 5, "LO=%+9.7f", gpsAverage.lng);
+				endLocation = gpsAverage;
 				cprintf(_ORANGE, 6, "NEXT CAMERA or SAVE");
 			}
 			
@@ -314,9 +321,7 @@ static void * learningMode(BUTTON_EVENT some_key)
 		case RBUTTON_DN:
 			if (some_key == RBUTTON_DN)
 			{
-				endLocation = gpsAverage;
-				cprintf(_RED, 2, "LA=%+9.7f", gpsAverage.lat);
-				cprintf(_RED ,3, "LO=%+9.7f", gpsAverage.lng);
+				cameraLocation = gpsAverage;
 				cprintf(_ORANGE, 6, "NEXT AWAY or SAVE");
 			}
 
@@ -324,11 +329,6 @@ static void * learningMode(BUTTON_EVENT some_key)
 
 		case MBUTTON_DN:
 		case MBUTTON_UP:
-			dist = gps.distanceBetween(cameraLocation.lat, cameraLocation.lng, endLocation.lat, endLocation.lng);
-			course = (int)gps.courseTo(cameraLocation.lat, cameraLocation.lng, endLocation.lat, endLocation.lng);
-			dir = gps.cardinal(course);
-
-			cprintf(_YELLOW, 6, "course = %d dir=%3s", course, dir);
 			
 			if (some_key == MBUTTON_DN)
 			{
@@ -349,6 +349,25 @@ static void * reportingMode(BUTTON_EVENT some_key)
 	const char *dir;
 	static KEY_STATE here;
 	const char *cardinal;
+
+
+	findNearestCamera(iLocation.lat, iLocation.lng);
+	
+	course = (int)gps.courseTo(iLocation.lat, iLocation.lng, closestCam->lat, closestCam->lng);
+	cardinal = gps.cardinal(course);
+
+	dist = (int) gps.distanceBetween(iLocation.lat, iLocation.lng, closestCam->lat, closestCam->lng);
+	
+	cprintf(_WHITE, 0, "%s", closestCam->onStreet);
+	cprintf(_WHITE, 1, "%s",  closestCam->crossStreet);
+	cprintf(dist > 100 ? _GREEN : _RED, 2, "DIST=%4d m %3d %s", dist, course, cardinal);
+
+	xprintf(3, "%VEH=%3d kph %3.1f%%", (int)iMisc.Kmph, iMisc.qual);
+
+
+	cprintf(_GREEN, 4, "NOW LA=%+9.7f", gpsAverage.lat);
+	cprintf(_GREEN, 5, "NOW LO=%+9.7f", gpsAverage.lng);
+
 	
 	// all display updates done ... just keys left
 	if (some_key == DISPLAY_REFRESH) return (void*) reportingMode;
@@ -374,10 +393,7 @@ static void * reportingMode(BUTTON_EVENT some_key)
 
 			if (some_key == LBUTTON_DN)
 			{
-				cameraLocation = gpsAverage;
-				cprintf(_GREEN, 4, "LA=%+9.7f", gpsAverage.lat);
-				cprintf(_GREEN, 5, "LO=%+9.7f", gpsAverage.lng);
-				cprintf(_ORANGE, 6, "NEXT CAMERA or SAVE");
+				cprintf(_ORANGE, 6, "TODO LEFT");
 			}
 			
 		break;
@@ -387,20 +403,13 @@ static void * reportingMode(BUTTON_EVENT some_key)
 
 			if (some_key == RBUTTON_DN)
 			{
-				endLocation = gpsAverage;
-				cprintf(_RED, 2, "LA=%+9.7f", gpsAverage.lat);
-				cprintf(_RED ,3, "LO=%+9.7f", gpsAverage.lng);
-				cprintf(_ORANGE, 6, "NEXT AWAY or SAVE");
+				cprintf(_ORANGE, 6, "TODO RIGHT");
 			}
 
 		break;
 
 		case MBUTTON_DN:
 		case MBUTTON_UP:
-
-			dist = gps.distanceBetween(cameraLocation.lat, cameraLocation.lng, endLocation.lat, endLocation.lng);
-			course = (int)gps.courseTo(cameraLocation.lat, cameraLocation.lng, endLocation.lat, endLocation.lng);
-			dir = gps.cardinal(course);
 
 			if (some_key == MBUTTON_DN)
 			{
@@ -410,16 +419,6 @@ static void * reportingMode(BUTTON_EVENT some_key)
 		break;
 
 	}
-
-	findNearestCamera(iLocation.lat, iLocation.lng);
-	
-	course = (int)gps.courseTo(iLocation.lat, iLocation.lng, closestCam->lat, closestCam->lng);
-	cardinal = gps.cardinal(course);
-
-	dist = (int) gps.distanceBetween(iLocation.lat, iLocation.lng, closestCam->lat, closestCam->lng);
-	
-	xprintf(0, "%s", closestCam->onStreet);
-	xprintf(1, "%s",  closestCam->crossStreet);
 
 /*
 	What is HDOP 
@@ -442,14 +441,6 @@ static void * reportingMode(BUTTON_EVENT some_key)
 	>20 Poor At this level, measurements should be discarded
 */
 
-	xprintf(3, "%3d kph %3s %3.1f", (int)iMisc.Kmph, veh_cardinal, iMisc.hdop);
-
-	if (dist > 100)
-		cprintf(_GREEN, 2, "%3d m %3d %s", dist, course, cardinal);
-	else
-		cprintf(_RED, 2, "%3d m %3d %s", dist, course, cardinal);
-
-	LINE;
 	return (void *) reportingMode;
 }	
 
