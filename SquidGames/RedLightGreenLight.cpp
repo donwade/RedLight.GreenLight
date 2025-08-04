@@ -55,11 +55,15 @@ extern TinyGPSPlus gps;
 
 typedef struct gpsLocation { double lng; double lat; };
 
+
 typedef struct gpsMisc 
 {
 	float speed;
 	const char *cardinal;
+	
 	float qual;
+	const char  *cqual;
+	
 	float Kmph;
 	float course;		//direction in float degrees
 	
@@ -70,6 +74,14 @@ typedef struct gpsMisc
 	
 gpsLocation iLocation;
 gpsMisc     iMisc;
+
+static const char *qual[] = {
+	"EXEL",
+	"GOOD",
+	"POOR",
+	"SICK"
+};
+
 
 //-----------------------------------------------------------------
 
@@ -148,6 +160,22 @@ void getData(void)
 	iMisc.Kmph = gps.speed.kmph();
 	iMisc.qual = gps.hdop.hdop();
 	iMisc.course = gps.course.deg();
+
+	/*
+		HDOP < 2: Excellent accuracy, suitable for critical applications. 
+		2 < HDOP < 5: Good accuracy, sufficient for most tasks. 
+		HDOP > 5: Poor accuracy, may require alternative or redundant systems. 
+		HDOP > 10: Considered poor and indicates a low accuracy GPS fix. 
+	*/
+	if (iMisc.qual <= 2.0)
+		iMisc.cqual = qual[0];
+	else if (iMisc.qual <= 5.0)
+		iMisc.cqual = qual[1];
+	else if (iMisc.qual <= 10.0)
+		iMisc.cqual = qual[2];
+	else
+		iMisc.cqual = qual[3];
+		
 
 	/* not required. tbeam builds char by char 
 	if (millis() > 5000 && gps.charsProcessed() < 10)
@@ -365,7 +393,7 @@ static void * reportingMode(BUTTON_EVENT some_key)
 	cprintf(_WHITE, 1, "%s",  closestCam->crossStreet);
 	cprintf(dist > 100 ? _GREEN : _RED, 2, "DIST=%4d m %3d %s", dist, course, cardinal);
 
-	xprintf(3, "%VEH=%3d kph %3.1f%%", (int)iMisc.Kmph, iMisc.qual);
+	xprintf(3, "%VEH=%3d kph Q=%s", (int)iMisc.Kmph, iMisc.cqual);
 
 	cprintf(_GREEN, 4, "NOW LA=%+9.7f", gpsAverage.lat);
 	cprintf(_GREEN, 5, "NOW LO=%+9.7f", gpsAverage.lng);
