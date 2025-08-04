@@ -30,15 +30,10 @@
 *******************************************************************************************************/
 
 #include <M5Unified.h>
-#include <FastLED.h>                                                                                                                                                                    
+#include "viewController.h"
 
 void SendPacket(char *explain, const uint8_t *pPacket, uint8_t packetSize, bool bDumpMsg = false);
 uint8_t getMessage(uint8_t ID1, uint8_t ID2, uint8_t *packet, uint16_t packetSize, bool bDumpPacket = false);
-
-#define LEDS_PIN 25
-#define LEDS_NUM 10
-
-CRGB ledsBuff[LEDS_NUM];
 
 // given a message packet, where is the payload?
 #define OFFSET2_PAYLOAD 6
@@ -540,29 +535,6 @@ void monitor(unsigned long waitMs)
 }
 
 //------------------------------------------------------
-// make entire LED bar one colour
-void colourBar(uint8_t R,uint8_t G, uint8_t B) 
-{
-	for (int i = 0; i < LEDS_NUM; i++) {
-		ledsBuff[i].setRGB(R, G, B);
-	}
-	FastLED.show();
-}	
-
-//------------------------------------------------------
-// make range of LEDs one color
-void colourNleds(uint8_t who, uint8_t width, uint8_t R,uint8_t G, uint8_t B) 
-{
-	assert(who < LEDS_NUM);
-	assert(who + width < LEDS_NUM);
-	
-	for (int i = who; i < who + width; i++) {
-		ledsBuff[i].setRGB(R, G, B);
-	}
-	FastLED.show();
-}	
-
-//------------------------------------------------------
 // user can provide a packet message that has a bad crc value.
 // This can occur when a RMW operation on the packet has occured
 // and the user shouldn't have to know about crc stuff.
@@ -632,8 +604,6 @@ void setup_BN880()
   M5.begin();
   Serial.begin(115200);
   
-  FastLED.addLeds<SK6812, LEDS_PIN>(ledsBuff, LEDS_NUM);
-
   Serial.println();
   Serial.printf("90_UBlox_GPS_Configuration Starting %d", SILENCE_MS);
   delay(1000);
@@ -646,7 +616,7 @@ void setup_BN880()
   Serial2.begin(115200);
 
 
-  colourBar(5, 0, 0);
+  colourBar(5, 5, 5);
   
   Serial.println("----------------------------------------------");
 

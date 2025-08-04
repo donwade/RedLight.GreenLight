@@ -1,10 +1,56 @@
 #include <M5Unified.h>
+#include <FastLED.h>                                                                                                                                                                    
 #include <m5Core2-only.h>
 #include "viewController.h"
 #include "watchdogs.h"
 
+#define LEDS_PIN 25
+#define LEDS_NUM 10
+
+CRGB ledsBuff[LEDS_NUM];
+
 static SemaphoreHandle_t displayMutex = xSemaphoreCreateMutex();
 SemaphoreHandle_t keyCountingSemaphore;
+
+//------------------------------------------------------
+// make entire LED bar one colour
+void colourBar(uint8_t R,uint8_t G, uint8_t B) 
+{
+	for (int i = 0; i < LEDS_NUM; i++) {
+		ledsBuff[i].setRGB(R, G, B);
+	}
+	FastLED.show();
+}	
+
+//------------------------------------------------------
+// make entire LED bar one colour
+void colourBarX(uint32_t RGB, uint8_t pct) 
+{
+	uint16_t R,G,B;
+	G = ((RGB >> 16) & 0xFF) * pct /100;
+	R = ((RGB >>  8) & 0xFF) * pct /100;
+	B =  (RGB 	     & 0xFF) * pct /100;
+	
+	for (int i = 0; i < LEDS_NUM; i++) {
+		ledsBuff[i].setRGB(R, G, B);
+	}
+	FastLED.show();
+}	
+
+
+//------------------------------------------------------
+// make range of LEDs one color
+void colourNleds(uint8_t who, uint8_t width, uint8_t R,uint8_t G, uint8_t B) 
+{
+	assert(who < LEDS_NUM);
+	assert(who + width < LEDS_NUM);
+	
+	for (int i = who; i < who + width; i++) {
+		ledsBuff[i].setRGB(R, G, B);
+	}
+	FastLED.show();
+}	
+
 
 //-------------------------------------------------------------
 void lfillRect(uint16_t x, uint16_t y, uint16_t wide, uint16_t height, uint32_t RGB)
@@ -197,6 +243,9 @@ ArduinoQueue<BUTTON_EVENT> buttonQueue(20);
 
 void setup_button()
 {
+
+	FastLED.addLeds<SK6812, LEDS_PIN>(ledsBuff, LEDS_NUM);	
+
 	keyCountingSemaphore = xSemaphoreCreateCounting(MAX_KEYS_QUEUED,0);
 
 	phyDispWidth = M5.Lcd.width();

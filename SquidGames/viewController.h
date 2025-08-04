@@ -14,13 +14,18 @@
 #define _MAGENTA     (_RED   | _BLUE)
 #define _YELLOW      (_RED   | _GREEN)
 
-#define _ORANGE      (_RED | (_GREEN/2))
+#define _ORANGE      (_RED | (165 << 8))
 #define _NAVY        (_BLUE/2)
 #define _MAROON      (_RED/2)
 #define _DGREEN      (_GREEN/2)
 #define _DCYAN       (_CYAN/2)
 #define _OLIVE       ( (_RED/2) | (_GREEN/2))
-#define _PINK        ( _RED | _GREEN | (_BLUE/20))
+#define _PINK        ( _RED | (_GREEN/20) | (_BLUE/20))
+
+extern void colourBar(uint8_t R,uint8_t G, uint8_t B);
+extern void colourBarX(uint32_t RGB, uint8_t pct);
+extern void colourNleds(uint8_t who, uint8_t width, uint8_t R,uint8_t G, uint8_t B);
+
 
 typedef enum KEY_STATE { KEY_UNKNOWN, KEY_DOWN, KEY_UP};
 

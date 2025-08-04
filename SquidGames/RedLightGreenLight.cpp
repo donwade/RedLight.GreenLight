@@ -312,6 +312,7 @@ static void * learningMode(BUTTON_EVENT some_key)
 			if (some_key == LBUTTON_DN)
 			{
 				endLocation = gpsAverage;
+				colourBarX(_GREEN, 10);
 				cprintf(_ORANGE, 6, "NEXT CAMERA or SAVE");
 			}
 			
@@ -322,6 +323,7 @@ static void * learningMode(BUTTON_EVENT some_key)
 			if (some_key == RBUTTON_DN)
 			{
 				cameraLocation = gpsAverage;
+				colourBarX(_RED, 10);
 				cprintf(_ORANGE, 6, "NEXT AWAY or SAVE");
 			}
 
@@ -332,6 +334,7 @@ static void * learningMode(BUTTON_EVENT some_key)
 			
 			if (some_key == MBUTTON_DN)
 			{
+				colourBarX(_YELLOW, 10);
 				return (void*) reportingMode;
 			}			
 			break;
@@ -393,6 +396,7 @@ static void * reportingMode(BUTTON_EVENT some_key)
 
 			if (some_key == LBUTTON_DN)
 			{
+				colourBarX(_CYAN, 10);
 				cprintf(_ORANGE, 6, "TODO LEFT");
 			}
 			
@@ -403,7 +407,8 @@ static void * reportingMode(BUTTON_EVENT some_key)
 
 			if (some_key == RBUTTON_DN)
 			{
-				cprintf(_ORANGE, 6, "TODO RIGHT");
+				colourBarX(_BLUE, 10);
+				cprintf(_BLUE, 6, "TODO RIGHT");
 			}
 
 		break;
@@ -413,6 +418,7 @@ static void * reportingMode(BUTTON_EVENT some_key)
 
 			if (some_key == MBUTTON_DN)
 			{
+				colourBarX(_PINK, 10);
 				return (void*) learningMode;
 			}			
 			
