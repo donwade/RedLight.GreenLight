@@ -367,10 +367,18 @@ static void * reportingMode(BUTTON_EVENT some_key)
 
 	xprintf(3, "%VEH=%3d kph %3.1f%%", (int)iMisc.Kmph, iMisc.qual);
 
-
 	cprintf(_GREEN, 4, "NOW LA=%+9.7f", gpsAverage.lat);
 	cprintf(_GREEN, 5, "NOW LO=%+9.7f", gpsAverage.lng);
 
+    bool isCharging = M5.Power.isCharging();
+    int vol_per = M5.Power.getBatteryLevel();
+    int vol = M5.Power.getBatteryVoltage();
+    int cur = M5.Power.getBatteryCurrent();
+	cprintf(_YELLOW, 6, "%3.1fv %d%% %dmA %s", 
+						(float)vol/1000.,
+						vol_per,
+						cur,
+						isCharging ? "CHG":"DIS");
 	
 	// all display updates done ... just keys left
 	if (some_key == DISPLAY_REFRESH) return (void*) reportingMode;

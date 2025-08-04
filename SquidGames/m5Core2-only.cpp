@@ -57,6 +57,7 @@ void lclear(void)
 #include <Fonts/FreeMono12pt7b.h>
 
 //--------------------------------------------------
+void reportPower(void);
 
 
 void setup_M5(void)
@@ -72,6 +73,9 @@ void setup_M5(void)
 
 	lfillRect(0, 0, 50, 50, 0x0000FF);
 	delay(2000);
+
+	Serial.begin(115200);
+	reportPower();
 	
 	setup_button();
 }
@@ -92,4 +96,21 @@ void lsetTextColor(uint32_t FGND, uint32_t BKGND)
     //M5.Display.drawString("HI MOM", w / 2, 0, &fonts::FreeMonoBold12pt7b);
     
 }
+
+
+void reportPower(void)
+{
+    //M5.Display.clear(TFT_WHITE);
+    
+    bool isCharging = M5.Power.isCharging();
+    int vol_per = M5.Power.getBatteryLevel();
+    int vol = M5.Power.getBatteryVoltage();
+    int cur = M5.Power.getBatteryCurrent();
+
+	Serial.printf("\n-------------------------\n");
+    Serial.printf("Charging: %s\n", isCharging ? "Yes" : "No");
+    Serial.printf("Bat_level: %d%%\n", vol_per);
+    Serial.printf("Bat_voltage: %d%mV\n", vol);
+    Serial.printf("Bat_current: %d%mA\n\n", cur);
+}                                              
 
