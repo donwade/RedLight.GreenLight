@@ -304,8 +304,8 @@ pStateFunction stateMachines[] =
 
 void stateDisplay(BUTTON_EVENT some_key)
 {
-	//static volatile pStateFunction lastCall = reportingMode;
-	static volatile pStateFunction lastCall = learningMode;
+	static volatile pStateFunction lastCall = reportingMode;
+	//static volatile pStateFunction lastCall = learningMode;
 	pStateFunction nowCall;
 
 	kickDog();

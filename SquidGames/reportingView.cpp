@@ -13,8 +13,28 @@ void * reportingMode(BUTTON_EVENT some_key)
 	const char *cardinal;
 
 
-	findNearestCamera(iLocation.lat, iLocation.lng);
+	if (!(int)iLocation.lat || !(int) iLocation.lng)
+	{
+		Serial.printf("ilat=%f ilng=%f\n", 
+			iLocation.lat,
+			iLocation.lng);
+		return (void*)reportingMode;
+	}
 	
+	int ret = findNearestCamera(iLocation.lat, iLocation.lng);
+
+	// if vehicle location not known, return negative dist.
+	if (ret < 0) return (void*) reportingMode;
+
+/*
+	Serial.printf("ilat=%f ilng=%f pGPS=%p clat=%f clng=%f\n", 
+		iLocation.lat,
+		iLocation.lng,
+		closestCam,
+		closestCam->lat,
+		closestCam->lng);
+*/
+
 	course = (int)gps.courseTo(iLocation.lat, iLocation.lng, closestCam->lat, closestCam->lng);
 	cardinal = gps.cardinal(course);
 

@@ -204,15 +204,19 @@ int findNearestCamera(float vehicleLat, float vehicleLng)
 	GPS_ENTRY2 *aCamera;
 	int closestDist = INT_MAX;
 
+	// do not do any GPS with 0.0 it will hang (hi GD).
+	if (!(int)vehicleLat )
+	{
+		Serial.printf("%s:%d skipping ... zero lat or long\n", __FUNCTION__, __LINE__);
+		return -1; // not ready (negative distance is not possible)
+	}
+	
 	if (xSemaphoreTake(hLocationMutex, portMAX_DELAY) == pdTRUE)
 	{
 		int dist;
 		int course;
 		int i;
 			
-		// do not do any GPS with 0.0 it will hang (hi GD).
-		if (vehicleLat < 1.0 ) goto byebye;
-		
 		for (int i = 0; i < cameras.size(); i++)
 		{
 			aCamera = cameras.get(i);
@@ -233,7 +237,6 @@ int findNearestCamera(float vehicleLat, float vehicleLng)
 		}
 		
 #ifdef CHATTY
-//#ifdef SHOW_DECISIONS 
 		Serial.println();
 		Serial.printf("lat=%9.7f lng=%9.7f \n", vehicleLat, vehicleLng);
 		
