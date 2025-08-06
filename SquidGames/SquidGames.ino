@@ -29,13 +29,26 @@ TinyGPSPlus gps;
 
 
 //=============================================================
-void smartDelay(unsigned long ms) {
+/*
+	while 'delaying' monitor the incoming gps stream for characters.
+	if serial2 chars are found, stuff them into the gps encoder.
+
+	Note: Tdelay, not delay is called.
+	      the requested delay could be longer than the watchdog
+	      timer, and that is not considered a sin.
+	      Tdelay will kick the watchdog as needed if the user
+	      requested time is gt dog timer.
+	
+*/
+
+void smartDelay(unsigned long ms) 
+{
+	
     unsigned long start = millis();
+	
     do {
         while (Serial2.available() > 0)	gps.encode(Serial2.read());
-		///////////////////////////////////
-		Tdelay((9600/1000)); // 9600baud in mS allow any task dogs !!!!!
-		///////////////////////////////////
+		Tdelay((8 * 9600/1000)); // 9600baud in mS allow any task dogs !!!!!
     } while (millis() - start < ms);
     //clear();
 }
@@ -184,7 +197,7 @@ void setup() {
 
 	add_to_playlist("terrain.wav");
 	add_to_playlist("speed.wav");
-	add_to_playlist("whoopwoop.wav");
+	add_to_playlist("whoop.wav");
 	add_to_playlist("terrain.wav");
 /*	
 	add_to_playlist("three.wav");

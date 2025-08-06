@@ -45,6 +45,13 @@ https://github.com/mikalhart/TinyGPSPlus
 #include "locate.h"
 #include "viewController.h"
 
+#define LAT_MIN  44.
+#define LAT_MAX  46.
+
+#define LNG_MAX -74.
+#define LNG_MIN -76.
+
+
 #define BUILTIN_LED 4  // TIP t-beam
 extern void smartDelay(unsigned long ms);
 
@@ -62,7 +69,7 @@ typedef struct gpsMisc
 	const char *cardinal;
 	
 	float qual;
-	const char  *cqual;
+	const char  *cQuality;
 	
 	float Kmph;
 	float course;		//direction in float degrees
@@ -87,7 +94,7 @@ static const char *qual[] = {
 
 //#define SIMULATOR
 
-void getData(void)
+bool getData(void)
 {
 #ifdef SIMULATOR
 	String cppStr;
@@ -149,11 +156,30 @@ void getData(void)
 	Serial.println(cDeg);
 	Serial.printf("-------done-----\n");
 #endif
+	return true;
 
 #else
 
-	iLocation.lat = gps.location.lat();
-	iLocation.lng = gps.location.lng();
+	double Tlat, Tlng;
+	Tlat = gps.location.lat();
+	Tlng = gps.location.lng();
+	
+	if (Tlat < LAT_MIN || Tlat > LAT_MAX)
+	{
+		Serial.printf("%s:%d GPS bad LAT= %11.8f < %11.8f < %11.8f\n",
+					__FUNCTION__,__LINE__, LAT_MIN, Tlat, LAT_MAX);
+		return false;
+	}
+	
+	if ( Tlng < LNG_MIN || Tlng > LNG_MAX )
+	{
+		Serial.printf("%s:%d GPS bad LON= %11.8f < %11.8f < %11.8f  \n",
+					__FUNCTION__,__LINE__, LNG_MIN, Tlng, LNG_MAX);
+		return false;
+	}
+	
+	iLocation.lat = Tlat;
+	iLocation.lng = Tlng;
 	iMisc.hour = gps.time.hour();
 	iMisc.minute = gps.time.minute();
 	iMisc.second = gps.time.second();
@@ -168,31 +194,25 @@ void getData(void)
 		HDOP > 10: Considered poor and indicates a low accuracy GPS fix. 
 	*/
 	if (iMisc.qual <= 2.0)
-		iMisc.cqual = qual[0];
+		iMisc.cQuality = qual[0];
 	else if (iMisc.qual <= 5.0)
-		iMisc.cqual = qual[1];
+		iMisc.cQuality = qual[1];
 	else if (iMisc.qual <= 10.0)
-		iMisc.cqual = qual[2];
+		iMisc.cQuality = qual[2];
 	else
-		iMisc.cqual = qual[3];
+		iMisc.cQuality = qual[3];
 		
-
-	/* not required. tbeam builds char by char 
-	if (millis() > 5000 && gps.charsProcessed() < 10)
-		Serial.println(F("No GPS data received: check wiring"));
-	else
-		Serial.printf("got reading\n");		
-	*/
+	return true;
 	
 #endif
 }
 
 
 gpsLocation gpsAverage;
-bool bButtonPressed	= false;
 
-
+#define GPS_SAMPLE_RATE 250  //mS
 #define GPS_SAMPLE_SIZE 12
+
 gpsLocation samples [ GPS_SAMPLE_SIZE ];
 uint8_t sIndex;
 
@@ -393,7 +413,7 @@ static void * reportingMode(BUTTON_EVENT some_key)
 	cprintf(_WHITE, 1, "%s",  closestCam->crossStreet);
 	cprintf(dist > 100 ? _GREEN : _RED, 2, "DIST=%4d m %3d %s", dist, course, cardinal);
 
-	xprintf(3, "%VEH=%3d kph Q=%s", (int)iMisc.Kmph, iMisc.cqual);
+	xprintf(3, "%VEH=%3d kph Qual=%s", (int)iMisc.Kmph, iMisc.cQuality);
 
 	cprintf(_GREEN, 4, "NOW LA=%+9.7f", gpsAverage.lat);
 	cprintf(_GREEN, 5, "NOW LO=%+9.7f", gpsAverage.lng);
@@ -498,6 +518,7 @@ pStateFunction stateMachines[] =
 
 void stateDisplay(BUTTON_EVENT some_key)
 {
+	//static volatile pStateFunction lastCall = reportingMode;
 	static volatile pStateFunction lastCall = learningMode;
 	pStateFunction nowCall;
 
@@ -530,53 +551,49 @@ void gpsGetDataTask(void *not_used)
 	
 	static unsigned long lastProfileTime; 
 
+
+	smartDelay(GPS_SAMPLE_RATE);
+	
+	if (!getData())
 	{
-		getData();
-		
-		{
-			// update rolling history
+		return;
+	}	
+	// update rolling history
 
-			samples[sIndex].lat = iLocation.lat;
-			samples[sIndex].lng = iLocation.lng;
+	samples[sIndex].lat = iLocation.lat;
+	samples[sIndex].lng = iLocation.lng;
 
-			// sIndex is left pointing to NEXT position to write to on the next pass
-			// therefore sIndex points to oldest entry by time
+	// sIndex is left pointing to NEXT position to write to on the next pass
+	// therefore sIndex points to oldest entry by time
 
-			if (++sIndex == GPS_SAMPLE_SIZE) sIndex = 0;
-		}	
+	if (++sIndex == GPS_SAMPLE_SIZE) sIndex = 0;
 
-		calcGPSaverage();
-		
-		double delta_dist = gps.distanceBetween(iLocation.lat, iLocation.lng, oldLocation.lat, oldLocation.lng );
-		oldLocation = iLocation;
-		
-		xprintf(7, "diff=%7.4f s=%d", delta_dist, gps.satellites.value());
-		
-		// get direction only if going fast enough
-		// otherwise it points all over the place
-		
-		if (iMisc.Kmph > MIN_SPEED_KPH )
-		{
-			gpsLocation oldest;
-			getOldestSample(&oldest);
-			veh_course = (int)gps.courseTo(oldest.lat, oldest.lng, iLocation.lat, iLocation.lng );
-			veh_cardinal = gps.cardinal(veh_course);
-		}
+	calcGPSaverage();
+	
+	double delta_dist = gps.distanceBetween(iLocation.lat, iLocation.lng, oldLocation.lat, oldLocation.lng );
+	oldLocation = iLocation;
+	
+	xprintf(7, "diff=%7.4f s=%d", delta_dist, gps.satellites.value());
+	
+	// get direction only if going fast enough
+	// otherwise it points all over the place
+	
+	if (iMisc.Kmph > MIN_SPEED_KPH )
+	{
+		gpsLocation oldest;
+		getOldestSample(&oldest);
+		veh_course = (int)gps.courseTo(oldest.lat, oldest.lng, iLocation.lat, iLocation.lng );
+		veh_cardinal = gps.cardinal(veh_course);
+	}
 
 #ifdef CHATTY		
-		Serial.printf("%2d:%02d:%02d @ %+9.7f %+9.7f ^ %3d kph dir %3d %s\n", 
-				iMisc.hour,iMisc.minute,iMisc.second,
-				iLocation.lat, iLocation.lng,
-				(int)iMisc.Kmph, (int)iMisc.course, gps.cardinal(iMisc.course)
-				);
+	Serial.printf("%2d:%02d:%02d @ %+9.7f %+9.7f ^ %3d kph dir %3d %s\n", 
+			iMisc.hour,iMisc.minute,iMisc.second,
+			iLocation.lat, iLocation.lng,
+			(int)iMisc.Kmph, (int)iMisc.course, gps.cardinal(iMisc.course)
+			);
 #endif
 
-		// profile loop time. So far about 3ms total		
-		//difftime =  micros() - startProfileTime;
-		//Serial.printf("profile = %d uS\n", difftime);
-
-		smartDelay(250);
-	}
 }
 
 //---------------------------------------------------------
