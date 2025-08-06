@@ -236,7 +236,7 @@ int findNearestCamera(float vehicleLat, float vehicleLng)
 	
 		}
 		
-#ifdef CHATTY
+#if 0 //def CHATTY
 		Serial.println();
 		Serial.printf("lat=%9.7f lng=%9.7f \n", vehicleLat, vehicleLng);
 		

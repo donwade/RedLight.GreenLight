@@ -1,8 +1,106 @@
 #include "locate.h"
 #include "viewController.h"
+#include "wavePlayer.h"
 
 #define LINE Serial.printf("%s:%d\n", __FUNCTION__, __LINE__)
 extern void * learningMode(BUTTON_EVENT x);
+
+void speakSpeed(int Kmph)
+{
+	
+}
+
+void speakDistance(int distNow)
+{
+	static bool bAnnounced10;
+	static bool bAnnounced20;
+	static bool bAnnounced30;
+	static bool bAnnounced40;
+	static bool bAnnounced50;
+	static bool bAnnounced60;
+	static bool bAnnounced70;
+	static bool bAnnounced80;
+	static bool bAnnounced90;
+	static bool bAnnounced100;
+	
+
+	if (distNow >= 0 && distNow < 10)
+	{
+		if (!bAnnounced10) add_to_playlist("toolow.wav");
+		bAnnounced10 = true;
+	}
+	
+	else if (distNow >= 10 && distNow < 20)
+	{
+		if (!bAnnounced20) add_to_playlist("twenty.wav");
+		bAnnounced20 = true;
+	}
+	
+	else if (distNow >= 20 && distNow < 30)
+	{
+		if (!bAnnounced30) add_to_playlist("thirty.wav");
+		bAnnounced30 = true;
+	}
+	
+	else if (distNow >= 30 && distNow < 40)
+	{
+		if (!bAnnounced40) add_to_playlist("fourty.wav");
+		bAnnounced40 = true;
+	}
+	
+	else if (distNow >= 40 && distNow < 50)
+	{
+		if (!bAnnounced50) add_to_playlist("fifty.wav");
+		bAnnounced50 = true;
+	}
+	
+	else if (distNow >= 50 && distNow < 60)
+	{
+		if (!bAnnounced60) add_to_playlist("sixty.wav");
+		bAnnounced60 = true;
+	}
+	
+	else if (distNow >= 60 && distNow < 70)
+	{
+		if (!bAnnounced70) add_to_playlist("seventy.wav");
+		bAnnounced70 = true;
+	}
+	
+	else if (distNow >= 70 && distNow < 80)
+	{
+		if (!bAnnounced80) add_to_playlist("eighty.wav");
+		bAnnounced80 = true;
+	}
+	
+	else if (distNow >= 80 && distNow < 90)
+	{
+		if (!bAnnounced90) add_to_playlist("ninety.wav");
+		bAnnounced90 = true;
+	}
+
+	else if (distNow >= 90 && distNow < 100)
+	{
+		if (!bAnnounced90) add_to_playlist("hundred.wav");
+		bAnnounced100 = true;
+	}
+	else
+	{
+		bAnnounced10 = false;
+		bAnnounced20 = false;
+		bAnnounced30 = false;
+		bAnnounced40 = false;
+		bAnnounced50 = false;
+		bAnnounced60 = false;
+		bAnnounced70 = false;
+		bAnnounced80 = false;
+		bAnnounced90 = false;
+		bAnnounced100 = false;
+	}	
+	
+}
+
+
+
 
 void * reportingMode(BUTTON_EVENT some_key)
 {
@@ -15,30 +113,20 @@ void * reportingMode(BUTTON_EVENT some_key)
 
 	if (!(int)iLocation.lat || !(int) iLocation.lng)
 	{
-		Serial.printf("ilat=%f ilng=%f\n", 
-			iLocation.lat,
-			iLocation.lng);
+		//Serial.printf("ilat=%f ilng=%f\n", iLocation.lat, iLocation.lng);
 		return (void*)reportingMode;
 	}
 	
-	int ret = findNearestCamera(iLocation.lat, iLocation.lng);
+	dist = findNearestCamera(iLocation.lat, iLocation.lng);
 
 	// if vehicle location not known, return negative dist.
-	if (ret < 0) return (void*) reportingMode;
-
-/*
-	Serial.printf("ilat=%f ilng=%f pGPS=%p clat=%f clng=%f\n", 
-		iLocation.lat,
-		iLocation.lng,
-		closestCam,
-		closestCam->lat,
-		closestCam->lng);
-*/
+	if (dist < 0) return (void*) reportingMode;
 
 	course = (int)gps.courseTo(iLocation.lat, iLocation.lng, closestCam->lat, closestCam->lng);
 	cardinal = gps.cardinal(course);
 
-	dist = (int) gps.distanceBetween(iLocation.lat, iLocation.lng, closestCam->lat, closestCam->lng);
+	//speakSpeed(iMisc.Kmph);
+	speakDistance(dist);
 	
 	cprintf(_WHITE, 0, "%s", closestCam->onStreet);
 	cprintf(_WHITE, 1, "%s",  closestCam->crossStreet);
