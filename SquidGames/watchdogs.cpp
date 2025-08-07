@@ -21,26 +21,6 @@ extern "C" unsigned long millis(void);
 */
 
 #define TWDT_DOG_TIMER_SEC    3
-#define TASK_SLEEP_PERIOD     TWDT_DOG_TIMER_SEC-1 // test should never fail      
-
-// Everything ok is TWDT_DOG_TIMER_SEC > TASK_SLEEP_PERIOD
-// DOG will trigger if TWDT_DOG_TIMER_SEC < TASK_SLEEP_PERIOD
-
-
-/*
- * Macro to check the outputs of TWDT functions and trigger an abort if an
- * incorrect code is returned.
- * It appears each core has a task called xTaskGetIdleTaskHandleForCPUx
- * provided by FreeRTOS.
- *
- * This task will somehow accept other tasks and monitor them.
- * 
- *     Activate task called xTaskGetIdleTaskHandleForCPUx (the monitor) 
- *     then when your task runs, have it register to xTaskGetIdleTaskHandleForCPUx
- */
-
-
-static TaskHandle_t task_handles[portNUM_PROCESSORS];
 
 void setup_watchdogs(void)
 {
@@ -55,69 +35,6 @@ void setup_watchdogs(void)
     // Initialize the TWDT with the specified configuration
     ESP_ERROR_CHECK(esp_task_wdt_init(&twdt_config));
 
-}
-//-------------------------------------------------------------------------
-
-// spawned task for core0. 
-void dogLoop0(void *arg)
-{
-    int i = *(int*) arg;
-
-    
-    //Subscribe this task to TWDT, then check if it is subscribed
-
-    // put this thread under control of the WDT thread
-    ABORT_ON_FAIL(esp_task_wdt_add(NULL), ESP_OK);
-
-    // did it stick?
-    ABORT_ON_FAIL(esp_task_wdt_status(NULL), ESP_OK);
-
-    //while(1)
-    {
-
-        static unsigned long ms;
-        unsigned long now=millis();
-        unsigned long diff = now -ms;
-        ms = now;
-        printf("%s core %d time = %d mS\n", __FUNCTION__, i,  diff);
-
-		kickDog();
-		
-        vTaskDelay(pdMS_TO_TICKS(TASK_SLEEP_PERIOD * 1000));
-        
-    }
-}
-
-//-------------------------------------------------------------------------
-
-// spawned task for core1. 
-void dogLoop1(void *arg)
-{
-    int i = *(int*) arg;
-
-    
-    //Subscribe this task to TWDT, then check if it is subscribed
-
-    // put this thread under control of the WDT thread
-    ABORT_ON_FAIL(esp_task_wdt_add(NULL), ESP_OK);
-
-    // did it stick?
-    ABORT_ON_FAIL(esp_task_wdt_status(NULL), ESP_OK);
-
-    //while (1)
-    {
-
-        static unsigned long ms;
-        unsigned long now=millis();
-        unsigned long diff = now -ms;
-        ms = now;
-        printf("%s core %d time = %d mS\n", __FUNCTION__, i,  diff);
-
-		kickDog();
-
-        vTaskDelay(pdMS_TO_TICKS(TASK_SLEEP_PERIOD * 1000));
-        
-    }
 }
 
 //-------------------------------------------------------------------------
@@ -145,10 +62,7 @@ void Tdelay(unsigned int ms)
 		kickDog();
 		delay(TWDT_DOG_TIMER_SEC * 1000 - 1);
 		ms -= TWDT_DOG_TIMER_SEC * 1000;
-		//printf("%s in loop ms = %d (wd=%d)\n", __FUNCTION__, ms, TWDT_DOG_TIMER_SEC * 1000);
 	}
-
-	//printf("%s exited loop ... ms left = %d\n", __FUNCTION__,  ms);
 
 	kickDog();
 	if (ms > 0) delay(ms);

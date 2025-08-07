@@ -29,14 +29,8 @@
 #endif
 
 extern TaskHandle_t spawnTaskAndDogV2(  TaskFunction_t pvTaskCode, const char * const pcName, const uint32_t usStackDepth, void * const pvParameters, UBaseType_t uxPriority);
-extern TaskHandle_t spawnTaskAndDog(  TaskFunction_t pvTaskCode, const char * const pcName, const uint32_t usStackDepth, void * const pvParameters, UBaseType_t uxPriority);
 extern void kickDog(void);
-extern void test_watchDogs(void);
 extern void Tdelay(unsigned int ms);
-extern void *testDump(uint32_t stacksize); 
-uint8_t *patternMemory(void * where, uint32_t size);
-void dumpAbout(void *address, uint32_t aboutSize);
-void dumpAboutStack(char *msg, uint32_t aboutSize);
 
 
 
