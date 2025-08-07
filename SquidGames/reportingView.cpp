@@ -12,15 +12,11 @@ void speakSpeed(int Kmph)
 
 void speakDistance(int distNow)
 {
-	static bool bAnnounced10;
+	static bool bAnnounced0;
 	static bool bAnnounced20;
-	static bool bAnnounced30;
 	static bool bAnnounced40;
-	static bool bAnnounced50;
 	static bool bAnnounced60;
-	static bool bAnnounced70;
 	static bool bAnnounced80;
-	static bool bAnnounced90;
 	static bool bAnnounced100;
 	static bool bAnnounced150;
 	static bool bAnnounced200;
@@ -28,19 +24,19 @@ void speakDistance(int distNow)
 
 	int i;
 	
-	if (bNewTarget || distNow > 100)
+#ifdef LONGVIEW
+	if (bNewTarget || distNow > 300)
+#else
+	if (bNewTarget || distNow > 150)
+#endif
 	{
 		// '300' always largest than farthest reporting distance
 		bNewTarget = false;
-		bAnnounced10 = false;
+		bAnnounced0 = false;
 		bAnnounced20 = false;
-		bAnnounced30 = false;
 		bAnnounced40 = false;
-		bAnnounced50 = false;
 		bAnnounced60 = false;
-		bAnnounced70 = false;
 		bAnnounced80 = false;
-		bAnnounced90 = false;
 		bAnnounced100 = false;
 		bAnnounced150 = false;
 		bAnnounced200 = false;
@@ -50,7 +46,7 @@ void speakDistance(int distNow)
 	if (0)
 	{
 	}
-/*
+#ifdef LONGVIEW
 	else if ( !bAnnounced300 && distNow < 300)
 	{
 		add_to_playlist("three.wav");
@@ -59,79 +55,55 @@ void speakDistance(int distNow)
 	}
 	else if ( !bAnnounced200 && distNow < 200)
 	{
+		add_to_playlist("dangerAhead.wav");
 		add_to_playlist("two.wav");
 		add_to_playlist("hundred.wav");
 		bAnnounced200 = true;
 	}
+#endif
 	else if ( !bAnnounced150 && distNow < 150)
 	{
-		add_to_playlist("dangerAhead.wav");
-		add_to_playlist("delay500.wav");
 		add_to_playlist("one.wav");
 		add_to_playlist("hundred.wav");
 		add_to_playlist("fifty.wav");
 		bAnnounced150 = true;
 	}
-*/	
 	else if ( !bAnnounced100 && distNow < 100)
-	{
-		add_to_playlist("ninety.wav");
-		bAnnounced100 = true;
-	}
-
-	else if (!bAnnounced90 && distNow < 90)
 	{
 		add_to_playlist("glideSlope.wav");
 		add_to_playlist("delay100.wav");
-		add_to_playlist("eighty.wav");
-		bAnnounced90 = true;
+		add_to_playlist("one.wav");
+		add_to_playlist("hundred.wav");
+		bAnnounced100 = true;
 	}
+
 	else if (!bAnnounced80 && distNow < 80)
 	{
-		add_to_playlist("seventy.wav");
+		add_to_playlist("eighty.wav");
 		bAnnounced80 = true;
-	}
-	else if (!bAnnounced70 && distNow < 70)
-	{
-		add_to_playlist("terrain.wav");
-		add_to_playlist("delay200.wav");
-		add_to_playlist("fireAlarm.wav");
-		add_to_playlist("sixty.wav");
-		bAnnounced70 = true;
 	}
 	else if (!bAnnounced60 && distNow < 60)
 	{
-		add_to_playlist("fifty.wav");
+		add_to_playlist("sixty.wav");
 		bAnnounced60 = true;
-	}
-	else if (!bAnnounced50 && distNow < 50)
-	{
-		add_to_playlist("fourty.wav");
-		bAnnounced50 = true;
 	}
 	else if (!bAnnounced40 && distNow < 40)
 	{
 		add_to_playlist("toolow.wav");
 		add_to_playlist("delay100.wav");
-		add_to_playlist("thirty.wav");
+		add_to_playlist("fourty.wav");
 		bAnnounced40 = true;
-	}
-	else if (!bAnnounced30 && distNow < 30)
-	{
-		add_to_playlist("twenty.wav");
-		bAnnounced30 = true;
 	}
 	else if (!bAnnounced20 && distNow < 20)
 	{
+		add_to_playlist("twenty.wav");
 		bAnnounced20 = true;
-		add_to_playlist("ten.wav");
 	}
-	else if (!bAnnounced10 && distNow < 10)
+	else if (!bAnnounced0)
 	{
-		bAnnounced10 = true;
 		add_to_playlist("danger.wav");
+		bAnnounced0 = true;
 	}
-	
 }
 
 
@@ -165,20 +137,21 @@ void * reportingMode(BUTTON_EVENT some_key)
 	
 	cprintf(_WHITE, 0, "%s", closestCam->onStreet);
 	cprintf(_WHITE, 1, "%s",  closestCam->crossStreet);
-	cprintf(dist > 100 ? _GREEN : _PINK, 2, "DIST=%4d m %3d %s", dist, course, cardinal);
+	cprintf(dist > 100 ? _GREEN : _YELLOW, 2, "DIST=%4d m %3d %s", dist, course, cardinal);
 
-	xprintf(3, "%VEH=%3d kph Qual=%s", (int)iMisc.Kmph, iMisc.cQuality);
+	xprintf(3, "%VEH=%03d kph Qual=%s", (int)iMisc.Kmph, iMisc.cQuality);
 
 	cprintf(_GREEN, 4, "NOW LA=%+9.7f", gpsAverage.lat);
 	cprintf(_GREEN, 5, "NOW LO=%+9.7f", gpsAverage.lng);
 
     bool isCharging = M5.Power.isCharging();
-    int vol_per = M5.Power.getBatteryLevel();
+    int percent = M5.Power.getBatteryVoltage() * 100/ 3700; // 3.7 v bat max
     int vol = M5.Power.getBatteryVoltage();
     int cur = M5.Power.getBatteryCurrent();
-	cprintf(_YELLOW, 6, "%3.1fv %d%% %dmA %s", 
+	
+	cprintf(_YELLOW, 6, "%3.1fv %03d%% %4dmA %s", 
 						(float)vol/1000.,
-						vol_per,
+						percent,
 						cur,
 						isCharging ? "CHG":"DIS");
 	
