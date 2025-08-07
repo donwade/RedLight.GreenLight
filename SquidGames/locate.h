@@ -44,4 +44,5 @@ extern gpsMisc     iMisc;
 extern gpsLocation cameraLocation;
 extern gpsLocation endLocation;
 extern gpsLocation gpsAverage;
+extern bool bNewTarget;
 

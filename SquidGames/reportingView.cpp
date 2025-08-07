@@ -28,8 +28,10 @@ void speakDistance(int distNow)
 
 	int i;
 	
-	if (distNow > 100)
+	if (bNewTarget || distNow > 100)
 	{
+		// '300' always largest than farthest reporting distance
+		bNewTarget = false;
 		bAnnounced10 = false;
 		bAnnounced20 = false;
 		bAnnounced30 = false;
@@ -45,7 +47,11 @@ void speakDistance(int distNow)
 		bAnnounced300 = false;
 	}	
 
-	if ( !bAnnounced300 && distNow < 300)
+	if (0)
+	{
+	}
+/*
+	else if ( !bAnnounced300 && distNow < 300)
 	{
 		add_to_playlist("three.wav");
 		add_to_playlist("hundred.wav");
@@ -66,7 +72,7 @@ void speakDistance(int distNow)
 		add_to_playlist("fifty.wav");
 		bAnnounced150 = true;
 	}
-	
+*/	
 	else if ( !bAnnounced100 && distNow < 100)
 	{
 		add_to_playlist("ninety.wav");
@@ -76,9 +82,7 @@ void speakDistance(int distNow)
 	else if (!bAnnounced90 && distNow < 90)
 	{
 		add_to_playlist("glideSlope.wav");
-		add_to_playlist("glideSlope.wav");
-		add_to_playlist("glideSlope.wav");
-		add_to_playlist("delay500.wav");
+		add_to_playlist("delay100.wav");
 		add_to_playlist("eighty.wav");
 		bAnnounced90 = true;
 	}
@@ -89,13 +93,9 @@ void speakDistance(int distNow)
 	}
 	else if (!bAnnounced70 && distNow < 70)
 	{
-		for (i = 0; i < 2; i++)
-		{
-			add_to_playlist("flaps.wav");
-			add_to_playlist("down.wav");
-			add_to_playlist("delay200.wav");
-			add_to_playlist("fireAlarm.wav");
-		}
+		add_to_playlist("terrain.wav");
+		add_to_playlist("delay200.wav");
+		add_to_playlist("fireAlarm.wav");
 		add_to_playlist("sixty.wav");
 		bAnnounced70 = true;
 	}
@@ -111,13 +111,8 @@ void speakDistance(int distNow)
 	}
 	else if (!bAnnounced40 && distNow < 40)
 	{
-		for (i = 0; i < 3; i++)
-		{
-			add_to_playlist("toolow.wav");
-			add_to_playlist("delay100.wav");
-			add_to_playlist("whoopwhoop.wav");
-			add_to_playlist("delay500.wav");
-		}
+		add_to_playlist("toolow.wav");
+		add_to_playlist("delay100.wav");
 		add_to_playlist("thirty.wav");
 		bAnnounced40 = true;
 	}
@@ -129,16 +124,18 @@ void speakDistance(int distNow)
 	else if (!bAnnounced20 && distNow < 20)
 	{
 		bAnnounced20 = true;
+		add_to_playlist("ten.wav");
 	}
 	else if (!bAnnounced10 && distNow < 10)
 	{
 		bAnnounced10 = true;
+		add_to_playlist("danger.wav");
 	}
 	
 }
 
 
-
+//-------------------------------------------------------------
 
 void * reportingMode(BUTTON_EVENT some_key)
 {
@@ -168,7 +165,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 	
 	cprintf(_WHITE, 0, "%s", closestCam->onStreet);
 	cprintf(_WHITE, 1, "%s",  closestCam->crossStreet);
-	cprintf(dist > 100 ? _GREEN : _RED, 2, "DIST=%4d m %3d %s", dist, course, cardinal);
+	cprintf(dist > 100 ? _GREEN : _PINK, 2, "DIST=%4d m %3d %s", dist, course, cardinal);
 
 	xprintf(3, "%VEH=%3d kph Qual=%s", (int)iMisc.Kmph, iMisc.cQuality);
 

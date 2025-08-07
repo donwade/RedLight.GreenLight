@@ -4,7 +4,7 @@
 #include "watchdogs.h"
 //#include <cppQueue.h>
 #include <ArduinoQueue.h>
-
+#include "wavePlayer.h"
 #include <TinyGPS++.h>
 
 #include <LinkedList.h>
@@ -196,12 +196,14 @@ static int32_t addCamera(GPS_ENTRY2 *data)
 
 GPS_ENTRY2 *closestCam;
 GPS_ENTRY2 *nextClosestCam;
-
+bool bNewTarget = true;
 
 int findNearestCamera(float vehicleLat, float vehicleLng)
 {
 
 	GPS_ENTRY2 *aCamera;
+	static GPS_ENTRY2 *stickyCamera;
+	
 	int closestDist = INT_MAX;
 
 	// do not do any GPS with 0.0 it will hang (hi GD).
@@ -234,6 +236,15 @@ int findNearestCamera(float vehicleLat, float vehicleLng)
 				closestCam = aCamera;
 			}
 	
+		}
+		
+		if (stickyCamera != closestCam)
+		{
+			stickyCamera = closestCam;
+			add_to_playlist("informationOnly.wav");
+			add_to_playlist("delay100.wav");
+			add_to_playlist("allClear.wav");
+			bNewTarget = true;
 		}
 		
 #if 0 //def CHATTY
