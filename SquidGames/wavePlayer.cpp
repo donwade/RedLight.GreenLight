@@ -22,7 +22,7 @@ static File root;
 #define MAX_FILES_CACHED 200
 
 #define MAX_FILENAME_LEN 50
-#define MAX_FILES_QUEUED 8
+#define MAX_FILES_QUEUED 30
 
 
 static char *wavList[MAX_FILES_CACHED] = {0};
@@ -90,6 +90,7 @@ static bool playWavFromSD(const char* filename)
     || wav_header.channel > 2
     )
   {
+  	Serial.printf("%s wrong wav format ... rejected\n", fname); 
     file.close();
     return false;
   }
@@ -140,7 +141,7 @@ static bool playWavFromSD(const char* filename)
 }
 //------------------------------------------------
 
-static cppQueue playlistQ(MAX_FILENAME_LEN, 8, FIFO);
+static cppQueue playlistQ(MAX_FILENAME_LEN, MAX_FILES_QUEUED, FIFO);
 
 void wavPlayerTask(void *NOTUSED)
 {
@@ -153,6 +154,39 @@ void wavPlayerTask(void *NOTUSED)
 
 			playlistQ.pop(playThisFile);
 			Serial.printf("popping %s\n", playThisFile);
+
+			if (!strcmp(playThisFile, "delay100.wav"))
+			{
+				Tdelay(100);
+				continue;
+			}
+			else if (!strcmp(playThisFile, "delay200.wav"))
+			{
+				Tdelay(200);
+				continue;
+			}
+			else if (!strcmp(playThisFile, "delay500.wav"))
+			{
+				Tdelay(500);
+				continue;
+			}
+			else if (!strcmp(playThisFile, "delay750.wav"))
+			{
+				Tdelay(750);
+				continue;
+			}
+			else if (!strcmp(playThisFile, "delay1000.wav"))
+			{
+				Tdelay(1000);
+				continue;
+			}
+			else if (!strcmp(playThisFile, "delay5000.wav"))
+			{
+				Tdelay(5000);
+				continue;
+			}
+
+			// not a fake file. its real if it got here
 			playWavFromSD(playThisFile);
 		}
 		else
@@ -179,8 +213,8 @@ bool add_to_playlist(char *filename)
 
 	if (i == numActiveSndFiles)
 	{
-	
-		Serial.printf("%s:%d miss %s \n", __FUNCTION__, __LINE__, filename);
+		Serial.printf("%s:%d caution file %s not in wavList\n", 
+				__FUNCTION__, __LINE__, filename);
 		return false; // file does not exist
 	}
 	

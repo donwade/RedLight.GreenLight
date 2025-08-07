@@ -22,6 +22,10 @@ void speakDistance(int distNow)
 	static bool bAnnounced80;
 	static bool bAnnounced90;
 	static bool bAnnounced100;
+	static bool bAnnounced150;
+	static bool bAnnounced200;
+	static bool bAnnounced300;
+
 	int i;
 	
 	if (distNow > 100)
@@ -36,9 +40,34 @@ void speakDistance(int distNow)
 		bAnnounced80 = false;
 		bAnnounced90 = false;
 		bAnnounced100 = false;
+		bAnnounced150 = false;
+		bAnnounced200 = false;
+		bAnnounced300 = false;
 	}	
+
+	if ( !bAnnounced300 && distNow < 300)
+	{
+		add_to_playlist("three.wav");
+		add_to_playlist("hundred.wav");
+		bAnnounced300 = true;
+	}
+	else if ( !bAnnounced200 && distNow < 200)
+	{
+		add_to_playlist("two.wav");
+		add_to_playlist("hundred.wav");
+		bAnnounced200 = true;
+	}
+	else if ( !bAnnounced150 && distNow < 150)
+	{
+		add_to_playlist("dangerAhead.wav");
+		add_to_playlist("delay500.wav");
+		add_to_playlist("one.wav");
+		add_to_playlist("hundred.wav");
+		add_to_playlist("fifty.wav");
+		bAnnounced150 = true;
+	}
 	
-	if ( !bAnnounced100 && distNow < 100)
+	else if ( !bAnnounced100 && distNow < 100)
 	{
 		add_to_playlist("ninety.wav");
 		bAnnounced100 = true;
@@ -46,6 +75,10 @@ void speakDistance(int distNow)
 
 	else if (!bAnnounced90 && distNow < 90)
 	{
+		add_to_playlist("glideSlope.wav");
+		add_to_playlist("glideSlope.wav");
+		add_to_playlist("glideSlope.wav");
+		add_to_playlist("delay500.wav");
 		add_to_playlist("eighty.wav");
 		bAnnounced90 = true;
 	}
@@ -56,11 +89,12 @@ void speakDistance(int distNow)
 	}
 	else if (!bAnnounced70 && distNow < 70)
 	{
-		for (i = 0; i < 3; i++)
+		for (i = 0; i < 2; i++)
 		{
 			add_to_playlist("flaps.wav");
 			add_to_playlist("down.wav");
-			delay(100);
+			add_to_playlist("delay200.wav");
+			add_to_playlist("fireAlarm.wav");
 		}
 		add_to_playlist("sixty.wav");
 		bAnnounced70 = true;
@@ -80,9 +114,9 @@ void speakDistance(int distNow)
 		for (i = 0; i < 3; i++)
 		{
 			add_to_playlist("toolow.wav");
-			delay(50);
+			add_to_playlist("delay100.wav");
 			add_to_playlist("whoopwhoop.wav");
-			delay(200);
+			add_to_playlist("delay500.wav");
 		}
 		add_to_playlist("thirty.wav");
 		bAnnounced40 = true;
