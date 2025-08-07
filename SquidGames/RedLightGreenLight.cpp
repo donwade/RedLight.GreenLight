@@ -147,8 +147,8 @@ bool getData(void)
 	
 	if (Tlat < LAT_MIN || Tlat > LAT_MAX)
 	{
-		Serial.printf("%s:%d GPS bad LAT= %11.8f < %11.8f < %11.8f\n",
-					__FUNCTION__,__LINE__, LAT_MIN, Tlat, LAT_MAX);
+		// gps is bad. Ignore this result
+		//Serial.printf("%s:%d GPS bad LAT= %11.8f < %11.8f < %11.8f\n", __FUNCTION__,__LINE__, LAT_MIN, Tlat, LAT_MAX);
 		return false;
 	}
 	

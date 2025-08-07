@@ -22,68 +22,9 @@ void speakDistance(int distNow)
 	static bool bAnnounced80;
 	static bool bAnnounced90;
 	static bool bAnnounced100;
+	int i;
 	
-
-	if (distNow >= 0 && distNow < 10)
-	{
-		if (!bAnnounced10) add_to_playlist("toolow.wav");
-		bAnnounced10 = true;
-	}
-	
-	else if (distNow >= 10 && distNow < 20)
-	{
-		if (!bAnnounced20) add_to_playlist("twenty.wav");
-		bAnnounced20 = true;
-	}
-	
-	else if (distNow >= 20 && distNow < 30)
-	{
-		if (!bAnnounced30) add_to_playlist("thirty.wav");
-		bAnnounced30 = true;
-	}
-	
-	else if (distNow >= 30 && distNow < 40)
-	{
-		if (!bAnnounced40) add_to_playlist("fourty.wav");
-		bAnnounced40 = true;
-	}
-	
-	else if (distNow >= 40 && distNow < 50)
-	{
-		if (!bAnnounced50) add_to_playlist("fifty.wav");
-		bAnnounced50 = true;
-	}
-	
-	else if (distNow >= 50 && distNow < 60)
-	{
-		if (!bAnnounced60) add_to_playlist("sixty.wav");
-		bAnnounced60 = true;
-	}
-	
-	else if (distNow >= 60 && distNow < 70)
-	{
-		if (!bAnnounced70) add_to_playlist("seventy.wav");
-		bAnnounced70 = true;
-	}
-	
-	else if (distNow >= 70 && distNow < 80)
-	{
-		if (!bAnnounced80) add_to_playlist("eighty.wav");
-		bAnnounced80 = true;
-	}
-	
-	else if (distNow >= 80 && distNow < 90)
-	{
-		if (!bAnnounced90) add_to_playlist("ninety.wav");
-		bAnnounced90 = true;
-	}
-
-	else if (distNow >= 90 && distNow < 100)
-	{
-		if (!bAnnounced90) add_to_playlist("hundred.wav");
-		bAnnounced100 = true;
-	}
-	else
+	if (distNow > 100)
 	{
 		bAnnounced10 = false;
 		bAnnounced20 = false;
@@ -96,6 +37,69 @@ void speakDistance(int distNow)
 		bAnnounced90 = false;
 		bAnnounced100 = false;
 	}	
+	
+	if ( !bAnnounced100 && distNow < 100)
+	{
+		add_to_playlist("ninety.wav");
+		bAnnounced100 = true;
+	}
+
+	else if (!bAnnounced90 && distNow < 90)
+	{
+		add_to_playlist("eighty.wav");
+		bAnnounced90 = true;
+	}
+	else if (!bAnnounced80 && distNow < 80)
+	{
+		add_to_playlist("seventy.wav");
+		bAnnounced80 = true;
+	}
+	else if (!bAnnounced70 && distNow < 70)
+	{
+		for (i = 0; i < 3; i++)
+		{
+			add_to_playlist("flaps.wav");
+			add_to_playlist("down.wav");
+			delay(100);
+		}
+		add_to_playlist("sixty.wav");
+		bAnnounced70 = true;
+	}
+	else if (!bAnnounced60 && distNow < 60)
+	{
+		add_to_playlist("fifty.wav");
+		bAnnounced60 = true;
+	}
+	else if (!bAnnounced50 && distNow < 50)
+	{
+		add_to_playlist("fourty.wav");
+		bAnnounced50 = true;
+	}
+	else if (!bAnnounced40 && distNow < 40)
+	{
+		for (i = 0; i < 3; i++)
+		{
+			add_to_playlist("toolow.wav");
+			delay(50);
+			add_to_playlist("whoopwhoop.wav");
+			delay(200);
+		}
+		add_to_playlist("thirty.wav");
+		bAnnounced40 = true;
+	}
+	else if (!bAnnounced30 && distNow < 30)
+	{
+		add_to_playlist("twenty.wav");
+		bAnnounced30 = true;
+	}
+	else if (!bAnnounced20 && distNow < 20)
+	{
+		bAnnounced20 = true;
+	}
+	else if (!bAnnounced10 && distNow < 10)
+	{
+		bAnnounced10 = true;
+	}
 	
 }
 
