@@ -7,15 +7,19 @@
 #define LEDS_PIN 25
 #define LEDS_NUM 10
 
+static bool bStopLedBarToggle = true;
 CRGB ledsBuff[LEDS_NUM];
 
 static SemaphoreHandle_t displayMutex = xSemaphoreCreateMutex();
 SemaphoreHandle_t keyCountingSemaphore;
 
+static bool bStopToggle = true;
 //------------------------------------------------------
 // make entire LED bar one colour
 void colourBar(uint8_t R,uint8_t G, uint8_t B) 
 {
+	bStopToggle = true;
+	
 	for (int i = 0; i < LEDS_NUM; i++) {
 		ledsBuff[i].setRGB(R, G, B);
 	}
@@ -30,10 +34,45 @@ void colourBarX(uint32_t RGB, uint8_t pct)
 	G = ((RGB >> 16) & 0xFF) * pct /100;
 	R = ((RGB >>  8) & 0xFF) * pct /100;
 	B =  (RGB 	     & 0xFF) * pct /100;
+
+	bStopToggle = true;
 	
 	for (int i = 0; i < LEDS_NUM; i++) {
 		ledsBuff[i].setRGB(R, G, B);
 	}
+	FastLED.show();
+}	
+
+//------------------------------------------------------
+// make entire LED bar one colour
+void setWigWagColours(uint32_t RGB_LEFT, uint32_t RGB_RIGHT, uint8_t pct) 
+{
+	uint32_t R,G,B;
+	static uint32_t OLD_LEFT = -1, OLD_RIGHT = -1;
+	
+	bStopLedBarToggle = (RGB_LEFT == _BLACK && RGB_RIGHT == _BLACK) ? true : false;
+
+	if (RGB_LEFT == OLD_LEFT && RGB_RIGHT == OLD_RIGHT) return;
+
+	OLD_RIGHT = RGB_RIGHT;
+	OLD_LEFT = RGB_LEFT;
+	
+	G = ((RGB_LEFT >> 16) & 0xFF) * pct /100;
+	R = ((RGB_LEFT >>  8) & 0xFF) * pct /100;
+	B =  (RGB_LEFT 	     & 0xFF) * pct /100;
+	
+	for (int i = 0; i < LEDS_NUM/2; i++) {
+		ledsBuff[i].setRGB(R, G, B);
+	}
+
+	G = ((RGB_RIGHT >> 16) & 0xFF) * pct /100;
+	R = ((RGB_RIGHT >>  8) & 0xFF) * pct /100;
+	B =  (RGB_RIGHT 	   & 0xFF) * pct /100;
+	
+	for (int i = LEDS_NUM/2 ; i < LEDS_NUM; i++) {
+		ledsBuff[i].setRGB(R, G, B);
+	}
+
 	FastLED.show();
 }	
 
@@ -44,6 +83,7 @@ void colourNleds(uint8_t who, uint8_t width, uint8_t R,uint8_t G, uint8_t B)
 {
 	assert(who < LEDS_NUM);
 	assert(who + width < LEDS_NUM);
+	bStopToggle = true;
 	
 	for (int i = who; i < who + width; i++) {
 		ledsBuff[i].setRGB(R, G, B);
@@ -51,7 +91,24 @@ void colourNleds(uint8_t who, uint8_t width, uint8_t R,uint8_t G, uint8_t B)
 	FastLED.show();
 }	
 
+//---------------------------------------------------------
+static uint32_t colourBarLeft = _GREEN;
+static uint32_t colourBarRight = _YELLOW;
 
+void runLightBarTask(void *not_used)
+{
+	static bool bFlipper;
+	
+	if (!bStopLedBarToggle)
+	{
+		if (bFlipper)
+			setWigWagColours(colourBarLeft,  colourBarRight, 2);
+		else
+			setWigWagColours(colourBarRight, colourBarLeft,  2);
+		bFlipper = !bFlipper;
+	}
+	Tdelay(500);
+}
 //-------------------------------------------------------------
 void lfillRect(uint16_t x, uint16_t y, uint16_t wide, uint16_t height, uint32_t RGB)
 {

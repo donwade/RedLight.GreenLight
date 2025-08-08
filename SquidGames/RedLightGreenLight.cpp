@@ -382,8 +382,6 @@ void gpsGetDataTask(void *not_used)
 
 }
 
-//---------------------------------------------------------
-
 void runDisplayTask(void *not_used)
 {
 	if (iMisc.Kmph > MIN_SPEED_KPH )

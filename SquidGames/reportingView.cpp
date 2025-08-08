@@ -41,7 +41,12 @@ void speakDistance(int distNow)
 		bAnnounced150 = false;
 		bAnnounced200 = false;
 		bAnnounced300 = false;
+
+		setWigWagColours(_BLACK,_BLACK);
+		return;
 	}	
+
+	setWigWagColours(_RED,_BLUE);
 
 	if (0)
 	{
@@ -99,7 +104,7 @@ void speakDistance(int distNow)
 		add_to_playlist("twenty.wav");
 		bAnnounced20 = true;
 	}
-	else if (!bAnnounced0)
+	else if (!bAnnounced0 && distNow < 10)
 	{
 		add_to_playlist("danger.wav");
 		bAnnounced0 = true;
@@ -179,7 +184,6 @@ void * reportingMode(BUTTON_EVENT some_key)
 
 			if (some_key == LBUTTON_DN)
 			{
-				colourBarX(_CYAN, 10);
 				cprintf(_ORANGE, 6, "TODO LEFT");
 			}
 			
@@ -190,7 +194,6 @@ void * reportingMode(BUTTON_EVENT some_key)
 
 			if (some_key == RBUTTON_DN)
 			{
-				colourBarX(_BLUE, 10);
 				cprintf(_BLUE, 6, "TODO RIGHT");
 			}
 
@@ -201,7 +204,6 @@ void * reportingMode(BUTTON_EVENT some_key)
 
 			if (some_key == MBUTTON_DN)
 			{
-				colourBarX(_PINK, 10);
 				return (void*) learningMode;
 			}			
 			

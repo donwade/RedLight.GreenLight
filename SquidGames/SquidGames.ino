@@ -21,6 +21,7 @@ static portMUX_TYPE my_mutex;
 extern void setup_GPS(void);
 extern void gpsGetDataTask(void *);
 extern void runDisplayTask(void *not_used);
+extern void runLightBarTask(void *not_used);
 
 extern TaskHandle_t speak_file(char *waveFilename);
 
@@ -171,7 +172,7 @@ void setup() {
 	delay(200);
 
 	spawnTaskAndDogV2( runMenuTask, 		//(void * not_used)TaskFunction_t pvTaskCode,
-                     "runMenuTask",    //const char * const pcName,
+                     "MenuTask",    //const char * const pcName,
                      1024 * 10,		//const uint32_t usStackDepth,
                      NULL,			//void * const pvParameters,
                      4           	//UBaseType_t uxPriority)
@@ -180,7 +181,7 @@ void setup() {
 	delay(200);
 
 	spawnTaskAndDogV2( gpsGetDataTask,	//(void * not_used)TaskFunction_t pvTaskCode,
-                     "gpsGetDataTask",	//const char * const pcName,
+                     "GetDataTask",	//const char * const pcName,
                      1024 * 10,			//const uint32_t usStackDepth,
                      NULL,				//void * const pvParameters,
                      4           		//UBaseType_t uxPriority)
@@ -188,25 +189,19 @@ void setup() {
 
 
 	spawnTaskAndDogV2( runDisplayTask, 		//(void * not_used)TaskFunction_t pvTaskCode,
-                     "runDisplayTask",    //const char * const pcName,
+                     "DisplayTask",    //const char * const pcName,
                      1024 * 10,		//const uint32_t usStackDepth,
                      NULL,			//void * const pvParameters,
                      4           	//UBaseType_t uxPriority)
                      );
 
+	spawnTaskAndDogV2( runLightBarTask,	//(void * not_used)TaskFunction_t pvTaskCode,
+					 "LightBarTask",	//const char * const pcName,
+					 1024 * 8,		 	//const uint32_t usStackDepth,
+					 NULL,				//void * const pvParameters,
+					 4				//UBaseType_t uxPriority)
+					 );
 
-	add_to_playlist("terrain.wav");
-	add_to_playlist("speed.wav");
-	add_to_playlist("whoop.wav");
-	add_to_playlist("terrain.wav");
-/*	
-	add_to_playlist("three.wav");
-	add_to_playlist("thousand.wav");
-	add_to_playlist("two.wav");
-	add_to_playlist("hundred.wav");
-	
-	add_to_playlist("forty.wav");
-	add_to_playlist("one.wav");
-*/
+
 }
 

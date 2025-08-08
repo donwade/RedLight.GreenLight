@@ -25,6 +25,7 @@
 extern void colourBar(uint8_t R,uint8_t G, uint8_t B);
 extern void colourBarX(uint32_t RGB, uint8_t pct);
 extern void colourNleds(uint8_t who, uint8_t width, uint8_t R,uint8_t G, uint8_t B);
+extern void setWigWagColours(uint32_t RGB_LEFT, uint32_t RGB_RIGHT, uint8_t pct = 20);
 
 
 typedef enum KEY_STATE { KEY_UNKNOWN, KEY_DOWN, KEY_UP};
@@ -33,6 +34,7 @@ extern int  xprintf(uint8_t lineNo, const char *format, ...);
 extern int  cprintf(uint32_t color, uint8_t lineNo, const char *format, ...);
 extern void lfillRect(uint16_t x, uint16_t y, uint16_t wide, uint16_t height, uint32_t RGB);
 
+extern void runLightBarTask(void *not_used);
 
 extern SemaphoreHandle_t keyCountingSemaphore;
 

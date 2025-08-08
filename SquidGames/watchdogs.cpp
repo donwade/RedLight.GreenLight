@@ -147,25 +147,6 @@ TaskHandle_t spawnTaskAndDogV2(  TaskFunction_t pvTaskCode,
     return retval;
 
 }
-
-//-------------------------------------------------------------
-
-TaskHandle_t spawnTaskAndDog(  TaskFunction_t pvTaskCode,
-                                const char * const pcName,
-                                const uint32_t usStackDepth,
-                                void * const pvParameters,
-                                UBaseType_t uxPriority)
-{
-    int tskParam;
-    TaskHandle_t retval;
-
-    //Initialize WDT, doing it again will cause a crash
-
-	printf("creating  %s\n", pcName); 
-    xTaskCreatePinnedToCore(pvTaskCode, pcName, usStackDepth, pvParameters, uxPriority, &retval, DEFAULT_CORE);
-    return retval;
-}
-
 //----------------------------------------------------------------------------------
 
 void kickDog(void)
