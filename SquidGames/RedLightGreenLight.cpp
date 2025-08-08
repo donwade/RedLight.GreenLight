@@ -304,8 +304,9 @@ pStateFunction stateMachines[] =
 
 void stateDisplay(BUTTON_EVENT some_key)
 {
-	static volatile pStateFunction lastCall = reportingMode;
 	//static volatile pStateFunction lastCall = learningMode;
+	static volatile pStateFunction lastCall = reportingMode;
+	
 	pStateFunction nowCall;
 
 	kickDog();
@@ -313,10 +314,7 @@ void stateDisplay(BUTTON_EVENT some_key)
 
 	if (nowCall != lastCall)
 	{
-
-		buttonQueue.enqueue(BUTTON_INIT);
-		xSemaphoreGive(keyCountingSemaphore);
-
+		button_push(BUTTON_INIT);
 		Serial.printf("enquing BUTTON_INIT (%d)\n", BUTTON_INIT);
 
 		lastCall = nowCall;
@@ -384,6 +382,15 @@ void gpsGetDataTask(void *not_used)
 
 void runDisplayTask(void *not_used)
 {
+	static bool bFirstTime = true;
+	BUTTON_EVENT abutton;
+	
+	if (bFirstTime) 
+	{
+		bFirstTime = false;
+		button_push(BUTTON_INIT);
+	}
+
 	if (iMisc.Kmph > MIN_SPEED_KPH )
 	{
 		gpsLocation oldest;
@@ -399,15 +406,12 @@ void runDisplayTask(void *not_used)
 			(int)iMisc.Kmph, (int)iMisc.course, gps.cardinal(iMisc.course)
 			);
 #endif
-	BUTTON_EVENT abutton;
 
-	while (xSemaphoreTake( keyCountingSemaphore, pdMS_TO_TICKS(250) ) == pdTRUE)
+	while (true)
 	{
-		abutton = buttonQueue.dequeue();
+		abutton = button_pop(250);
 		stateDisplay(abutton);
 	}
-	
-	stateDisplay(DISPLAY_REFRESH);
 }
 
 

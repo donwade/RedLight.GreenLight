@@ -36,8 +36,6 @@ extern void lfillRect(uint16_t x, uint16_t y, uint16_t wide, uint16_t height, ui
 
 extern void runLightBarTask(void *not_used);
 
-extern SemaphoreHandle_t keyCountingSemaphore;
-
 void touchPanel_impl(void);
 void setup_button(void);
 void button_create(void);
@@ -67,6 +65,8 @@ void threeButtonText(
 	char *middleButtonText, 
 	char *rightButtonText);
 
-extern ArduinoQueue<BUTTON_EVENT>  buttonQueue;
+extern void button_push(BUTTON_EVENT msg);
+extern BUTTON_EVENT button_pop(uint32_t maxWaitMs);
+
 
 #endif

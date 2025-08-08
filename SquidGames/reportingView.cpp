@@ -126,6 +126,10 @@ void * reportingMode(BUTTON_EVENT some_key)
 	if (!(int)iLocation.lat || !(int) iLocation.lng)
 	{
 		//Serial.printf("ilat=%f ilng=%f\n", iLocation.lat, iLocation.lng);
+
+		// when gps is stable, then process keys.		
+		button_push(some_key);
+		
 		return (void*)reportingMode;
 	}
 	
@@ -169,7 +173,8 @@ void * reportingMode(BUTTON_EVENT some_key)
 	{
 		case BUTTON_INIT:
 			lfillRect(0,0, 50, 50, _RED);
-			threeButtonText("QUIET", "OK", "BYTEME");
+			threeButtonText("AWAY", "SAVE", "CAMERA");
+			//threeButtonText("QUIET", "OK", "BYTEME");
 			
 			cprintf(_RED,	2, "TODO        ");
 			cprintf(_RED ,	3, "TODO        ");
@@ -181,11 +186,17 @@ void * reportingMode(BUTTON_EVENT some_key)
 			
 		case LBUTTON_UP:
 		case LBUTTON_DN:
-
 			if (some_key == LBUTTON_DN)
 			{
-				cprintf(_ORANGE, 6, "TODO LEFT");
+				endLocation = gpsAverage;
+				colourBarX(_GREEN, 10);
+				cprintf(_ORANGE, 6, "NEXT CAMERA or SAVE");
 			}
+
+			//if (some_key == LBUTTON_DN)
+			//{
+			//	cprintf(_ORANGE, 6, "TODO LEFT");
+			//}
 			
 		break;
 
@@ -194,8 +205,14 @@ void * reportingMode(BUTTON_EVENT some_key)
 
 			if (some_key == RBUTTON_DN)
 			{
-				cprintf(_BLUE, 6, "TODO RIGHT");
+				cameraLocation = gpsAverage;
+				colourBarX(_RED, 10);
+				cprintf(_ORANGE, 6, "NEXT AWAY or SAVE");
 			}
+			//if (some_key == RBUTTON_DN)
+			//{
+			//	cprintf(_BLUE, 6, "TODO RIGHT");
+			//}
 
 		break;
 

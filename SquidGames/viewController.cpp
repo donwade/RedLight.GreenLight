@@ -11,7 +11,7 @@ static bool bStopLedBarToggle = true;
 CRGB ledsBuff[LEDS_NUM];
 
 static SemaphoreHandle_t displayMutex = xSemaphoreCreateMutex();
-SemaphoreHandle_t keyCountingSemaphore;
+static SemaphoreHandle_t keyCountingSemaphore;
 
 static bool bStopToggle = true;
 //------------------------------------------------------
@@ -265,38 +265,28 @@ void threeButtonMenu(
 	
 }
 
-void twoButtonMenu(
-	char *leftButtonText, 
-	char *rightButtonText
-	)
-{
-	xSemaphoreTake(displayMutex, portMAX_DELAY);
-    M5.Lcd.setTextFont(WIDGET_FONT);
-
-	bMenuIsActive = true;
-	buttonWidth = phyDispWidth /2;
-	
-	// coordinates specify center of button hence odd math
-	buttonLeft.initButton(&M5.Lcd,	buttonWidth * 0 + buttonWidth/2, 210, buttonWidth, buttonHeight, TFT_WHITE, TFT_GREEN, TFT_BLACK, leftButtonText, 1, 1);
-	buttonLeft.drawButton();
-	leftButtonState = KEY_UNKNOWN;
-	
-    middleButtonState = -1;
-
-	buttonRight.initButton(&M5.Lcd, buttonWidth * 1 + buttonWidth/2 ,210, buttonWidth, buttonHeight, TFT_WHITE, TFT_RED, TFT_BLACK, rightButtonText, 1, 1);
-	buttonRight.drawButton();
-	rightButtonState = KEY_UNKNOWN;
-
-	xSemaphoreGive(displayMutex);	
-
-}
-
 #define MAX_KEYS_QUEUED 8
 
+static ArduinoQueue<BUTTON_EVENT> buttonQueue(20);
 
-KEY_STATE keyDest;
+void button_push(BUTTON_EVENT msg)
+{
+	buttonQueue.enqueue(msg);
+	xSemaphoreGive(keyCountingSemaphore);
+}
 
-ArduinoQueue<BUTTON_EVENT> buttonQueue(20);
+BUTTON_EVENT button_pop(uint32_t maxWaitMs)
+{
+	BUTTON_EVENT abutton;
+	
+	while (xSemaphoreTake( keyCountingSemaphore, pdMS_TO_TICKS(maxWaitMs) ) == pdTRUE)
+	{
+		abutton = buttonQueue.dequeue();
+		return abutton;
+	}
+	
+	return DISPLAY_REFRESH;
+}
 
 void setup_button()
 {
@@ -313,8 +303,6 @@ void setup_button()
 	BUTTON_EVENT msg;
 	
 	msg = BUTTON_INIT;
-	buttonQueue.enqueue(msg);
-	xSemaphoreGive(keyCountingSemaphore);
 }
 
 void touchPanel_impl()
@@ -347,7 +335,7 @@ void touchPanel_impl()
 				leftButtonState = KEY_DOWN;
 				
 				msg = LBUTTON_DN;
-				buttonQueue.enqueue(msg);
+				button_push(msg);
 				Serial.printf("push %d\n", msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
@@ -360,7 +348,7 @@ void touchPanel_impl()
 				middleButtonState = KEY_DOWN;
 				
 				msg = MBUTTON_DN;
-				buttonQueue.enqueue(msg);
+				button_push(msg);
 				Serial.printf("push %d\n", msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
@@ -373,7 +361,7 @@ void touchPanel_impl()
 				rightButtonState = KEY_DOWN;
 
 				msg = RBUTTON_DN;
-				buttonQueue.enqueue(msg);
+				button_push(msg);
 				Serial.printf("push %d\n", msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
@@ -392,7 +380,7 @@ void touchPanel_impl()
 				leftButtonState = KEY_UP;
 
 				msg = LBUTTON_UP;
-				buttonQueue.enqueue(msg);
+				button_push(msg);
 				Serial.printf("push %d\n", msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
