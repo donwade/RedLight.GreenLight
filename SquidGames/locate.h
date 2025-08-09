@@ -41,8 +41,10 @@ typedef struct gpsMisc
 	
 extern gpsLocation iLocation;
 extern gpsMisc     iMisc;
+
 extern gpsLocation cameraLocation;
-extern gpsLocation endLocation;
+extern gpsLocation awayLocation;
+
 extern gpsLocation gpsAverage;
 extern bool bNewTarget;
 

@@ -23,11 +23,11 @@ void * learningMode(BUTTON_EVENT some_key)
 	cprintf(_WHITE, 1, "NOW    LN=%+10.7f", gpsAverage.lng);
 	cprintf(_RED, 2,   "CAMERA LA=%+9.7f", cameraLocation.lat);
 	cprintf(_RED ,3,   "CAMERA LO=%+9.7f", cameraLocation.lng);
-	cprintf(_GREEN, 4, "AWAY   LA=%+9.7f", endLocation.lat);
-	cprintf(_GREEN, 5, "AWAY   LO=%+9.7f", endLocation.lng);
+	cprintf(_GREEN, 4, "AWAY   LA=%+9.7f", awayLocation.lat);
+	cprintf(_GREEN, 5, "AWAY   LO=%+9.7f", awayLocation.lng);
 
-	dist = gps.distanceBetween(cameraLocation.lat, cameraLocation.lng, endLocation.lat, endLocation.lng);
-	course = (int)gps.courseTo(cameraLocation.lat, cameraLocation.lng, endLocation.lat, endLocation.lng);
+	dist = gps.distanceBetween(cameraLocation.lat, cameraLocation.lng, awayLocation.lat, awayLocation.lng);
+	course = (int)gps.courseTo(cameraLocation.lat, cameraLocation.lng, awayLocation.lat, awayLocation.lng);
 	dir = gps.cardinal(course);
 	
 	cprintf(_YELLOW, 6, "course = %d dir=%3s", course, dir);
@@ -53,7 +53,7 @@ void * learningMode(BUTTON_EVENT some_key)
 		case LBUTTON_DN:
 			if (some_key == LBUTTON_DN)
 			{
-				endLocation = gpsAverage;
+				awayLocation = gpsAverage;
 				colourBarX(_GREEN, 10);
 				cprintf(_ORANGE, 6, "NEXT CAMERA or SAVE");
 			}

@@ -25,7 +25,7 @@
 extern void colourBar(uint8_t R,uint8_t G, uint8_t B);
 extern void colourBarX(uint32_t RGB, uint8_t pct);
 extern void colourNleds(uint8_t who, uint8_t width, uint8_t R,uint8_t G, uint8_t B);
-extern void setWigWagColours(uint32_t RGB_LEFT, uint32_t RGB_RIGHT, uint8_t pct = 20);
+extern void setToggleColors(uint32_t RGB_LEFT, uint32_t RGB_RIGHT, uint16_t pct =100) ;
 
 
 typedef enum KEY_STATE { KEY_UNKNOWN, KEY_DOWN, KEY_UP};

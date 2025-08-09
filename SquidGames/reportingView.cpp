@@ -42,11 +42,11 @@ void speakDistance(int distNow)
 		bAnnounced200 = false;
 		bAnnounced300 = false;
 
-		setWigWagColours(_BLACK,_BLACK);
+		//toggleLeftRight(_BLACK,_BLACK);
 		return;
 	}	
 
-	setWigWagColours(_RED,_BLUE);
+	//toggleLeftRight(_RED,_BLUE);
 
 	if (0)
 	{
@@ -113,6 +113,8 @@ void speakDistance(int distNow)
 
 
 //-------------------------------------------------------------
+static bool bHaveAway = false;
+static bool bHaveCamera = false;
 
 void * reportingMode(BUTTON_EVENT some_key)
 {
@@ -135,7 +137,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 	
 	dist = findNearestCamera(iLocation.lat, iLocation.lng);
 
-	// if vehicle location not known, return negative dist.
+	// if vehicle location not known, a negative dist is returned
 	if (dist < 0) return (void*) reportingMode;
 
 	course = (int)gps.courseTo(iLocation.lat, iLocation.lng, closestCam->lat, closestCam->lng);
@@ -188,16 +190,22 @@ void * reportingMode(BUTTON_EVENT some_key)
 		case LBUTTON_DN:
 			if (some_key == LBUTTON_DN)
 			{
-				endLocation = gpsAverage;
-				colourBarX(_GREEN, 10);
-				cprintf(_ORANGE, 6, "NEXT CAMERA or SAVE");
+				if (bHaveAway && !bHaveCamera)
+				{
+					// double press, cancel both
+					bHaveAway = false;
+					bHaveCamera = false;
+					setToggleColors(_BLACK, _BLACK);
+				}
+				else
+				{
+					bHaveAway = true;
+					awayLocation = gpsAverage;
+					setToggleColors(_GREEN, bHaveCamera ? _RED : _BLACK, 10);
+					cprintf(_ORANGE, 7, "NEXT CAMERA or SAVE");
+				}
 			}
 
-			//if (some_key == LBUTTON_DN)
-			//{
-			//	cprintf(_ORANGE, 6, "TODO LEFT");
-			//}
-			
 		break;
 
 		case RBUTTON_UP:
@@ -205,15 +213,21 @@ void * reportingMode(BUTTON_EVENT some_key)
 
 			if (some_key == RBUTTON_DN)
 			{
-				cameraLocation = gpsAverage;
-				colourBarX(_RED, 10);
-				cprintf(_ORANGE, 6, "NEXT AWAY or SAVE");
+				if (bHaveCamera && !bHaveAway)
+				{
+					// double press, cancel both
+					bHaveAway = false;
+					bHaveCamera = false;
+					setToggleColors(_BLACK, _BLACK);
+				}
+				else
+				{
+					bHaveCamera = true;
+					cameraLocation = iLocation;
+					setToggleColors(_RED, bHaveAway? _GREEN : _BLACK, 10);
+					cprintf(_ORANGE, 7, "NEXT AWAY or SAVE");
+				}
 			}
-			//if (some_key == RBUTTON_DN)
-			//{
-			//	cprintf(_BLUE, 6, "TODO RIGHT");
-			//}
-
 		break;
 
 		case MBUTTON_DN:
@@ -221,7 +235,24 @@ void * reportingMode(BUTTON_EVENT some_key)
 
 			if (some_key == MBUTTON_DN)
 			{
-				return (void*) learningMode;
+				if (bHaveAway && bHaveCamera)
+				{
+					setToggleColors(_BLACK, _BLACK);
+					bHaveAway = false;
+					bHaveCamera = false;
+				}
+				else
+				{
+					if (!bHaveAway && !bHaveCamera)
+					{
+						cprintf(_ORANGE, 7, "need CAMERA *AND* AWAY");
+					}
+					else if (bHaveAway)
+						cprintf(_ORANGE, 7, "NO! STILL NEED CAMERA");
+					else
+						cprintf(_ORANGE, 7, "NO! STILL NEED AWAY");
+				}
+				//return (void*) learningMode;
 			}			
 			
 		break;

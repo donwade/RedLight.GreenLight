@@ -284,7 +284,7 @@ void calcGPSaverage(void)
 u_int8_t char_height = 0;
 
 gpsLocation cameraLocation;
-gpsLocation endLocation;
+gpsLocation awayLocation;
 
 static int veh_course;
 static const char *veh_cardinal = "???";
@@ -356,8 +356,9 @@ void gpsGetDataTask(void *not_used)
 	
 	double delta_dist = gps.distanceBetween(iLocation.lat, iLocation.lng, oldLocation.lat, oldLocation.lng );
 	oldLocation = iLocation;
-	
-	xprintf(7, "diff=%7.4f s=%d", delta_dist, gps.satellites.value());
+
+	//accurate to 1 M i don't need this now.
+	//xprintf(7, "diff=%7.4f s=%d", delta_dist, gps.satellites.value());
 	
 	// get direction only if going fast enough
 	// otherwise it points all over the place
