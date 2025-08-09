@@ -115,6 +115,8 @@ void speakDistance(int distNow)
 //-------------------------------------------------------------
 static bool bHaveAway = false;
 static bool bHaveCamera = false;
+static bool bFirstPressAway = false;
+static bool bFirstPressCamera = false;
 
 void * reportingMode(BUTTON_EVENT some_key)
 {
@@ -190,15 +192,19 @@ void * reportingMode(BUTTON_EVENT some_key)
 		case LBUTTON_DN:
 			if (some_key == LBUTTON_DN)
 			{
-				if (bHaveAway && !bHaveCamera)
+				if (bHaveAway)
 				{
 					// double press, cancel both
 					bHaveAway = false;
 					bHaveCamera = false;
+					bFirstPressAway = false;
+					bFirstPressCamera = false;
+					cprintf(_ORANGE, 7, "NEXT CAMERA or AWAY");
 					setToggleColors(_BLACK, _BLACK);
 				}
 				else
 				{
+					if (!bFirstPressCamera ) bFirstPressAway = true;
 					bHaveAway = true;
 					awayLocation = gpsAverage;
 					setToggleColors(_GREEN, bHaveCamera ? _RED : _BLACK, 10);
@@ -213,15 +219,19 @@ void * reportingMode(BUTTON_EVENT some_key)
 
 			if (some_key == RBUTTON_DN)
 			{
-				if (bHaveCamera && !bHaveAway)
+				if (bHaveCamera )
 				{
 					// double press, cancel both
 					bHaveAway = false;
 					bHaveCamera = false;
+					bFirstPressAway = false;
+					bFirstPressCamera = false;
 					setToggleColors(_BLACK, _BLACK);
+					cprintf(_ORANGE, 7, "NEXT CAMERA or AWAY");
 				}
 				else
 				{
+					if (!bFirstPressAway) bFirstPressCamera = true;
 					bHaveCamera = true;
 					cameraLocation = iLocation;
 					setToggleColors(_RED, bHaveAway? _GREEN : _BLACK, 10);
@@ -237,9 +247,12 @@ void * reportingMode(BUTTON_EVENT some_key)
 			{
 				if (bHaveAway && bHaveCamera)
 				{
+					Serial.printf("first key pressed was %s\n", bFirstPressAway ? "AWAY" : "CAMERA");
 					setToggleColors(_BLACK, _BLACK);
 					bHaveAway = false;
 					bHaveCamera = false;
+					bFirstPressAway = false;
+					bFirstPressCamera = false;
 				}
 				else
 				{
