@@ -22,11 +22,11 @@ static SemaphoreHandle_t hLocationMutex;
 static File root;
 
 //------------------------------------------------
-static LinkedList <GPS_ENTRY2 *> cameras;
+static LinkedList <GPS_ENTRY2 *> cameraList;
 
 //-------------------------------------------------------------
 
-static int32_t readFromSD(const char* filename)
+static int32_t copySDtoCameraList(const char* filename)
 {
 	String item;
 	char *cstr;
@@ -84,24 +84,26 @@ static int32_t readFromSD(const char* filename)
 			//Serial.printf("xx %f %f %d\n", flat, flon, iDir);
 			//Serial.printf("%s on %s \n", aCamera->onStreet, aCamera->crossStreet);
 
-			cameras.add(aCamera);
+			cameraList.add(aCamera);
 			delete cstr;
 		}
 		
 		file.close();
 
-		for (int i = 0; i < cameras.size(); i++)
+		#if 0
+		for (int i = 0; i < cameraList.size(); i++)
 		{
 			Serial.print("Element at index ");
 			Serial.print(i);
 			Serial.print(": ");
-			aCamera = cameras.get(i);
+			aCamera = cameraList.get(i);
 			Serial.printf("%f/%f on=%s ac=%s\n", 
 					aCamera->lat,
 					aCamera->lng,
 					aCamera->onStreet,
 					aCamera->crossStreet);
 		}
+		#endif
 		
 		xSemaphoreGive(hLocationMutex);
 	}	
@@ -112,7 +114,7 @@ static int32_t readFromSD(const char* filename)
 
 //-------------------------------------------------------------
 
-int32_t writeToSD(char* filename)
+int32_t copyCameraListToSD(char* filename)
 {
 	char fname[80];
 	int cnt=0;
@@ -131,9 +133,9 @@ int32_t writeToSD(char* filename)
 
 		if (!file) { return false; }
 
-		for (i = 0; i < cameras.size(); i++)
+		for (i = 0; i < cameraList.size(); i++)
 		{
-			aCamera = cameras.get(i);
+			aCamera = cameraList.get(i);
 
 			//+45.2948422,-75.8642632 ,  71, "ENE", "Bridlewood" , "Aintree"
 			sprintf(bigMessage, "%f,%f , %d, %s , %s, %s ", 
@@ -159,44 +161,102 @@ int32_t writeToSD(char* filename)
 }
 
 //-------------------------------------------------------------
-static int32_t addCamera(GPS_ENTRY2 *data)
+#define LINE Serial.printf("%s:%d LINE\n", __FUNCTION__, __LINE__)
+
+int32_t addGPStoCameraList(GPS_ENTRY2 *userData)
 {
 	String item;
 	char *cstr;
-	char fname[80];
-	int cnt=0;
-	GPS_ENTRY2 *aCamera;
+	int dist;
+	
+	char bigString[120];
+	GPS_ENTRY2 *aCamera = new(GPS_ENTRY2);
+	
+	//no no no! this is a shallow copy.
+	//data will dissapear as the stack is washed! :(
+	//aCamera = userData; 
+
+	// deep copy.
+	aCamera->lat = userData->lat;
+	aCamera->lng = userData->lng;
+	aCamera->bearing = userData->bearing;
+	strcpy(aCamera->cardinal, userData->cardinal);
+	strcpy(aCamera->crossStreet, userData->crossStreet);
+	strcpy(aCamera->onStreet, userData->onStreet);
+	
+	//+45.2948422,-75.8642632 ,  71, "ENE", "Bridlewood" , "Aintree"
+
+	dist = quickSearchDistance(aCamera->lat, aCamera->lng);
+
+	sprintf(bigString, "%f,%f , %d, \"%s\", \"%s\", \"%s\" ", 
+		aCamera->lat,
+		aCamera->lng,
+		aCamera->bearing,
+		aCamera->cardinal,
+		aCamera->onStreet,
+		aCamera->crossStreet);
+	
+	Serial.printf("adding %s\n", bigString);
+	
+	
+	if (dist < 100)
+		Serial.printf("%s:%d adding camera close to another %dm\n",
+			__FUNCTION__,__LINE__, dist);
 
 	if (xSemaphoreTake(hLocationMutex, portMAX_DELAY) == pdTRUE)
 	{
-		char bigString[120];
+		cameraList.add(aCamera);
+		xSemaphoreGive(hLocationMutex);
+	}			
+	LINE;
 		
-		aCamera = new(GPS_ENTRY2);
-		aCamera = data;
-		
-		//+45.2948422,-75.8642632 ,  71, "ENE", "Bridlewood" , "Aintree"
-
-		sprintf(bigString, "%f,%f , %d, \"%s\", \"%s\", \"%s\" ", 
-			aCamera->lng,
-			aCamera->lat,
-			aCamera->bearing,
-			aCamera->cardinal,
-			aCamera->onStreet,
-			aCamera->crossStreet);
-
-					
-		cameras.add(aCamera);
-	}
-		
-	xSemaphoreGive(hLocationMutex);
-	return cameras.size();
+	return cameraList.size();
 }
 
-
+//--------------------------------------------------------------
 
 GPS_ENTRY2 *closestCam;
-GPS_ENTRY2 *nextClosestCam;
-bool bNewTarget = true;
+
+bool bTargetHasChanged = true;
+
+// scan for closest location do not update any globals
+int quickSearchDistance(float userLat, float userLng)
+{
+
+	GPS_ENTRY2 *dbCamera;
+	GPS_ENTRY2 *closeCam;
+	
+	int nearestDist = INT_MAX;
+
+	// do not do any GPS with 0.0 it will hang (hi GD).
+	if (!(int)userLat )
+	{
+		Serial.printf("%s:%d skipping ... zero lat or long\n", __FUNCTION__, __LINE__);
+		return -1; // not ready (negative distance is not possible)
+	}
+	
+	if (xSemaphoreTake(hLocationMutex, portMAX_DELAY) == pdTRUE)
+	{
+		int dist;
+		int i;
+		
+		for (int i = 0; i < cameraList.size(); i++)
+		{
+			dbCamera = cameraList.get(i);
+			dist = (int) gps.distanceBetween(userLat, userLng, dbCamera->lat, dbCamera->lng);
+	
+			if ( dist < nearestDist )
+			{
+				nearestDist = dist;
+				closeCam = dbCamera;
+			}
+		}
+		xSemaphoreGive(hLocationMutex);
+	}	
+	
+	Serial.printf("sksksksk %f:%f %d\n", userLat, userLng, nearestDist);
+	return nearestDist;
+}
 
 int findNearestCamera(float vehicleLat, float vehicleLng)
 {
@@ -218,12 +278,14 @@ int findNearestCamera(float vehicleLat, float vehicleLng)
 		int dist;
 		int course;
 		int i;
-			
-		for (int i = 0; i < cameras.size(); i++)
+
+		int end = cameraList.size();
+	
+		for (int i = 0; i < end; i++)
 		{
-			aCamera = cameras.get(i);
+			aCamera = cameraList.get(i);
 			
-			//Serial.printf("%+9.7f  %+9.7f\n",  cameraLocations[i].lat, cameraLocations[i].lng);
+			//Serial.printf("%s:%d %d = %+9.7f  %+9.7f\n", __FUNCTION__, __LINE__, i, aCamera->lat, aCamera->lng);
 			//course = (int)gps.courseTo(vehicleLat, vehicleLng, cameraLocations[i].lat, cameraLocations[i].lng);
 			//cardinal = gps.cardinal(course);
 	
@@ -231,11 +293,9 @@ int findNearestCamera(float vehicleLat, float vehicleLng)
 	
 			if ( dist < closestDist )
 			{
-				nextClosestCam = closestCam;
 				closestDist = dist;
 				closestCam = aCamera;
 			}
-	
 		}
 		
 		if (stickyCamera != closestCam)
@@ -244,37 +304,10 @@ int findNearestCamera(float vehicleLat, float vehicleLng)
 			add_to_playlist("informationOnly.wav");
 			add_to_playlist("delay100.wav");
 			add_to_playlist("allClear.wav");
-			bNewTarget = true;
+			bTargetHasChanged = true;
 		}
 		
-#if 0 //def CHATTY
-		Serial.println();
-		Serial.printf("lat=%9.7f lng=%9.7f \n", vehicleLat, vehicleLng);
-		
-		for (int i = 0; i < cameras.size(); i++)
-		{
-			const char *cardinal;
-			int course;
-			
-			aCamera = cameras.get(i);
-			
-			dist = (int)gps.distanceBetween(vehicleLat, vehicleLng, aCamera->lat, aCamera->lng);
-			course = (int)gps.courseTo(vehicleLat, vehicleLng, aCamera->lat, aCamera->lng);
-			cardinal = gps.cardinal(course);
-			
-			char star;
-	
-			star = (aCamera == closestCam) ? '1' : ' ';
-			if ( star != '1' ) star = (aCamera == nextClosestCam) ? '2' : ' ';
-			
-			if (star != ' ') Serial.printf("%c [%2d] dist=%4d course=%3d cardinal=%s\n",
-				star, i,  dist, course, cardinal);
-			
-		}
-#endif
-
-byebye:
-		xSemaphoreGive(hLocationMutex);
+ 		xSemaphoreGive(hLocationMutex);
 	}	
 
 	return closestDist;
@@ -285,8 +318,8 @@ byebye:
 void setup_locate(void)
 {
 	hLocationMutex = xSemaphoreCreateMutex();
-	readFromSD("gps.db");
-	// testing writeToSD("backup.db");
+	copySDtoCameraList("gps.db");
+	// testing copyCameraListToSD("backup.db");
 }
 
 

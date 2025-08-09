@@ -25,13 +25,13 @@ void speakDistance(int distNow)
 	int i;
 	
 #ifdef LONGVIEW
-	if (bNewTarget || distNow > 300)
+	if (bTargetHasChanged || distNow > 300)
 #else
-	if (bNewTarget || distNow > 150)
+	if (bTargetHasChanged || distNow > 150)
 #endif
 	{
 		// '300' always largest than farthest reporting distance
-		bNewTarget = false;
+		bTargetHasChanged = false;
 		bAnnounced0 = false;
 		bAnnounced20 = false;
 		bAnnounced40 = false;
@@ -125,6 +125,8 @@ void * reportingMode(BUTTON_EVENT some_key)
 	const char *dir;
 	static KEY_STATE here;
 	const char *cardinal;
+	int 	cam_course;
+	char 	const *veh_cardinal;
 
 
 	if (!(int)iLocation.lat || !(int) iLocation.lng)
@@ -253,6 +255,28 @@ void * reportingMode(BUTTON_EVENT some_key)
 					bHaveCamera = false;
 					bFirstPressAway = false;
 					bFirstPressCamera = false;
+
+					double delta_dist = gps.distanceBetween(cameraLocation.lat, cameraLocation.lng, 
+															awayLocation.lat,   awayLocation.lng );
+					if (bFirstPressAway)
+						cam_course = (int)gps.courseTo(	cameraLocation.lat, cameraLocation.lng,
+													   	awayLocation.lat, awayLocation.lng);
+					else
+						cam_course = (int)gps.courseTo(	awayLocation.lat, awayLocation.lng, 
+														cameraLocation.lat, cameraLocation.lng);
+
+					veh_cardinal = gps.cardinal(cam_course);
+
+					GPS_ENTRY2 userData;
+					userData.lat = cameraLocation.lat;
+					userData.lng = cameraLocation.lng;
+					userData.bearing = cam_course;
+					
+					strcpy(userData.cardinal, veh_cardinal);
+					strcpy(userData.onStreet, "TBD");
+					strcpy(userData.crossStreet, "TBD");
+					LINE;
+					addGPStoCameraList(&userData);
 				}
 				else
 				{

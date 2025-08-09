@@ -18,8 +18,11 @@ extern GPS_ENTRY2 *closestCam;
 extern GPS_ENTRY2 *nextClosestCam;
 
 // distance to closest camera is returned.
-extern int findNearestCamera(float vehicleLat, float vehicleLng);
-extern int32_t writeToSD(char* filename = "backup.db" );
+extern int     findNearestCamera(float vehicleLat, float vehicleLng);
+extern int32_t copyCameraListToSD(char* filename = "backup.db" );
+extern int32_t addGPStoCameraList(GPS_ENTRY2 *data);
+extern int quickSearchDistance(float userLat, float userLng);
+
 
 typedef struct gpsLocation { double lng; double lat; };
 
@@ -46,5 +49,6 @@ extern gpsLocation cameraLocation;
 extern gpsLocation awayLocation;
 
 extern gpsLocation gpsAverage;
-extern bool bNewTarget;
+extern bool bTargetHasChanged;
+
 
