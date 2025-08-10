@@ -161,9 +161,8 @@ int32_t copyCameraListToSD(char* filename)
 }
 
 //-------------------------------------------------------------
-#define LINE Serial.printf("%s:%d LINE\n", __FUNCTION__, __LINE__)
 
-int32_t addGPStoCameraList(GPS_ENTRY2 *userData)
+int32_t addToCameraList(GPS_ENTRY2 *userData)
 {
 	String item;
 	char *cstr;
@@ -208,9 +207,64 @@ int32_t addGPStoCameraList(GPS_ENTRY2 *userData)
 		cameraList.add(aCamera);
 		xSemaphoreGive(hLocationMutex);
 	}			
-	LINE;
 		
 	return cameraList.size();
+}
+
+//--------------------------------------------------------------
+
+int removeNearbyCamera(float userLat, float userLng)
+{
+
+	GPS_ENTRY2 *aCamera, *cCamera;
+	int closestDist = -1;
+
+	// do not do any GPS with 0.0 it will hang (hi GD).
+	if (!(int)userLat )
+	{
+		return -1;
+	}
+	
+	if (xSemaphoreTake(hLocationMutex, portMAX_DELAY) == pdTRUE)
+	{
+		int dist;
+		int course;
+		
+		int index;
+		int closestIndex = -1;
+
+		int end = cameraList.size();
+	
+		for (index = 0; index < end; index++)
+		{
+			aCamera = cameraList.get(index);
+			
+			dist = (int) gps.distanceBetween(userLat, userLng, aCamera->lat, aCamera->lng);
+	
+			if ( dist < 150 )
+			{
+				closestDist = dist;
+				closestIndex = index;
+				cCamera = aCamera;
+			}
+		}
+
+		if (closestIndex < 0)
+		{
+			Serial.printf("%s:%d nothing close in 150M found\n", __FUNCTION__, __LINE__);
+		}
+		else
+		{
+			Serial.printf("%s:%d removing lat=%11.8f lng=%11.8f ci=%d dist=%d\n", 
+						__FUNCTION__, __LINE__, 
+						cCamera->lat, cCamera->lng,
+						 closestIndex,closestDist);
+			cameraList.remove(closestIndex);
+		}	
+ 		xSemaphoreGive(hLocationMutex);
+	}	
+
+	return closestDist;
 }
 
 //--------------------------------------------------------------
@@ -254,7 +308,6 @@ int quickSearchDistance(float userLat, float userLng)
 		xSemaphoreGive(hLocationMutex);
 	}	
 	
-	Serial.printf("sksksksk %f:%f %d\n", userLat, userLng, nearestDist);
 	return nearestDist;
 }
 

@@ -276,7 +276,10 @@ void * reportingMode(BUTTON_EVENT some_key)
 					strcpy(userData.onStreet, "TBD");
 					strcpy(userData.crossStreet, "TBD");
 					LINE;
-					addGPStoCameraList(&userData);
+					
+					removeNearbyCamera(cameraLocation.lat, cameraLocation.lng);
+					
+					addToCameraList(&userData);
 				}
 				else
 				{
