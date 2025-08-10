@@ -120,11 +120,11 @@ static bool bFirstPressCamera = false;
 
 void * reportingMode(BUTTON_EVENT some_key)
 {
-	int dist;
-	int course;
+	int Vdist;
+	int Vcourse;
 	const char *dir;
 	static KEY_STATE here;
-	const char *cardinal;
+	const char *Vcardinal;
 	int 	cam_course;
 	char 	const *veh_cardinal;
 
@@ -139,25 +139,29 @@ void * reportingMode(BUTTON_EVENT some_key)
 		return (void*)reportingMode;
 	}
 	
-	dist = findNearestCamera(iLocation.lat, iLocation.lng);
+	Vdist = findNearestCamera(iLocation.lat, iLocation.lng);
 
-	// if vehicle location not known, a negative dist is returned
-	if (dist < 0) return (void*) reportingMode;
+	// if vehicle location not known, a negative Vdist is returned
+	if (Vdist < 0) return (void*) reportingMode;
 
-	course = (int)gps.courseTo(iLocation.lat, iLocation.lng, closestCam->lat, closestCam->lng);
-	cardinal = gps.cardinal(course);
+	Vcourse = (int)gps.courseTo(iLocation.lat, iLocation.lng, 
+								targetCamera.lat, targetCamera.lng);
+	Vcardinal = gps.cardinal(Vcourse);
 
 	//speakSpeed(iMisc.Kmph);
-	speakDistance(dist);
+	speakDistance(Vdist);
 	
-	cprintf(_WHITE, 0, "%s", closestCam->onStreet);
-	cprintf(_WHITE, 1, "%s",  closestCam->crossStreet);
-	cprintf(dist > 100 ? _GREEN : _YELLOW, 2, "DIST=%4d m %3d %s", dist, course, cardinal);
+	cprintf(_WHITE, 0, "%s", targetCamera.onStreet);
+	cprintf(_WHITE, 1, "%s",  targetCamera.crossStreet);
 
-	xprintf(3, "%VEH=%03d kph Qual=%s", (int)iMisc.Kmph, iMisc.cQuality);
+	cprintf(Vdist > 100 ? _GREEN : _YELLOW, 2, "TDIST=%4d VSPD=%3d", Vdist, (int)iMisc.Kmph);
+	
+	cprintf(_CYAN,  3, "VEH %3d %s", Vcourse, Vcardinal);
+	cprintf(_CYAN,  4, "TGT %3d %s", targetCamera.bearing, targetCamera.cardinal);
 
-	cprintf(_GREEN, 4, "NOW LA=%+9.7f", gpsAverage.lat);
-	cprintf(_GREEN, 5, "NOW LO=%+9.7f", gpsAverage.lng);
+	xprintf(5, "Qual=%s", iMisc.cQuality);
+	//cprintf(_GREEN, 4, "NOW LA=%+9.7f", gpsAverage.lat);
+	//cprintf(_GREEN, 5, "NOW LO=%+9.7f", gpsAverage.lng);
 
     bool isCharging = M5.Power.isCharging();
     int percent = M5.Power.getBatteryVoltage() * 100/ 3700; // 3.7 v bat max

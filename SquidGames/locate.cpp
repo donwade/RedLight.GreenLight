@@ -21,6 +21,8 @@ static SemaphoreHandle_t hLocationMutex;
 
 static File root;
 
+GPS_ENTRY2 targetCamera;  // allow anyone to see closest cam
+
 //------------------------------------------------
 static LinkedList <GPS_ENTRY2 *> cameraList;
 
@@ -269,8 +271,6 @@ int removeNearbyCamera(float userLat, float userLng)
 
 //--------------------------------------------------------------
 
-GPS_ENTRY2 *closestCam;
-
 bool bTargetHasChanged = true;
 
 // scan for closest location do not update any globals
@@ -315,7 +315,7 @@ int findNearestCamera(float vehicleLat, float vehicleLng)
 {
 
 	GPS_ENTRY2 *aCamera;
-	static GPS_ENTRY2 *stickyCamera;
+	GPS_ENTRY2 *closestCam;
 	
 	int closestDist = INT_MAX;
 
@@ -351,9 +351,9 @@ int findNearestCamera(float vehicleLat, float vehicleLng)
 			}
 		}
 		
-		if (stickyCamera != closestCam)
+		if (targetCamera.lat != closestCam->lat)
 		{
-			stickyCamera = closestCam;
+			targetCamera = *closestCam;
 			add_to_playlist("informationOnly.wav");
 			add_to_playlist("delay100.wav");
 			add_to_playlist("allClear.wav");

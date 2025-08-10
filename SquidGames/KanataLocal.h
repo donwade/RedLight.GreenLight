@@ -1,4 +1,4 @@
-
+/*
 typedef struct  
 {        float lat; 
          float lng; 
@@ -37,4 +37,4 @@ const GPS_ENTRY cameraLocations[] =
 };
 
 #define  NUM_GPS_ENTRIES (sizeof(cameraLocations)/sizeof(cameraLocations[0]))
-
+*/

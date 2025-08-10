@@ -14,15 +14,14 @@ typedef struct
 
 extern TinyGPSPlus gps;
 
-extern GPS_ENTRY2 *closestCam;
-extern GPS_ENTRY2 *nextClosestCam;
-
 // distance to closest camera is returned.
 extern int     findNearestCamera(float vehicleLat, float vehicleLng);
 extern int32_t copyCameraListToSD(char* filename = "backup.db" );
 extern int32_t addToCameraList(GPS_ENTRY2 *data);
 extern int quickSearchDistance(float userLat, float userLng);
 extern int removeNearbyCamera(float userLat, float userLng);
+
+extern GPS_ENTRY2 targetCamera;  // allow anyone to see closest cam
 
 
 
