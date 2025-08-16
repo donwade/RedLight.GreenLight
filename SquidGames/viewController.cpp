@@ -360,7 +360,11 @@ void touchPanel_impl()
 			{
 				Serial.println("Left pressed");
 				leftButtonState = KEY_DOWN;
-				
+
+				M5.Speaker.setVolume(64);
+				M5.Speaker.tone(2000, 50);				
+				M5.Speaker.setVolume(128);
+
 				msg = LBUTTON_DN;
 				button_push(msg);
 				Serial.printf("push %d\n", msg);
@@ -374,6 +378,10 @@ void touchPanel_impl()
 				Serial.println("Middle pressed");
 				middleButtonState = KEY_DOWN;
 				
+				M5.Speaker.setVolume(64);
+				M5.Speaker.tone(2000, 50);				
+				M5.Speaker.setVolume(128);
+
 				msg = MBUTTON_DN;
 				button_push(msg);
 				Serial.printf("push %d\n", msg);
@@ -387,6 +395,10 @@ void touchPanel_impl()
 				Serial.println("Right pressed");
 				rightButtonState = KEY_DOWN;
 
+				M5.Speaker.setVolume(64);
+				M5.Speaker.tone(2000, 50);				
+				M5.Speaker.setVolume(128);
+				
 				msg = RBUTTON_DN;
 				button_push(msg);
 				Serial.printf("push %d\n", msg);
