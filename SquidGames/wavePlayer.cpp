@@ -58,8 +58,15 @@ struct __attribute__((packed)) sub_chunk_t
 static bool playWavFromSD(const char* filename)
 {
   char fname[80];
-  strcpy(&fname[1], filename);
-  fname[0]='/';
+
+  if (filename[0] != '/' )
+  {
+  	strcpy(&fname[1], filename);
+  	fname[0]='/';
+  }
+  else
+    strcpy(fname, filename);
+  	
 
   kickDog();
 

@@ -4,6 +4,7 @@
 
 #define LINE Serial.printf("%s:%d\n", __FUNCTION__, __LINE__)
 extern void * learningMode(BUTTON_EVENT x);
+extern void * savingMode(BUTTON_EVENT x);
 
 void speakSpeed(int Kmph)
 {
@@ -177,14 +178,13 @@ void * reportingMode(BUTTON_EVENT some_key)
 	// all display updates done ... just keys left
 	if (some_key == DISPLAY_REFRESH) return (void*) reportingMode;
 
-	Serial.printf("handled key %d\n", some_key);
+	//Serial.printf("handled key %d\n", some_key);
 
 	switch (some_key)
 	{
 		case BUTTON_INIT:
 			lfillRect(0,0, 50, 50, _RED);
 			threeButtonText("AWAY", "SAVE", "CAMERA");
-			//threeButtonText("QUIET", "OK", "BYTEME");
 			
 			cprintf(_RED,	2, "TODO        ");
 			cprintf(_RED ,	3, "TODO        ");
@@ -282,47 +282,36 @@ void * reportingMode(BUTTON_EVENT some_key)
 					LINE;
 					
 					removeNearbyCamera(cameraLocation.lat, cameraLocation.lng);
-					
 					addToCameraList(&userData);
+
+					
+					return (void*) savingMode;
 				}
 				else
 				{
 					if (!bHaveAway && !bHaveCamera)
 					{
 						cprintf(_ORANGE, 7, "need CAMERA *AND* AWAY");
+
+						// hitting save with no endpoints ?
+						// assume delete nearest camera to current veh location
+						
+						removeNearbyCamera(gpsAverage.lat, gpsAverage.lng);
+						
+						// ensure deletion sticks across next reboot
+						copyCameraListToSD("gps.db");
+						
+						return (void*) reportingMode;
 					}
 					else if (bHaveAway)
 						cprintf(_ORANGE, 7, "NO! STILL NEED CAMERA");
 					else
 						cprintf(_ORANGE, 7, "NO! STILL NEED AWAY");
 				}
-				//return (void*) learningMode;
 			}			
 			
 		break;
 
 	}
-
-/*
-	What is HDOP 
-	< 1 Ideal
-
-	1-2 Excellent
-	Highest possible confidence level to be used for applications demanding the highest possible precision at all times.
-	At this confidence level, positional measurements are considered accurate enough to meet all but the most sensitive applications.
-
-	2-5 Good
-
-	Represents a level that marks the minimum appropriate for making accurate decisions. Positional measurements could be used to make reliable in-route navigation suggestions to the user.
-	Positional measurements could be used for calculations, but the fix quality could still be improved. A more open view of the sky is
-
-	5-10 Moderate
-
-	10-20 Fair
-	Represents a low confidence level. Positional measurements should be discarded or used only to indicate a very rough estimate
-
-	>20 Poor At this level, measurements should be discarded
-*/
-
 	return (void *) reportingMode;
 }	

@@ -38,8 +38,13 @@ static int32_t copySDtoCameraList(const char* filename)
 	
 	if (xSemaphoreTake(hLocationMutex, portMAX_DELAY) == pdTRUE)
 	{
-		strcpy(&fname[1], filename);
-		fname[0]='/';
+		if (filename[0] != '/' )
+		{
+			strcpy(&fname[1], filename);
+			fname[0]='/';
+		}
+		else
+			strcpy(fname, filename);
 
 		Serial.printf("%s open %s for reading\n", __FUNCTION__, fname);
 		auto file = SD.open(fname);
@@ -127,9 +132,14 @@ int32_t copyCameraListToSD(char* filename)
 
 	if (xSemaphoreTake(hLocationMutex, portMAX_DELAY) == pdTRUE)
 	{
-		strcpy(&fname[1], filename);
-		fname[0]='/';
-
+		if ( filename[0] != '/')
+		{
+			strcpy(&fname[1], filename);
+			fname[0]='/';
+		}
+		else
+			strcpy(fname, filename);
+			
 		Serial.printf("%s open %s for writing\n", __FUNCTION__, fname);
 		auto file = SD.open(fname, FILE_WRITE);
 
@@ -150,7 +160,7 @@ int32_t copyCameraListToSD(char* filename)
 			
 			file.println(bigMessage);
 			
-			//Serial.printf("xyz: %s\n", bigMessage);
+			Serial.printf("writing :[%3d]  %s\n", i, bigMessage);
 
 		}
 
@@ -262,6 +272,10 @@ int removeNearbyCamera(float userLat, float userLng)
 						cCamera->lat, cCamera->lng,
 						 closestIndex,closestDist);
 			cameraList.remove(closestIndex);
+			
+			M5.Speaker.tone(1000, 200);				
+			M5.Speaker.tone(2000, 300);				
+			M5.Speaker.tone(900 , 200);				
 		}	
  		xSemaphoreGive(hLocationMutex);
 	}	
