@@ -136,8 +136,10 @@ void * reportingMode(BUTTON_EVENT some_key)
 
 		// when gps is stable, then process keys.		
 		button_push(some_key);
-		
+
+		colourBarX(_RED, 100);
 		showPower();
+		
 		return (void*)reportingMode;
 	}
 	
@@ -165,6 +167,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 	//cprintf(_GREEN, 4, "NOW LA=%+9.7f", gpsAverage.lat);
 	//cprintf(_GREEN, 5, "NOW LO=%+9.7f", gpsAverage.lng);
 
+	
 	showPower();
 	
 	// all display updates done ... just keys left
@@ -183,6 +186,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 			cprintf(_GREEN, 4, "TODO        ");
 			cprintf(_GREEN, 5, "TODO        ");
 			cprintf(_ORANGE,6, "TODO        ");
+			setToggleColors(_BLACK, _BLACK);
 			
 		break;	
 			
