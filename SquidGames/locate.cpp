@@ -27,6 +27,12 @@ GPS_ENTRY2 targetCamera;  // allow anyone to see closest cam
 static LinkedList <GPS_ENTRY2 *> cameraList;
 
 //-------------------------------------------------------------
+static void trimEnds(char *who)
+{
+	while (who[0] == ' ' ) strcpy (who, who+1);
+	while (who[strlen(who)-1] == ' ' ) who[strlen(who)-1] = '\0';
+}
+//-------------------------------------------------------------
 
 static int32_t copySDtoCameraList(const char* filename)
 {
@@ -71,7 +77,7 @@ static int32_t copySDtoCameraList(const char* filename)
 			//convert 'String' to C-String
 			cstr = new char [item.length()+1];
 			std::strcpy (cstr, item.c_str());
-			Serial.printf("%d %s\n", cnt, cstr);
+			Serial.printf("%4d %s\n", cnt, cstr);
 			
 			//+45.2948422,-75.8642632 ,  71, "ENE", "Bridlewood" , "Aintree"
 
@@ -87,8 +93,22 @@ static int32_t copySDtoCameraList(const char* filename)
 							aCamera->cardinal, 
 							aCamera->onStreet, 
 							aCamera->crossStreet);
+
+			trimEnds(cDir);
+			trimEnds(clat);
+			trimEnds(clon);
+			trimEnds(aCamera->cardinal);
+			trimEnds(aCamera->onStreet);
+			trimEnds(aCamera->crossStreet);
 			
-			if (ret != 6) continue; // bad data
+			if (ret != 6)
+			{
+				Serial.printf("%s:%d bad data\n", __FUNCTION__, __LINE__);
+				delay(3000);
+				assert(ret == 6);
+				
+				continue; // bad data
+			}
 			
 			iDir = atoi(cDir);
 			flat = atof(clat);	
@@ -154,14 +174,19 @@ int32_t copyCameraListToSD(char* filename)
 		Serial.printf("%s open %s for writing\n", __FUNCTION__, fname);
 		auto file = SD.open(fname, FILE_WRITE);
 
-		if (!file) { return false; }
+		if (!file) 
+		{
+			Serial.printf("FAIL: could not open %s for writing\n");
+			xSemaphoreGive(hLocationMutex);
+			return false;
+		}
 
 		for (i = 0; i < cameraList.size(); i++)
 		{
 			aCamera = cameraList.get(i);
 
 			//+45.2948422,-75.8642632 ,  71, "ENE", "Bridlewood" , "Aintree"
-			sprintf(bigMessage, "%f,%f , %d, %s , %s, %s ", 
+			sprintf(bigMessage, "%f,%f,%d,%s,%s,%s", 
 				aCamera->lat,
 				aCamera->lng,
 				aCamera->bearing,
@@ -171,7 +196,7 @@ int32_t copyCameraListToSD(char* filename)
 			
 			file.println(bigMessage);
 			
-			Serial.printf("writing :[%3d]  %s\n", i, bigMessage);
+			Serial.printf("\twriting :[%3d]  %s\n", i, bigMessage);
 
 		}
 

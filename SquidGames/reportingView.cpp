@@ -280,6 +280,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 					
 					removeNearbyCamera(cameraLocation.lat, cameraLocation.lng);
 					addToCameraList(&userData);
+					copyCameraListToSD("gps.db");
 
 					
 					return (void*) reportingMode;

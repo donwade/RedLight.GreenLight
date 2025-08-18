@@ -377,7 +377,6 @@ void touchPanel_impl()
 		{
 			if (leftButtonState != KEY_DOWN)
 			{
-				Serial.println("Left pressed");
 				leftButtonState = KEY_DOWN;
 
 				M5.Speaker.setVolume(64);
@@ -393,7 +392,6 @@ void touchPanel_impl()
 		{
 			if (middleButtonState != KEY_DOWN)
 			{
-				Serial.println("Middle pressed");
 				middleButtonState = KEY_DOWN;
 				
 				M5.Speaker.setVolume(64);
@@ -409,7 +407,6 @@ void touchPanel_impl()
 		{
 			if (rightButtonState != KEY_DOWN)
 			{
-				Serial.println("Right pressed");
 				rightButtonState = KEY_DOWN;
 
 				M5.Speaker.setVolume(64);
@@ -431,7 +428,6 @@ void touchPanel_impl()
 		{
 			if ( leftButtonState != KEY_UP)
 			{
-				Serial.println("Left released");
 				leftButtonState = KEY_UP;
 
 				msg = LBUTTON_UP;
@@ -443,7 +439,6 @@ void touchPanel_impl()
 		{
 			if (middleButtonState != KEY_UP)
 			{
-				Serial.println("Middle released");
 				middleButtonState = KEY_UP;
 
 				msg = MBUTTON_UP;
@@ -455,7 +450,6 @@ void touchPanel_impl()
 		{
 			if (rightButtonState != KEY_UP)
 			{
-				Serial.println("Right released");
 				rightButtonState = KEY_UP;
 
 				msg = RBUTTON_UP;
