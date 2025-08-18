@@ -323,13 +323,14 @@ void button_push(BUTTON_EVENT msg)
 BUTTON_EVENT button_pop(uint32_t maxWaitMs)
 {
 	BUTTON_EVENT abutton;
-	
+
+	kickDog();
 	while (xSemaphoreTake( keyCountingSemaphore, pdMS_TO_TICKS(maxWaitMs) ) == pdTRUE)
 	{
 		abutton = buttonQueue.dequeue();
 		return abutton;
 	}
-	
+		
 	return DISPLAY_REFRESH;
 }
 

@@ -165,41 +165,34 @@ void wavPlayerTask(void *NOTUSED)
 			if (!strcmp(playThisFile, "delay100.wav"))
 			{
 				Tdelay(100);
-				continue;
 			}
 			else if (!strcmp(playThisFile, "delay200.wav"))
 			{
 				Tdelay(200);
-				continue;
 			}
 			else if (!strcmp(playThisFile, "delay500.wav"))
 			{
 				Tdelay(500);
-				continue;
 			}
 			else if (!strcmp(playThisFile, "delay750.wav"))
 			{
 				Tdelay(750);
-				continue;
 			}
 			else if (!strcmp(playThisFile, "delay1000.wav"))
 			{
 				Tdelay(1000);
-				continue;
 			}
 			else if (!strcmp(playThisFile, "delay5000.wav"))
 			{
 				Tdelay(5000);
-				continue;
 			}
-
+			else
 			// not a fake file. its real if it got here
 			playWavFromSD(playThisFile);
 		}
 		else
-		{
 			kickDog();
-		}
+			delay(1);
 	}
 }
 

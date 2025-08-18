@@ -49,10 +49,20 @@ static int32_t copySDtoCameraList(const char* filename)
 		Serial.printf("%s open %s for reading\n", __FUNCTION__, fname);
 		auto file = SD.open(fname);
 
-		if (!file) { return false; }
+		if (!file) 
+		{
+			Serial.printf("%s FAILED %s for reading\n", __FUNCTION__, fname);
+			xSemaphoreGive(hLocationMutex);
+			return false; 
+		}
 
 		while (file.available())
 		{
+			int x;
+			x = x +5 ;
+			
+			//kickDog();
+			
 			aCamera = new(GPS_ENTRY2);
 		
 			cnt++;
@@ -337,8 +347,8 @@ int quickSearchDistance(float userLat, float userLng)
 int findNearestCamera(float vehicleLat, float vehicleLng)
 {
 
-	GPS_ENTRY2 *aCamera;
-	GPS_ENTRY2 *closestCam;
+	GPS_ENTRY2 *aCamera = NULL;
+	GPS_ENTRY2 *closestCam = NULL;
 	
 	int closestDist = INT_MAX;
 
@@ -357,7 +367,7 @@ int findNearestCamera(float vehicleLat, float vehicleLng)
 
 		int end = cameraList.size();
 	
-		for (int i = 0; i < end; i++)
+		for (i = 0; i < end; i++)
 		{
 			aCamera = cameraList.get(i);
 			
@@ -374,7 +384,7 @@ int findNearestCamera(float vehicleLat, float vehicleLng)
 			}
 		}
 		
-		if (targetCamera.lat != closestCam->lat)
+		if (closestCam && targetCamera.lat != closestCam->lat)
 		{
 			targetCamera = *closestCam;
 			add_to_playlist("informationOnly.wav");

@@ -125,6 +125,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 	int Vcourse;
 	const char *dir;
 	static KEY_STATE here;
+	static int ticker;
 	const char *Vcardinal;
 	int 	cam_course;
 	char 	const *veh_cardinal;
@@ -137,7 +138,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 		// when gps is stable, then process keys.		
 		button_push(some_key);
 
-		colourBarX(_RED, 100);
+		colourBarX(_RED, 7);
 		showPower();
 		
 		return (void*)reportingMode;
@@ -153,7 +154,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 	Vcardinal = gps.cardinal(Vcourse);
 
 	//speakSpeed(iMisc.Kmph);
-	speakDistance(Vdist);
+	//speakDistance(Vdist);
 	
 	cprintf(_WHITE, 0, "%s", targetCamera.onStreet);
 	cprintf(_WHITE, 1, "%s",  targetCamera.crossStreet);
@@ -163,7 +164,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 	cprintf(_CYAN,  3, "VEH %3d %s", Vcourse, Vcardinal);
 	cprintf(_CYAN,  4, "TGT %3d %s", targetCamera.bearing, targetCamera.cardinal);
 
-	xprintf(5, "Qual=%s", iMisc.cQuality);
+	xprintf(5, "Qual=%5s %d", iMisc.cQuality, ticker++);
 	//cprintf(_GREEN, 4, "NOW LA=%+9.7f", gpsAverage.lat);
 	//cprintf(_GREEN, 5, "NOW LO=%+9.7f", gpsAverage.lng);
 
