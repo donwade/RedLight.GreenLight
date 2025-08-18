@@ -57,8 +57,6 @@ void lclear(void)
 #include <Fonts/FreeMono12pt7b.h>
 
 //--------------------------------------------------
-void reportPower(void);
-
 
 void setup_M5(void)
 {
@@ -75,7 +73,6 @@ void setup_M5(void)
 	delay(2000);
 
 	Serial.begin(115200);
-	reportPower();
 	
 	setup_button();
 }

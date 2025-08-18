@@ -40,6 +40,8 @@ void touchPanel_impl(void);
 void setup_button(void);
 void button_create(void);
 
+extern void showPower(void);
+
 typedef enum { 
 	DISPLAY_REFRESH, //nothing
 	LBUTTON_DN, LBUTTON_UP, // odd DOWN. Even UP

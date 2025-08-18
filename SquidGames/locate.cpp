@@ -114,7 +114,8 @@ static int32_t copySDtoCameraList(const char* filename)
 		
 		xSemaphoreGive(hLocationMutex);
 	}	
-
+	Serial.printf("%s:%d  %d (=%d?) items loaded sd->db\n",
+				  __FUNCTION__, __LINE__, cnt, cameraList.size());
 	return cnt;
 }
 
@@ -219,6 +220,9 @@ int32_t addToCameraList(GPS_ENTRY2 *userData)
 		cameraList.add(aCamera);
 		xSemaphoreGive(hLocationMutex);
 	}			
+	Serial.printf("%s:%d %d items in list\n", 
+				  __FUNCTION__,__LINE__,
+				  cameraList.size());
 		
 	return cameraList.size();
 }
@@ -236,6 +240,8 @@ int removeNearbyCamera(float userLat, float userLng)
 	{
 		return -1;
 	}
+	
+	Serial.printf("%s:%d %d items in list\n", __FUNCTION__, __LINE__, cameraList.size());
 	
 	if (xSemaphoreTake(hLocationMutex, portMAX_DELAY) == pdTRUE)
 	{
@@ -273,13 +279,16 @@ int removeNearbyCamera(float userLat, float userLng)
 						 closestIndex,closestDist);
 			cameraList.remove(closestIndex);
 			
-			M5.Speaker.tone(1000, 200);				
+			M5.Speaker.tone(1000, 200);
+			delay(200);
 			M5.Speaker.tone(2000, 300);				
+			delay(200);
 			M5.Speaker.tone(900 , 200);				
 		}	
  		xSemaphoreGive(hLocationMutex);
 	}	
 
+	Serial.printf("%s:%d %d items in list\n", __FUNCTION__, __LINE__, cameraList.size());
 	return closestDist;
 }
 

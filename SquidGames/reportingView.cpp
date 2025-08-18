@@ -137,6 +137,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 		// when gps is stable, then process keys.		
 		button_push(some_key);
 		
+		showPower();
 		return (void*)reportingMode;
 	}
 	
@@ -164,16 +165,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 	//cprintf(_GREEN, 4, "NOW LA=%+9.7f", gpsAverage.lat);
 	//cprintf(_GREEN, 5, "NOW LO=%+9.7f", gpsAverage.lng);
 
-    bool isCharging = M5.Power.isCharging();
-    int percent = M5.Power.getBatteryVoltage() * 100/ 3700; // 3.7 v bat max
-    int vol = M5.Power.getBatteryVoltage();
-    int cur = M5.Power.getBatteryCurrent();
-	
-	cprintf(_YELLOW, 6, "%3.1fv %03d%% %4dmA %s", 
-						(float)vol/1000.,
-						percent,
-						cur,
-						isCharging ? "CHG":"DIS");
+	showPower();
 	
 	// all display updates done ... just keys left
 	if (some_key == DISPLAY_REFRESH) return (void*) reportingMode;
@@ -285,7 +277,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 					addToCameraList(&userData);
 
 					
-					return (void*) savingMode;
+					return (void*) reportingMode;
 				}
 				else
 				{

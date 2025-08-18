@@ -241,6 +241,24 @@ int8_t middleButtonState = -1;
 
 static uint32_t bMenuIsActive = false;
 
+
+//--------------------------------------------------
+void showPower(void)
+{
+    bool isCharging = M5.Power.isCharging();
+    int percent = M5.Power.getBatteryVoltage() * 100/ 3700; // 3.7 v bat max
+    int vol = M5.Power.getBatteryVoltage();
+    int cur = M5.Power.getBatteryCurrent();
+	
+	cprintf(_YELLOW, 6, "%3.1fv %03d%% %4dmA %s", 
+						(float)vol/1000.,
+						percent,
+						cur,
+						isCharging ? "CHG":"DIS");
+}	
+
+//--------------------------------------------------
+
 void threeButtonText(
 	char *leftButtonText, 
 	char *middleButtonText, 
@@ -367,7 +385,6 @@ void touchPanel_impl()
 
 				msg = LBUTTON_DN;
 				button_push(msg);
-				Serial.printf("push %d\n", msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
@@ -384,7 +401,6 @@ void touchPanel_impl()
 
 				msg = MBUTTON_DN;
 				button_push(msg);
-				Serial.printf("push %d\n", msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
@@ -401,7 +417,6 @@ void touchPanel_impl()
 				
 				msg = RBUTTON_DN;
 				button_push(msg);
-				Serial.printf("push %d\n", msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
@@ -420,7 +435,6 @@ void touchPanel_impl()
 
 				msg = LBUTTON_UP;
 				button_push(msg);
-				Serial.printf("push %d\n", msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
@@ -433,7 +447,6 @@ void touchPanel_impl()
 
 				msg = MBUTTON_UP;
 				buttonQueue.enqueue(msg);
-				Serial.printf("push %d\n", msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
@@ -446,7 +459,6 @@ void touchPanel_impl()
 
 				msg = RBUTTON_UP;
 				buttonQueue.enqueue(msg);
-				Serial.printf("push %d\n", msg);
 				xSemaphoreGive(keyCountingSemaphore);
 			}
 		}
