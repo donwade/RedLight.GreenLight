@@ -183,13 +183,14 @@ void * reportingMode(BUTTON_EVENT some_key)
 	{
 		case BUTTON_INIT:
 			lfillRect(0,0, 50, 50, _RED);
-			threeButtonText("AWAY", "SAVE", "CAMERA");
+			threeButtonText("AWAY", "NEXT", "CAMERA");
 			
-			cprintf(_RED,	2, "TODO        ");
-			cprintf(_RED ,	3, "TODO        ");
-			cprintf(_GREEN, 4, "TODO        ");
-			cprintf(_GREEN, 5, "TODO        ");
-			cprintf(_ORANGE,6, "TODO        ");
+			cprintf(_RED,	2, "TODO           ");
+			cprintf(_RED ,	3, "TODO           ");
+			cprintf(_GREEN, 4, "TODO           ");
+			cprintf(_GREEN, 5, "TODO           ");
+			cprintf(_ORANGE,6, "TODO           ");
+			cprintf(_ORANGE, 7, "need CAMERA *AND* AWAY");
 			setToggleColors(_BLACK, _BLACK);
 			
 		break;	
@@ -205,7 +206,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 					bHaveCamera = false;
 					bFirstPressAway = false;
 					bFirstPressCamera = false;
-					cprintf(_ORANGE, 7, "NEXT CAMERA or AWAY");
+					cprintf(_ORANGE, 7, "SELECT CAMERA or AWAY");
 					setToggleColors(_BLACK, _BLACK);
 				}
 				else
@@ -214,7 +215,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 					bHaveAway = true;
 					awayLocation = gpsAverage;
 					setToggleColors(_GREEN, bHaveCamera ? _RED : _BLACK, 10);
-					cprintf(_ORANGE, 7, "NEXT CAMERA or SAVE");
+					cprintf(_ORANGE, 7, "SELECT CAMERA or NEXT");
 				}
 			}
 
@@ -233,7 +234,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 					bFirstPressAway = false;
 					bFirstPressCamera = false;
 					setToggleColors(_BLACK, _BLACK);
-					cprintf(_ORANGE, 7, "NEXT CAMERA or AWAY");
+					cprintf(_ORANGE, 7, "SELECT CAMERA or AWAY");
 				}
 				else
 				{
@@ -241,7 +242,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 					bHaveCamera = true;
 					cameraLocation = iLocation;
 					setToggleColors(_RED, bHaveAway? _GREEN : _BLACK, 10);
-					cprintf(_ORANGE, 7, "NEXT AWAY or SAVE");
+					cprintf(_ORANGE, 7, "SELECT AWAY or NEXT");
 				}
 			}
 		break;
@@ -284,9 +285,8 @@ void * reportingMode(BUTTON_EVENT some_key)
 					removeNearbyCamera(cameraLocation.lat, cameraLocation.lng);
 					addToCameraList(&userData);
 					copyCameraListToSD("gps.db");
-
 					
-					return (void*) reportingMode;
+					return (void*) savingMode;
 				}
 				else
 				{
@@ -302,7 +302,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 						// ensure deletion sticks across next reboot
 						copyCameraListToSD("gps.db");
 						
-						return (void*) reportingMode;
+						return (void*) savingMode;
 					}
 					else if (bHaveAway)
 						cprintf(_ORANGE, 7, "NO! STILL NEED CAMERA");

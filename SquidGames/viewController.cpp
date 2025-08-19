@@ -113,7 +113,7 @@ void setToggleColors(uint32_t RGB_LEFT, uint32_t RGB_RIGHT, uint16_t brite)
 	colourBarLeft = RGB_LEFT;
 	colourBarRight = RGB_RIGHT;
 
-	Serial.printf("left=0x%08X right=0x%08X\n", RGB_LEFT, RGB_RIGHT);
+	//Serial.printf("left=0x%08X right=0x%08X\n", RGB_LEFT, RGB_RIGHT);
 	
 	bStopLedBarToggle = (RGB_LEFT == _BLACK && RGB_RIGHT == _BLACK) ? true : false;
 

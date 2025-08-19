@@ -41,7 +41,7 @@ void * learningMode(BUTTON_EVENT some_key)
 	{
 		case BUTTON_INIT:
 			lfillRect(0,0, 50, 50, _BLUE);
-			threeButtonText("AWAY", "SAVE", "CAMERA");
+			threeButtonText("AWAY", "NEXT", "CAMERA");
 			cprintf(_RED,	2, "LA=%+9.7f", gpsAverage.lat);
 			cprintf(_RED ,	3, "LO=%+9.7f", gpsAverage.lng);
 			cprintf(_GREEN, 4, "LA=%+9.7f", gpsAverage.lat);
@@ -55,7 +55,7 @@ void * learningMode(BUTTON_EVENT some_key)
 			{
 				awayLocation = gpsAverage;
 				colourBarX(_GREEN, 10);
-				cprintf(_ORANGE, 6, "NEXT CAMERA or SAVE");
+				cprintf(_ORANGE, 6, "SELECT CAMERA or NEXT");
 			}
 			
 		break;
@@ -66,7 +66,7 @@ void * learningMode(BUTTON_EVENT some_key)
 			{
 				cameraLocation = gpsAverage;
 				colourBarX(_RED, 10);
-				cprintf(_ORANGE, 6, "NEXT AWAY or SAVE");
+				cprintf(_ORANGE, 6, "SELECT AWAY or NEXT");
 			}
 
 		break;
