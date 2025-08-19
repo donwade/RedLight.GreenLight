@@ -158,7 +158,8 @@ void wavPlayerTask(void *NOTUSED)
 	{
 		if (xSemaphoreTake( xCountingSemaphore, pdMS_TO_TICKS(1000) ) == pdTRUE)
 		{
-
+			kickDog();
+			
 			playlistQ.pop(playThisFile);
 			Serial.printf("popping %s\n", playThisFile);
 

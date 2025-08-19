@@ -164,7 +164,10 @@ void * reportingMode(BUTTON_EVENT some_key)
 	cprintf(_CYAN,  3, "VEH %3d %s", Vcourse, Vcardinal);
 	cprintf(_CYAN,  4, "TGT %3d %s", targetCamera.bearing, targetCamera.cardinal);
 
-	xprintf(5, "Qual=%5s %d", iMisc.cQuality, ticker++);
+	xprintf(5, "Angle=%d Qual=%5s", 
+				angle_diff(Vcourse,targetCamera.bearing),
+				iMisc.cQuality);
+	
 	//cprintf(_GREEN, 4, "NOW LA=%+9.7f", gpsAverage.lat);
 	//cprintf(_GREEN, 5, "NOW LO=%+9.7f", gpsAverage.lng);
 

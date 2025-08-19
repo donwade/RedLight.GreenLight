@@ -52,4 +52,5 @@ extern gpsLocation awayLocation;
 extern gpsLocation gpsAverage;
 extern bool bTargetHasChanged;
 
+extern int16_t angle_diff (uint16_t from, uint16_t to);
 

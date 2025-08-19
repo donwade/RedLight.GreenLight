@@ -23,10 +23,35 @@ static File root;
 
 GPS_ENTRY2 targetCamera;  // allow anyone to see closest cam
 
-//------------------------------------------------
+//-------------------------------------------------------------
+
+int16_t angle_diff (uint16_t from, uint16_t to)
+{
+	int16_t a, b, c ;
+
+	a = from + 360;
+	b = to + 360;
+
+	c = (b - a );
+
+	while (c >  360) c -= 360;
+	while (c < -360) c += 360;
+
+	if ( c > 180 || c < -180)
+	{
+		if ( c > 180) c = c - 360;
+		else if ( c < 180) c = c + 360;
+	}	
+	//Serial.printf("from/to/diff  %3d/%3d/%3d\n", from, to , c);
+
+	return c;	
+}
+//-------------------------------------------------------------
+
 static LinkedList <GPS_ENTRY2 *> cameraList;
 
 //-------------------------------------------------------------
+// srtip spaces from start or end of string
 static void trimEnds(char *who)
 {
 	while (who[0] == ' ' ) strcpy (who, who+1);
@@ -146,6 +171,16 @@ static int32_t copySDtoCameraList(const char* filename)
 	}	
 	Serial.printf("%s:%d  %d (=%d?) items loaded sd->db\n",
 				  __FUNCTION__, __LINE__, cnt, cameraList.size());
+
+/*
+	angle_diff (10, 20);
+	angle_diff (45, 90+ 45);
+	angle_diff (90 + 45, 180);
+	angle_diff (1, 359);
+	angle_diff (359, 1);
+	angle_diff (179, 181);
+	angle_diff (182, 178);
+*/
 	return cnt;
 }
 
