@@ -92,8 +92,8 @@ void setToggleColors(uint32_t RGB_LEFT, uint32_t RGB_RIGHT, uint16_t brite)
 	uint32_t r,g,b;
 	
 	colourBarLeft = RGB_LEFT;
-	r = (RGB_LEFT >> 16 ) & 0xFF;
-	g = (RGB_LEFT >> 8  ) & 0xFF;
+	g = (RGB_LEFT >> 16 ) & 0xFF;
+	r = (RGB_LEFT >> 8  ) & 0xFF;
 	b = (RGB_LEFT       ) & 0xFF;
 
 	r = r * brite/100;
@@ -101,8 +101,8 @@ void setToggleColors(uint32_t RGB_LEFT, uint32_t RGB_RIGHT, uint16_t brite)
 	b = b * brite/100;
 	RGB_LEFT = r << 16 | g << 8 | b;
 
-	r = (RGB_RIGHT >> 16 ) & 0xFF;
-	g = (RGB_RIGHT >> 8  ) & 0xFF;
+	g = (RGB_RIGHT >> 16 ) & 0xFF;
+	r = (RGB_RIGHT >> 8  ) & 0xFF;
 	b = (RGB_RIGHT       ) & 0xFF;
 
 	r = r * brite/100;

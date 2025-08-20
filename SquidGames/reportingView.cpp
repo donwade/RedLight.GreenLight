@@ -119,6 +119,43 @@ static bool bHaveCamera = false;
 static bool bFirstPressAway = false;
 static bool bFirstPressCamera = false;
 
+void saveCamera(void)
+{
+	int 	cam_course;
+	char 	const *veh_cardinal;
+	
+	double delta_dist = gps.distanceBetween(cameraLocation.lat, cameraLocation.lng, 
+											awayLocation.lat,	awayLocation.lng );
+	if (bFirstPressAway)
+		cam_course = (int)gps.courseTo( cameraLocation.lat, cameraLocation.lng,
+										awayLocation.lat, awayLocation.lng);
+	else
+		cam_course = (int)gps.courseTo( awayLocation.lat, awayLocation.lng, 
+										cameraLocation.lat, cameraLocation.lng);
+	
+	veh_cardinal = gps.cardinal(cam_course);
+	
+	GPS_ENTRY2 userData;
+	userData.lat = cameraLocation.lat;
+	userData.lng = cameraLocation.lng;
+	userData.bearing = cam_course;
+	
+	strcpy(userData.cardinal, veh_cardinal);
+	strcpy(userData.onStreet, "TBD");
+	strcpy(userData.crossStreet, "TBD");
+	LINE;
+	
+	removeNearbyCamera(cameraLocation.lat, cameraLocation.lng);
+	addToCameraList(&userData);
+	copyCameraListToSD("gps.db");
+
+	bHaveAway = false;
+	bHaveCamera = false;
+	bFirstPressAway = false;
+	bFirstPressCamera = false;
+	
+}
+
 void * reportingMode(BUTTON_EVENT some_key)
 {
 	int Vdist;
@@ -126,9 +163,8 @@ void * reportingMode(BUTTON_EVENT some_key)
 	const char *dir;
 	static KEY_STATE here;
 	static int ticker;
-	const char *Vcardinal;
-	int 	cam_course;
 	char 	const *veh_cardinal;
+	const char *Vcardinal;
 
 
 	if (!(int)iLocation.lat || !(int) iLocation.lng)
@@ -194,56 +230,98 @@ void * reportingMode(BUTTON_EVENT some_key)
 			setToggleColors(_BLACK, _BLACK);
 			
 		break;	
-			
+		
+		// aka 'away button'
 		case LBUTTON_UP:
 		case LBUTTON_DN:
 			if (some_key == LBUTTON_DN)
 			{
-				if (bHaveAway)
+				awayLocation = gpsAverage;
+				
+				if (bHaveCamera)
 				{
-					// double press, cancel both
+					LINE;
+					// save operation
 					bHaveAway = false;
 					bHaveCamera = false;
 					bFirstPressAway = false;
 					bFirstPressCamera = false;
+					
 					cprintf(_ORANGE, 7, "SELECT CAMERA or AWAY");
-					setToggleColors(_BLACK, _BLACK);
+					setToggleColors(_CYAN, _CYAN, 2);
+
+					saveCamera();
+					break;
 				}
+				
+				if (!bHaveAway)
+				{
+					LINE;
+					bHaveAway = true;
+					if (!bFirstPressCamera) bFirstPressAway = true;
+					
+					
+					cprintf(_ORANGE, 7, "SELECT CAMERA");
+					setToggleColors(_RED, _BLACK, 10);
+					break;
+				}
+				
 				else
 				{
-					if (!bFirstPressCamera ) bFirstPressAway = true;
-					bHaveAway = true;
-					awayLocation = gpsAverage;
-					setToggleColors(_GREEN, bHaveCamera ? _RED : _BLACK, 10);
-					cprintf(_ORANGE, 7, "SELECT CAMERA or NEXT");
+					LINE;
+					// cancel op
+					bHaveAway = false;
+					bFirstPressAway = false;
+					setToggleColors(_BLACK , _BLACK, 10);
+					cprintf(_ORANGE, 7, "SELECT CAMERA or AWAY");
 				}
 			}
 
 		break;
 
+		// camera button
 		case RBUTTON_UP:
 		case RBUTTON_DN:
 
 			if (some_key == RBUTTON_DN)
 			{
-				if (bHaveCamera )
+				cameraLocation = iLocation;
+				if (bHaveAway)
 				{
-					// double press, cancel both
+					LINE;
+					// save operation
 					bHaveAway = false;
 					bHaveCamera = false;
 					bFirstPressAway = false;
 					bFirstPressCamera = false;
-					setToggleColors(_BLACK, _BLACK);
 					cprintf(_ORANGE, 7, "SELECT CAMERA or AWAY");
+					setToggleColors(_CYAN, _CYAN, 2);
+
+					saveCamera();
+					break;
 				}
+				
+				if (!bHaveCamera)
+				{
+					LINE;
+					bHaveCamera = true;
+					if (!bFirstPressAway) bFirstPressCamera = true;
+
+					cprintf(_ORANGE, 7, "SELECT CAMERA");
+					setToggleColors(_GREEN, _BLACK, 10);
+					break;
+				}
+				
 				else
 				{
-					if (!bFirstPressAway) bFirstPressCamera = true;
-					bHaveCamera = true;
-					cameraLocation = iLocation;
-					setToggleColors(_RED, bHaveAway? _GREEN : _BLACK, 10);
-					cprintf(_ORANGE, 7, "SELECT AWAY or NEXT");
+					LINE;
+					// cancel op
+					bHaveCamera = false;
+					bFirstPressCamera= false;
+					setToggleColors(_BLACK , _BLACK, 10);
+					cprintf(_ORANGE, 7, "SELECT CAMERA or AWAY");
 				}
+
 			}
 		break;
 
@@ -252,63 +330,13 @@ void * reportingMode(BUTTON_EVENT some_key)
 
 			if (some_key == MBUTTON_DN)
 			{
-				if (bHaveAway && bHaveCamera)
-				{
-					Serial.printf("first key pressed was %s\n", bFirstPressAway ? "AWAY" : "CAMERA");
-					setToggleColors(_BLACK, _BLACK);
-					bHaveAway = false;
-					bHaveCamera = false;
-					bFirstPressAway = false;
-					bFirstPressCamera = false;
+				setToggleColors(_BLACK, _BLACK);
+				bHaveAway = false;
+				bHaveCamera = false;
+				bFirstPressAway = false;
+				bFirstPressCamera = false;
 
-					double delta_dist = gps.distanceBetween(cameraLocation.lat, cameraLocation.lng, 
-															awayLocation.lat,   awayLocation.lng );
-					if (bFirstPressAway)
-						cam_course = (int)gps.courseTo(	cameraLocation.lat, cameraLocation.lng,
-													   	awayLocation.lat, awayLocation.lng);
-					else
-						cam_course = (int)gps.courseTo(	awayLocation.lat, awayLocation.lng, 
-														cameraLocation.lat, cameraLocation.lng);
-
-					veh_cardinal = gps.cardinal(cam_course);
-
-					GPS_ENTRY2 userData;
-					userData.lat = cameraLocation.lat;
-					userData.lng = cameraLocation.lng;
-					userData.bearing = cam_course;
-					
-					strcpy(userData.cardinal, veh_cardinal);
-					strcpy(userData.onStreet, "TBD");
-					strcpy(userData.crossStreet, "TBD");
-					LINE;
-					
-					removeNearbyCamera(cameraLocation.lat, cameraLocation.lng);
-					addToCameraList(&userData);
-					copyCameraListToSD("gps.db");
-					
-					return (void*) savingMode;
-				}
-				else
-				{
-					if (!bHaveAway && !bHaveCamera)
-					{
-						cprintf(_ORANGE, 7, "need CAMERA *AND* AWAY");
-
-						// hitting save with no endpoints ?
-						// assume delete nearest camera to current veh location
-						
-						removeNearbyCamera(gpsAverage.lat, gpsAverage.lng);
-						
-						// ensure deletion sticks across next reboot
-						copyCameraListToSD("gps.db");
-						
-						return (void*) savingMode;
-					}
-					else if (bHaveAway)
-						cprintf(_ORANGE, 7, "NO! STILL NEED CAMERA");
-					else
-						cprintf(_ORANGE, 7, "NO! STILL NEED AWAY");
-				}
+				return (void*) savingMode;
 			}			
 			
 		break;
