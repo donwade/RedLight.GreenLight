@@ -261,7 +261,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 					if (!bFirstPressCamera) bFirstPressAway = true;
 					
 					
-					cprintf(_ORANGE, 7, "SELECT CAMERA");
+					cprintf(_ORANGE, 7, "MOVE 2 AND MARK CAMERA");
 					setToggleColors(_RED, _BLACK, 10);
 					break;
 				}
@@ -294,8 +294,8 @@ void * reportingMode(BUTTON_EVENT some_key)
 					bHaveCamera = false;
 					bFirstPressAway = false;
 					bFirstPressCamera = false;
-					cprintf(_ORANGE, 7, "SELECT CAMERA or AWAY");
 					setToggleColors(_CYAN, _CYAN, 2);
+					cprintf(_ORANGE, 7, "SELECT CAMERA or AWAY");
 
 					saveCamera();
 					break;
@@ -307,7 +307,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 					bHaveCamera = true;
 					if (!bFirstPressAway) bFirstPressCamera = true;
 
-					cprintf(_ORANGE, 7, "SELECT CAMERA");
+					cprintf(_ORANGE, 7, "MARK AWAY FROM CAM");
 					setToggleColors(_GREEN, _BLACK, 10);
 					break;
 				}

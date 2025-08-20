@@ -68,7 +68,9 @@ void setup_M5(void)
 
 	// confusing. this sets font for buttons
 	M5.Lcd.setFont(WIDGET_FONT);
-
+	
+	M5.Speaker.setAllChannelVolume(70);
+	
 	lfillRect(0, 0, 50, 50, 0x0000FF);
 	delay(2000);
 

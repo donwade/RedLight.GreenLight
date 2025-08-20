@@ -91,18 +91,22 @@ static int32_t copySDtoCameraList(const char* filename)
 		{
 			int x;
 			x = x +5 ;
+			int ilen;
 			
 			//kickDog();
 			
 			aCamera = new(GPS_ENTRY2);
 		
-			cnt++;
 			item = file.readStringUntil('\n');
-
+			ilen = item.length();
+			if (!ilen) continue;
+			
+			Serial.printf("ssss=%d\n", ilen);
+			
 			//convert 'String' to C-String
-			cstr = new char [item.length()+1];
+			cstr = new char [ilen + 1];
 			std::strcpy (cstr, item.c_str());
-			Serial.printf("%4d %s\n", cnt, cstr);
+			Serial.printf("%4d >%s<\n", cnt, cstr);
 			
 			//+45.2948422,-75.8642632 ,  71, "ENE", "Bridlewood" , "Aintree"
 
@@ -119,6 +123,16 @@ static int32_t copySDtoCameraList(const char* filename)
 							aCamera->onStreet, 
 							aCamera->crossStreet);
 
+			if (ret != 6)
+			{
+				Serial.printf("%s:%d bad data\n", __FUNCTION__, __LINE__);
+				//assert(ret == 6);
+				
+				continue; // bad data
+			}
+
+			cnt++;
+
 			trimEnds(cDir);
 			trimEnds(clat);
 			trimEnds(clon);
@@ -126,14 +140,6 @@ static int32_t copySDtoCameraList(const char* filename)
 			trimEnds(aCamera->onStreet);
 			trimEnds(aCamera->crossStreet);
 			
-			if (ret != 6)
-			{
-				Serial.printf("%s:%d bad data\n", __FUNCTION__, __LINE__);
-				delay(3000);
-				assert(ret == 6);
-				
-				continue; // bad data
-			}
 			
 			iDir = atoi(cDir);
 			flat = atof(clat);	
@@ -152,7 +158,7 @@ static int32_t copySDtoCameraList(const char* filename)
 		
 		file.close();
 
-		#if 0
+		#if 1
 		for (int i = 0; i < cameraList.size(); i++)
 		{
 			Serial.print("Element at index ");
@@ -221,15 +227,16 @@ int32_t copyCameraListToSD(char* filename)
 			aCamera = cameraList.get(i);
 
 			//+45.2948422,-75.8642632 ,  71, "ENE", "Bridlewood" , "Aintree"
-			sprintf(bigMessage, "%f,%f,%d,%s,%s,%s", 
+			sprintf(bigMessage, "%f,%f,%d,%s,%s,%s%c", 
 				aCamera->lat,
 				aCamera->lng,
 				aCamera->bearing,
 				aCamera->cardinal,
 				aCamera->onStreet,
-				aCamera->crossStreet);
+				aCamera->crossStreet,
+				0xa);
 			
-			file.println(bigMessage);
+			file.print(bigMessage);
 			
 			Serial.printf("\twriting :[%3d]  %s\n", i, bigMessage);
 
