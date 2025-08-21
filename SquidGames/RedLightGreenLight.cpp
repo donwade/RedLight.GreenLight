@@ -167,7 +167,8 @@ bool getData(void)
 	iMisc.Kmph = gps.speed.kmph();
 	iMisc.qual = gps.hdop.hdop();
 	iMisc.course = gps.course.deg();
-
+	iMisc.sats = gps.satellites.value();
+	
 	/*
 		HDOP < 2: Excellent accuracy, suitable for critical applications. 
 		2 < HDOP < 5: Good accuracy, sufficient for most tasks. 

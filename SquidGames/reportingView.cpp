@@ -197,14 +197,14 @@ void * reportingMode(BUTTON_EVENT some_key)
 	cprintf(_WHITE, 0, "%s", targetCamera.onStreet);
 	cprintf(_WHITE, 1, "%s",  targetCamera.crossStreet);
 
-	cprintf(targetDistance > 100 ? _GREEN : _YELLOW, 2, "TDIST=%4d" , targetDistance);
+	cprintf(_MAGENTA, 2, "sats= %02d qual = %s", iMisc.sats, iMisc.cQuality);
 	
 	cprintf(_CYAN,  3, "VEH  %3d Kph %3s %3d", (int)iMisc.Kmph, vehicalCardinal, vehicalDirection);
 	cprintf(_CYAN,  4, "TGT %4d m   %3s %3d", targetDistance, targetCardinal, targetBearing);
 
-	xprintf(5, "Angle=%d Qual=%5s", 
+	cprintf(targetDistance > 100 ? _GREEN : _YELLOW, 5, "Angle=%d Dist=%5m", 
 				angle_diff(vehicalDirection,targetBearing),
-				iMisc.cQuality);
+				targetDistance);
 	
 	//cprintf(_GREEN, 4, "NOW LA=%+9.7f", gpsAverage.lat);
 	//cprintf(_GREEN, 5, "NOW LO=%+9.7f", gpsAverage.lng);
@@ -337,7 +337,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 				bHaveCamera = false;
 				bFirstPressAway = false;
 				bFirstPressCamera = false;
-
+				
 				return (void*) savingMode;
 			}			
 			

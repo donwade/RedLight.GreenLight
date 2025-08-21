@@ -315,6 +315,7 @@ int removeNearbyCamera(float userLat, float userLng)
 	// do not do any GPS with 0.0 it will hang (hi GD).
 	if (!(int)userLat )
 	{
+		Serial.printf("WTF????");
 		return -1;
 	}
 	

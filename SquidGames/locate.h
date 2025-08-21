@@ -38,6 +38,7 @@ typedef struct gpsMisc
 	float Kmph;
 	float course;		//direction in float degrees
 	
+    uint16_t sats;      //how many
 	uint8_t hour;
 	uint8_t minute;
 	uint8_t second;
