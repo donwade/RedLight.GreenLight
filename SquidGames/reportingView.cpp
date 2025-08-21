@@ -11,9 +11,8 @@ void speakSpeed(int Kmph)
 	
 }
 
-void speakDistance(int distNow)
+void speakDistance(int distNow, int16_t AOA)
 {
-	static bool bAnnounced0;
 	static bool bAnnounced20;
 	static bool bAnnounced40;
 	static bool bAnnounced60;
@@ -22,6 +21,7 @@ void speakDistance(int distNow)
 	static bool bAnnounced150;
 	static bool bAnnounced200;
 	static bool bAnnounced300;
+	static bool bAOAsounded;
 
 	int i;
 	
@@ -33,7 +33,6 @@ void speakDistance(int distNow)
 	{
 		// '300' always largest than farthest reporting distance
 		bTargetHasChanged = false;
-		bAnnounced0 = false;
 		bAnnounced20 = false;
 		bAnnounced40 = false;
 		bAnnounced60 = false;
@@ -42,8 +41,8 @@ void speakDistance(int distNow)
 		bAnnounced150 = false;
 		bAnnounced200 = false;
 		bAnnounced300 = false;
+		bAOAsounded = false;
 
-		//toggleLeftRight(_BLACK,_BLACK);
 		return;
 	}	
 
@@ -62,7 +61,7 @@ void speakDistance(int distNow)
 #endif
 	else if ( !bAnnounced200 && distNow < 200)
 	{
-		add_to_playlist("dangerAhead.wav");
+		add_to_playlist("bankAngle.wav");
 		add_to_playlist("two.wav");
 		add_to_playlist("hundred.wav");
 		bAnnounced200 = true;
@@ -76,9 +75,21 @@ void speakDistance(int distNow)
 	}
 	else if ( !bAnnounced100 && distNow < 100)
 	{
+		bAnnounced100 = true;
 		add_to_playlist("one.wav");
 		add_to_playlist("hundred.wav");
-		bAnnounced100 = true;
+		
+		if (!bAOAsounded)
+		{
+			bAOAsounded = true;
+			Serial.printf("AOA = %d\n", AOA);
+			if (abs(AOA) > 160 )
+				add_to_playlist("dangerAhead.wav");
+			else if (abs(AOA < 20))
+				add_to_playlist("behindYou.wav");
+			else
+				add_to_playlist("crossStreetWarning.wav");
+		}
 	}
 
 	else if (!bAnnounced80 && distNow < 80)
@@ -101,12 +112,8 @@ void speakDistance(int distNow)
 	else if (!bAnnounced20 && distNow < 20)
 	{
 		add_to_playlist("twenty.wav");
-		bAnnounced20 = true;
-	}
-	else if (!bAnnounced0 && distNow < 10)
-	{
 		add_to_playlist("danger.wav");
-		bAnnounced0 = true;
+		bAnnounced20 = true;
 	}
 }
 
@@ -187,12 +194,14 @@ void * reportingMode(BUTTON_EVENT some_key)
 								targetCamera.lat, targetCamera.lng);
 	targetCardinal = gps.cardinal(targetBearing);
 
-	
 	vehicalDirection = (int)gps.course.deg();
 	vehicalCardinal =  gps.cardinal(gps.course.deg());
+
+	//angle of attack
+	int16_t AOA =	angle_diff(vehicalDirection,targetBearing);
 	
 	//speakSpeed(iMisc.Kmph);
-	speakDistance(targetDistance);
+	speakDistance(targetDistance, AOA);
 	
 	cprintf(_WHITE, 0, "%s", targetCamera.onStreet);
 	cprintf(_WHITE, 1, "%s",  targetCamera.crossStreet);
@@ -203,8 +212,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 	cprintf(_CYAN,  4, "TGT %4d m   %3s %3d", targetDistance, targetCardinal, targetBearing);
 
 	cprintf(targetDistance > 100 ? _GREEN : _YELLOW, 5, "Angle=%d Dist=%5dm",
-				angle_diff(vehicalDirection,targetBearing),
-				min(targetDistance,999));
+				min(targetDistance,999) , AOA);
 	
 	//cprintf(_GREEN, 4, "NOW LA=%+9.7f", gpsAverage.lat);
 	//cprintf(_GREEN, 5, "NOW LO=%+9.7f", gpsAverage.lng);
@@ -220,7 +228,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 	switch (some_key)
 	{
 		case BUTTON_INIT:
-			lfillRect(0,0, 50, 50, _RED);
+			//lfillRect(0,0, 50, 50, _RED);
 			threeButtonText("AWAY", "NEXT", "CAMERA");
 			
 			cprintf(_RED,	2, "TODO           ");
