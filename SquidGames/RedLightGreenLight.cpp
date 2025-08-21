@@ -140,7 +140,7 @@ bool getData(void)
 		//Serial.println("After TZ tweak");
 		//Serial.print("now() = ");
 		//Serial.println(now());
-		print_date_time();
+		Serial.println(format_date_time());
 
 		setRTC(hour(), minute(), gps.time.second(), gps.date.day(), month(), year());
 

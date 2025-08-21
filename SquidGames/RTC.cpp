@@ -7,11 +7,11 @@
 
 
 //-----------------------------------------------------------------
-void print_date_time() 
+char *format_date_time() 
 { //easy way to print date and time
-	char buf[40];
-	sprintf(buf, "%02d/%02d/%4d %02d:%02d:%02d", day(), month(), year(), hour(), minute(), second());
-	Serial.println(buf);
+	static char tstring[40];
+	sprintf(tstring, "%02d/%02d/%4d %02d:%02d:%02d", day(), month(), year(), hour(), minute(), second());
+	return tstring;
 }
 
 //-----------------------------------------------------------------
@@ -65,7 +65,7 @@ void setRTC(uint8_t hr, uint8_t min, uint8_t sec, uint8_t day, uint8_t month, ui
 		//Serial.println("After TZ tweak");
 		//Serial.print("now() = ");
 		//Serial.println(now());
-		print_date_time();
+		Serial.println(format_date_time());
 
 		// stuff into RTC chip
 		TimeStruct.hours = hr;

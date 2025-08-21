@@ -3,6 +3,7 @@
 #include <m5Core2-only.h>
 #include "viewController.h"
 #include "watchdogs.h"
+#include "RTC.h"
 
 #define LEDS_PIN 25
 #define LEDS_NUM 10
@@ -245,16 +246,25 @@ static uint32_t bMenuIsActive = false;
 //--------------------------------------------------
 void showPower(void)
 {
-    bool isCharging = M5.Power.isCharging();
-    int percent = M5.Power.getBatteryVoltage() * 100/ 3700; // 3.7 v bat max
-    int vol = M5.Power.getBatteryVoltage();
-    int cur = M5.Power.getBatteryCurrent();
+	static uint8_t flipper;
 	
-	cprintf(_YELLOW, 6, "%3.1fv %03d%% %4dmA %s", 
-						(float)vol/1000.,
-						percent,
-						cur,
-						isCharging ? "CHG":"DIS");
+	if (flipper++ & 0x10)
+	{
+		bool isCharging = M5.Power.isCharging();
+		int percent = M5.Power.getBatteryVoltage() * 100/ 3700; // 3.7 v bat max
+		int vol = M5.Power.getBatteryVoltage();
+		int cur = M5.Power.getBatteryCurrent();
+		
+		cprintf(_YELLOW, 6, "%3.1fv %03d%% %4dmA %s", 
+							(float)vol/1000.,
+							percent,
+							cur,
+							isCharging ? "CHG":"DIS");
+	}
+	else
+	{
+		cprintf(_YELLOW, 6, "%s", format_date_time());
+	}
 }	
 
 //--------------------------------------------------
