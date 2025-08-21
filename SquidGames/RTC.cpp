@@ -1,9 +1,22 @@
+#include <M5Unified.h>
 #include "RTC.h"
+#include "TimeLib.h"
 
 // gps may require cold start assistance from
 // the RTC. So we put this routine in the GPS file.
 
-uint32_t getUTCfromRTC()
+
+//-----------------------------------------------------------------
+void print_date_time() 
+{ //easy way to print date and time
+	char buf[40];
+	sprintf(buf, "%02d/%02d/%4d %02d:%02d:%02d", day(), month(), year(), hour(), minute(), second());
+	Serial.println(buf);
+}
+
+//-----------------------------------------------------------------
+
+uint32_t getUTCfromRTC(void)
 {
 
 	time_t UTC; 		// a time stamp
@@ -44,7 +57,7 @@ uint32_t getUTCfromRTC()
 }
 //---------------------------------------------------------------------------
 
-void SetRTC(void)
+void setRTC(uint8_t hr, uint8_t min, uint8_t sec, uint8_t day, uint8_t month, uint16_t year)
 {
 		// set RTC		
 		m5::rtc_time_t TimeStruct;
@@ -55,14 +68,15 @@ void SetRTC(void)
 		print_date_time();
 
 		// stuff into RTC chip
-		TimeStruct.hours = hour();
-		TimeStruct.minutes = minute();
-		TimeStruct.seconds = gps.time.second();
+		TimeStruct.hours = hr;
+		TimeStruct.minutes = min;
+		TimeStruct.seconds = sec;
 		
-		DateStruct.year = year();
-		DateStruct.month = month();
-		DateStruct.date = gps.date.day();
+		DateStruct.year = year;
+		DateStruct.month = month;
+		DateStruct.date = day;
 		
 		M5.Rtc.setTime(&TimeStruct);
 		M5.Rtc.setDate(&DateStruct);
 }
+

@@ -31,6 +31,9 @@
 
 #include <M5Unified.h>
 #include "viewController.h"
+#include "RTC.h"
+
+//----------------------------------------------------
 
 void SendPacket(char *explain, const uint8_t *pPacket, uint8_t packetSize, bool bDumpMsg = false);
 uint8_t getMessage(uint8_t ID1, uint8_t ID2, uint8_t *packet, uint16_t packetSize, bool bDumpPacket = false);

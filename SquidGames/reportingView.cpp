@@ -197,7 +197,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 	cprintf(_WHITE, 0, "%s", targetCamera.onStreet);
 	cprintf(_WHITE, 1, "%s",  targetCamera.crossStreet);
 
-	cprintf(_MAGENTA, 2, "sats= %02d qual = %s", iMisc.sats, iMisc.cQuality);
+	if (iMisc.cQuality) cprintf(_MAGENTA, 2, "sats= %02d qual = %s", iMisc.sats, iMisc.cQuality);
 	
 	cprintf(_CYAN,  3, "VEH  %3d Kph %3s %3d", (int)iMisc.Kmph, vehicalCardinal, vehicalDirection);
 	cprintf(_CYAN,  4, "TGT %4d m   %3s %3d", targetDistance, targetCardinal, targetBearing);

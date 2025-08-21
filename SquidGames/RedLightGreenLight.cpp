@@ -1,26 +1,4 @@
-/*****************************************
-  ESP32 GPS VKEL 9600 Bds
-This version is for T22_v01 20190612 board
-As the power management chipset changed, it
-require the axp20x library that can be found
-https://github.com/lewisxhe/AXP202X_Library
-You must import it as gzip in sketch submenu
-in Arduino IDE
-This way, it is required to power up the GPS
-module, before trying to read it.
-
-Also get TinyGPS++ library from: 
-https://github.com/mikalhart/TinyGPSPlus
-******************************************/
-
-
-// Bluetooth for Arduino (C) 2020 Phil Schatzmann
-// https://github.com/pschatzmann/ESP32-A2DP.git
-// https://github.com/pschatzmann/arduino-audio-tools.git
-
-#define LINE Serial.printf("%s:%d\n", __FUNCTION__, __LINE__)
-
-
+#include "TimeLib.h"
 #include <TinyGPS++.h>
 #include <M5Unified.h>
 
@@ -34,6 +12,7 @@ https://github.com/mikalhart/TinyGPSPlus
 
 #include <SPI.h>
 #include <Wire.h>  
+#include "RTC.h"
 
 //#include "BluetoothA2DPSource.h"
 #include <math.h> 
@@ -45,14 +24,20 @@ https://github.com/mikalhart/TinyGPSPlus
 #include "locate.h"
 #include "viewController.h"
 
+
+#define LINE Serial.printf("%s:%d\n", __FUNCTION__, __LINE__)
+
+// allow only valid lat/long. This is custom to my location
+
 #define LAT_MIN  44.
 #define LAT_MAX  46.
 
 #define LNG_MAX -74.
 #define LNG_MIN -76.
 
+#define TZ -4	// my timezone compensation
 
-#define BUILTIN_LED 4  // TIP t-beam
+
 extern void smartDelay(unsigned long ms);
 
 extern TinyGPSPlus gps;
@@ -70,97 +55,36 @@ static const char *qual[] = {
 	"SICK"
 };
 
+//----------------------------------------------------
 
-//-----------------------------------------------------------------
-
-//#define SIMULATOR
+static bool bSystemClock = false;
 
 bool getData(void)
 {
-#ifdef SIMULATOR
-	String cppStr;
-	char *cstr;
-	char charo[100];
-	char notUsed[30];
-	char notUsed1[30];
-	char clat[20];
-	char clng[20];
-	char cSpeed[5];
-	char  cDeg[6];
-
-	
-	while(!Serial.available()) { delay(10);}
-
-	// or many lines get read
-	cppStr = Serial.readStringUntil('\n');  
-
-	// convert 'String' to C-String
-	cstr = new char [cppStr.length()+1];
-	std::strcpy (cstr, cppStr.c_str());
-
-	//18:31:02 @ +45.2944592 -75.8636137 ^  14 kph dir 110 ESE
-
-	// sscanf  %f not available on embedded systems without hard work 	
-
-	sscanf((char*) cstr, "%s %s %s %s %s %s %s %s %s %s\n", 
-						 &notUsed, &notUsed, 
-						 &clat, &clng, 
-						 &notUsed,
-						 &cSpeed,
-						 &notUsed,
-						 &notUsed1,
-						 &cDeg,
-						 &notUsed
-						 );
-
-
-	iLocation.lat = atof(clat);
-	iLocation.lng = atof(clng);
-
-	iMisc.Kmph = atof(cSpeed);
-	iMisc.course = atof( cDeg);
-	iMisc.cardinal = gps.cardinal(iMisc.course);
-
-	if (cstr) delete [] cstr;
-
-#if 0
-	Serial.printf("\n\n-------start-----\n");
-	Serial.println(cstr);
-	Serial.printf("lat=%10.7f \n", iLocation.lat);
-	Serial.printf("lng=%10.7f \n", iLocation.lng);
-
-	Serial.printf(" k/c/c %6.4f %6.4f %s\n", 
-			iMisc.Kmph, 
-			iMisc.course, 
-			iMisc.cardinal);
-	
-	Serial.println(cDeg);
-	Serial.printf("-------done-----\n");
-#endif
-	return true;
-
-#else
 
 	double Tlat, Tlng;
+
+	// is the data valid?
 	Tlat = gps.location.lat();
 	Tlng = gps.location.lng();
 	
-	if (Tlat < LAT_MIN || Tlat > LAT_MAX)
+	if (Tlat < LAT_MIN || Tlat > LAT_MAX ||
+		Tlng < LNG_MIN || Tlng > LNG_MAX )
 	{
 		// gps is bad. Ignore this result
-		//Serial.printf("%s:%d GPS bad LAT= %11.8f < %11.8f < %11.8f\n", __FUNCTION__,__LINE__, LAT_MIN, Tlat, LAT_MAX);
+		Serial.printf("%s:%d GPS bad LAT= %11.8f < %11.8f < %11.8f LNG= %11.8f < %11.8f < %11.8f\n", 
+					__FUNCTION__,__LINE__, 
+					LAT_MIN, Tlat, LAT_MAX,
+					LNG_MIN, Tlng, LNG_MAX);
 		return false;
 	}
-	
-	if ( Tlng < LNG_MIN || Tlng > LNG_MAX )
-	{
-		Serial.printf("%s:%d GPS bad LON= %11.8f < %11.8f < %11.8f  \n",
-					__FUNCTION__,__LINE__, LNG_MIN, Tlng, LNG_MAX);
-		return false;
-	}
-	
+
+
+
+	// iLocation = Immediate location
 	iLocation.lat = Tlat;
 	iLocation.lng = Tlng;
+	
 	iMisc.hour = gps.time.hour();
 	iMisc.minute = gps.time.minute();
 	iMisc.second = gps.time.second();
@@ -168,7 +92,60 @@ bool getData(void)
 	iMisc.qual = gps.hdop.hdop();
 	iMisc.course = gps.course.deg();
 	iMisc.sats = gps.satellites.value();
+
+
+
+	// set internal clock "now" to UTC time from satellite
 	
+	time_t UTC; 		// a time stamp
+	if (!bSystemClock)
+	{	
+		bSystemClock = true;
+
+		getUTCfromRTC();
+		
+		tmElements_t tmpTime;	//Time elements structure
+		time_t UTC; 	  	// a time stamp
+
+		tmpTime.Second = gps.time.second();
+		tmpTime.Hour = gps.time.hour();
+		tmpTime.Minute = gps.time.minute();
+		tmpTime.Day = gps.date.day();
+		tmpTime.Month = gps.date.month();
+		tmpTime.Year = gps.date.year() - 1970; //Y2K, in seconds = 946684800UL
+
+		//thank god I dont have to calc seconds in month 
+		UTC =  makeTime(tmpTime);
+		//Serial.println(UTC);
+
+		// put UTC into the system 'now' clock
+		setTime(UTC);
+
+		// see clock jump aka now() will jump
+		//Serial.print("now() = ");
+		//Serial.println(now());
+		//print_date_time();
+		
+		// add TIMEZONE
+		UTC += (TZ * 3600L); //my timezone
+
+		Serial.printf("UTC calculated from GPS = %d\n", UTC);		
+
+		setTime(UTC);
+
+
+		// set RTC		
+		m5::rtc_time_t TimeStruct;
+		m5::rtc_date_t DateStruct;
+		//Serial.println("After TZ tweak");
+		//Serial.print("now() = ");
+		//Serial.println(now());
+		print_date_time();
+
+		setRTC(hour(), minute(), gps.time.second(), gps.date.day(), month(), year());
+
+	}	
+
 	/*
 		HDOP < 2: Excellent accuracy, suitable for critical applications. 
 		2 < HDOP < 5: Good accuracy, sufficient for most tasks. 
@@ -186,7 +163,6 @@ bool getData(void)
 		
 	return true;
 	
-#endif
 }
 
 
