@@ -202,9 +202,9 @@ void * reportingMode(BUTTON_EVENT some_key)
 	cprintf(_CYAN,  3, "VEH  %3d Kph %3s %3d", (int)iMisc.Kmph, vehicalCardinal, vehicalDirection);
 	cprintf(_CYAN,  4, "TGT %4d m   %3s %3d", targetDistance, targetCardinal, targetBearing);
 
-	cprintf(targetDistance > 100 ? _GREEN : _YELLOW, 5, "Angle=%d Dist=%5m", 
+	cprintf(targetDistance > 100 ? _GREEN : _YELLOW, 5, "Angle=%d Dist=%5dm",
 				angle_diff(vehicalDirection,targetBearing),
-				targetDistance);
+				min(targetDistance,999));
 	
 	//cprintf(_GREEN, 4, "NOW LA=%+9.7f", gpsAverage.lat);
 	//cprintf(_GREEN, 5, "NOW LO=%+9.7f", gpsAverage.lng);
