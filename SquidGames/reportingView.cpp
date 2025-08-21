@@ -59,6 +59,7 @@ void speakDistance(int distNow)
 		add_to_playlist("hundred.wav");
 		bAnnounced300 = true;
 	}
+#endif
 	else if ( !bAnnounced200 && distNow < 200)
 	{
 		add_to_playlist("dangerAhead.wav");
@@ -66,7 +67,6 @@ void speakDistance(int distNow)
 		add_to_playlist("hundred.wav");
 		bAnnounced200 = true;
 	}
-#endif
 	else if ( !bAnnounced150 && distNow < 150)
 	{
 		add_to_playlist("one.wav");
@@ -76,8 +76,6 @@ void speakDistance(int distNow)
 	}
 	else if ( !bAnnounced100 && distNow < 100)
 	{
-		add_to_playlist("glideSlope.wav");
-		add_to_playlist("delay100.wav");
 		add_to_playlist("one.wav");
 		add_to_playlist("hundred.wav");
 		bAnnounced100 = true;
@@ -156,16 +154,16 @@ void saveCamera(void)
 	
 }
 
+int vehicalDirection;
+const char *vehicalCardinal;
+int targetDistance;
+int targetBearing;
+const char *targetCardinal;
+
+
 void * reportingMode(BUTTON_EVENT some_key)
 {
-	int Vdist;
-	int Vcourse;
-	const char *dir;
 	static KEY_STATE here;
-	static int ticker;
-	char 	const *veh_cardinal;
-	const char *Vcardinal;
-
 
 	if (!(int)iLocation.lat || !(int) iLocation.lng)
 	{
@@ -180,28 +178,32 @@ void * reportingMode(BUTTON_EVENT some_key)
 		return (void*)reportingMode;
 	}
 	
-	Vdist = findNearestCamera(iLocation.lat, iLocation.lng);
+	targetDistance = findNearestCamera(iLocation.lat, iLocation.lng);
 
-	// if vehicle location not known, a negative Vdist is returned
-	if (Vdist < 0) return (void*) reportingMode;
+	// if vehicle location not known, a negative targetDistance is returned
+	if (targetDistance < 0) return (void*) reportingMode;
 
-	Vcourse = (int)gps.courseTo(iLocation.lat, iLocation.lng, 
+	targetBearing = (int)gps.courseTo(iLocation.lat, iLocation.lng, 
 								targetCamera.lat, targetCamera.lng);
-	Vcardinal = gps.cardinal(Vcourse);
+	targetCardinal = gps.cardinal(targetBearing);
 
+	
+	vehicalDirection = (int)gps.course.deg();
+	vehicalCardinal =  gps.cardinal(gps.course.deg());
+	
 	//speakSpeed(iMisc.Kmph);
-	//speakDistance(Vdist);
+	speakDistance(targetDistance);
 	
 	cprintf(_WHITE, 0, "%s", targetCamera.onStreet);
 	cprintf(_WHITE, 1, "%s",  targetCamera.crossStreet);
 
-	cprintf(Vdist > 100 ? _GREEN : _YELLOW, 2, "TDIST=%4d VSPD=%3d", Vdist, (int)iMisc.Kmph);
+	cprintf(targetDistance > 100 ? _GREEN : _YELLOW, 2, "TDIST=%4d" , targetDistance);
 	
-	cprintf(_CYAN,  3, "VEH %3d %s", Vcourse, Vcardinal);
-	cprintf(_CYAN,  4, "TGT %3d %s", targetCamera.bearing, targetCamera.cardinal);
+	cprintf(_CYAN,  3, "VEH  %3d Kph %3s %3d", (int)iMisc.Kmph, vehicalCardinal, vehicalDirection);
+	cprintf(_CYAN,  4, "TGT %4d m   %3s %3d", targetDistance, targetCardinal, targetBearing);
 
 	xprintf(5, "Angle=%d Qual=%5s", 
-				angle_diff(Vcourse,targetCamera.bearing),
+				angle_diff(vehicalDirection,targetBearing),
 				iMisc.cQuality);
 	
 	//cprintf(_GREEN, 4, "NOW LA=%+9.7f", gpsAverage.lat);
