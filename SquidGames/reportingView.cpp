@@ -185,7 +185,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 		return (void*)reportingMode;
 	}
 	
-	targetDistance = findNearestCamera(iLocation.lat, iLocation.lng);
+	targetDistance = min(findNearestCamera(iLocation.lat, iLocation.lng), 9999);
 
 	// if vehicle location not known, a negative targetDistance is returned
 	if (targetDistance < 0) return (void*) reportingMode;
@@ -211,8 +211,7 @@ void * reportingMode(BUTTON_EVENT some_key)
 	cprintf(_CYAN,  3, "VEH  %3d Kph %3s %3d", (int)iMisc.Kmph, vehicalCardinal, vehicalDirection);
 	cprintf(_CYAN,  4, "TGT %4d m   %3s %3d", targetDistance, targetCardinal, targetBearing);
 
-	cprintf(targetDistance > 100 ? _GREEN : _YELLOW, 5, "Angle=%d Dist=%5dm",
-				min(targetDistance,999) , AOA);
+	cprintf(targetDistance > 100 ? _GREEN : _YELLOW, 5, "Angle=%3d Dist=%4dm", AOA, targetDistance);
 	
 	//cprintf(_GREEN, 4, "NOW LA=%+9.7f", gpsAverage.lat);
 	//cprintf(_GREEN, 5, "NOW LO=%+9.7f", gpsAverage.lng);
