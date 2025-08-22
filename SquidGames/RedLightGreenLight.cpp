@@ -5,6 +5,7 @@
 #include "m5Core2-only.h"
 #include "watchdogs.h"
 #include "viewController.h"
+#include "wavePlayer.h"
 
 #include <iostream>
 #include <cstring>
@@ -57,13 +58,14 @@ static const char *qual[] = {
 
 //----------------------------------------------------
 
-static bool bSystemClock = false;
+static bool bSysClockInitialized = false;
 
 bool getData(void)
 {
 
 	double Tlat, Tlng;
-
+	static int8_t bGPSisGood = -1; // not init'd
+	
 	// is the data valid?
 	Tlat = gps.location.lat();
 	Tlng = gps.location.lng();
@@ -71,6 +73,15 @@ bool getData(void)
 	if (Tlat < LAT_MIN || Tlat > LAT_MAX ||
 		Tlng < LNG_MIN || Tlng > LNG_MAX )
 	{
+
+		if (bGPSisGood != false )
+		{
+			bGPSisGood = false;
+			add_to_playlist("gpsIsLost.wav");
+			setToggleColors(_RED, _CYAN, 8);
+			Tdelay(2000);
+		}
+		
 		// gps is bad. Ignore this result
 		Serial.printf("%s:%d GPS bad LAT= %11.8f < %11.8f < %11.8f LNG= %11.8f < %11.8f < %11.8f\n", 
 					__FUNCTION__,__LINE__, 
@@ -79,6 +90,12 @@ bool getData(void)
 		return false;
 	}
 
+	if (bGPSisGood != true )
+	{
+		add_to_playlist("gpsIsReady.wav");
+		bGPSisGood = true;
+		setToggleColors(_BLACK, _BLACK, 2);
+	}
 
 
 	// iLocation = Immediate location
@@ -98,9 +115,9 @@ bool getData(void)
 	// set internal clock "now" to UTC time from satellite
 	
 	time_t UTC; 		// a time stamp
-	if (!bSystemClock)
+	if (!bSysClockInitialized)
 	{	
-		bSystemClock = true;
+		bSysClockInitialized = true;
 
 		getUTCfromRTC();
 		
